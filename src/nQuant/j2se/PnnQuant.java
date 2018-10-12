@@ -222,6 +222,9 @@ public class PnnQuant {
 		int curdist, mindist = SHORT_MAX;
 		for (int i=0; i<palette.length; ++i) {
 			Color c2 = palette[i];
+			if(c2 == null)
+				continue;
+			
 			int adist = Math.abs(c2.getAlpha() - c.getAlpha());
 			curdist = squares3[adist];
 			if (curdist > mindist)
@@ -258,6 +261,9 @@ public class PnnQuant {
 
 			for (; k < palette.length; k++) {
 				Color c2 = palette[k];
+				if(c2 == null)
+					continue;
+				
 				closest[4] = (char) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
