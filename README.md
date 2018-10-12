@@ -6,7 +6,7 @@ A new multilevel thresholding algorithm derived from the well-known pairwise nea
 The PNN has been considered a slow algorithm, as the time complexity of the original method was shown to be O(N3).<br/>
 Faster approaches have been proposed by Kurita20 using a heap structure, and by Fra¨nti et al.21 using nearest neighbor pointers. The time complexity of the method is O(N log N), which is significantly better than that of optimal thresholding.
 
-The Java version of the code, together with a test driver, using simple drag and drop method to directly convert image to 256 colors.
+The Java version of the code, together with a test driver, using simple drag and drop method to convert the dropped image to 256 colors directly.
 The main method is located at PQCanvas.java. It will open a JFrame dialog.
 
 Original photo:<br><img src="https://i.stack.imgur.com/SE5x9.png" /><br>
