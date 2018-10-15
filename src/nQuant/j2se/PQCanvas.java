@@ -28,8 +28,8 @@ public class PQCanvas extends Canvas {
 			try {
 				tracker.waitForID(0);
 			} catch (InterruptedException e) { }
-			System.out.println ("w = " + img.getWidth (this));
-			System.out.println ("h = " + img.getHeight (this));
+			System.out.println("w = " + img.getWidth (this));
+			System.out.println("h = " + img.getHeight (this));
 			set(img);
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -64,18 +64,18 @@ public class PQCanvas extends Canvas {
 
 		pixels = pq.convert(w, h, 256, true);
 		this.image = this.createImage(new MemoryImageSource(w, h, pixels, 0, w));
-		this.getParent().setSize(w, h);
+		this.getParent().setSize(w + 16, h + 38);
 	}
 
 	public void paint(Graphics graphics) {
-		Graphics2D g2d = (Graphics2D) graphics.create();
-		g2d.setRenderingHint(
-		        RenderingHints.KEY_TEXT_ANTIALIASING,
-		        RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-		if (image != null)
+		Graphics2D g2d = (Graphics2D) graphics.create();		
+		if (image != null) {
+			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR); 
 			graphics.drawImage(image, 0, 0, this);
+		}
 		else {
 			graphics.setFont(new Font("Arial", Font.BOLD, 20));
+			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
 			graphics.drawString("Please drag an image file to here!", getWidth() / 5, getHeight() / 2);
 		}
 		g2d.dispose();
@@ -84,13 +84,13 @@ public class PQCanvas extends Canvas {
 	public static void main(String [] args) throws java.io.IOException {
 		PQCanvas canvas = new PQCanvas();
 		java.awt.Frame frame = new java.awt.Frame("PnnQuant Test");
-		frame.setSize (500, 500);
+		frame.setSize(500, 500);
 		canvas.addFileDrop();
 		frame.add(canvas);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		frame.setLocation(dim.width/2-frame.getSize().width/2, dim.height/2-frame.getSize().height/2);
 		frame.setVisible(true);
-		frame.addWindowListener (new java.awt.event.WindowAdapter() {
+		frame.addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent e) { 
 				System.out.println("Closing program");		
 				System.exit(0); }

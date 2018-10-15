@@ -12,12 +12,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PnnQuant {
-	private final char SHORT_MAX = Character.MAX_VALUE;
-	private final char BYTE_MAX = -Byte.MIN_VALUE +Byte.MAX_VALUE;
+	private final short SHORT_MAX = Short.MAX_VALUE;
+	private final char BYTE_MAX = -Byte.MIN_VALUE + Byte.MAX_VALUE;
 	private boolean hasTransparency = false, hasSemiTransparency = false;
 	private int pixels[] = null;
 	private Color m_transparentColor;
-	private Map<Color, char[]> closestMap = new HashMap<>();	
+	private Map<Color, short[]> closestMap = new HashMap<>();	
 	
 	public PnnQuant(Image im, int w, int h) throws IOException {
 		setPixels(im, w, h);
@@ -50,7 +50,7 @@ public class PnnQuant {
 	private static class Pnnbin {
 		double ac = 0, rc = 0, gc = 0, bc = 0, err = 0;
 		int cnt = 0;
-		char nn, fw, bk, tm, mtm;
+		int nn, fw, bk, tm, mtm;
 	}
 
 	private int getColorIndex(final Color c, boolean semiTransparency)
@@ -83,12 +83,12 @@ public class PnnQuant {
 			nn = i;
 		}
 		bin1.err = err;
-		bin1.nn = (char) nn;
+		bin1.nn = nn;
 	}
 
 	private int pnnquan(final Color[] pixels, Pnnbin[] bins, Color[] palette, boolean quan_sqrt)
 	{
-		char[] heap = new char[65537];
+		short[] heap = new short[65537];
 		double err, n1, n2;
 		int l, l2, h, b1, maxbins, extbins;
 
@@ -125,8 +125,8 @@ public class PnnQuant {
 		}
 
 		for (int i = 0; i < maxbins - 1; i++) {
-			bins[i].fw = (char) (i + 1);
-			bins[i + 1].bk = (char) i;
+			bins[i].fw = (i + 1);
+			bins[i + 1].bk = i;
 		}
 		// !!! Already zeroed out by calloc()
 		//	bins[0].bk = bins[i].fw = 0;
@@ -140,9 +140,9 @@ public class PnnQuant {
 				l2 = l >> 1;
 				if (bins[h = heap[l2]].err <= err)
 					break;
-				heap[l] = (char) h;
+				heap[l] = (short) h;
 			}
-			heap[l] = (char) i;
+			heap[l] = (short) i;
 		}
 
 		/* Merge bins which increase error the least */
@@ -159,7 +159,7 @@ public class PnnQuant {
 				else /* Too old error value */
 				{
 					find_nn(bins, b1);
-					tb.tm = (char) i;
+					tb.tm = i;
 				}
 				/* Push slot down */
 				err = bins[b1].err;
@@ -168,9 +168,9 @@ public class PnnQuant {
 						l2++;
 					if (err <= bins[h = heap[l2]].err)
 						break;
-					heap[l] = (char) h;
+					heap[l] = (short) h;
 				}
-				heap[l] = (char) b1;
+				heap[l] = (short) b1;
 			}
 
 			/* Do a merge */
@@ -184,7 +184,7 @@ public class PnnQuant {
 			tb.gc = d * Math.rint(n1 * tb.gc + n2 * nb.gc);
 			tb.bc = d * Math.rint(n1 * tb.bc + n2 * nb.bc);
 			tb.cnt += nb.cnt;
-			tb.mtm = (char) ++i;
+			tb.mtm = ++i;
 
 			/* Unchain deleted bin */
 			bins[nb.bk].fw = nb.fw;
@@ -223,7 +223,7 @@ public class PnnQuant {
 		for (int i=0; i<palette.length; ++i) {
 			Color c2 = palette[i];
 			if(c2 == null)
-				continue;
+				break;
 			
 			int adist = Math.abs(c2.getAlpha() - c.getAlpha());
 			curdist = squares3[adist];
@@ -254,25 +254,25 @@ public class PnnQuant {
 	private int closestColorIndex(final Color[] palette, final int[] squares3, final Color c)
 	{
 		int k = 0;
-		char[] closest = new char[5];
-		char[] got = closestMap.get(c);
+		short[] closest = new short[5];
+		short[] got = closestMap.get(c);
 		if (got == null) {
 			closest[2] = closest[3] = SHORT_MAX;
 
 			for (; k < palette.length; k++) {
 				Color c2 = palette[k];
 				if(c2 == null)
-					continue;
+					break;
 				
-				closest[4] = (char) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
+				closest[4] = (short) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
 					closest[3] = closest[2];
-					closest[0] = (char) k;
+					closest[0] = (short) k;
 					closest[2] = closest[4];
 				}
 				else if (closest[4] < closest[3]) {
-					closest[1] = (char) k;
+					closest[1] = (short) k;
 					closest[3] = closest[4];
 				}
 			}
@@ -402,16 +402,12 @@ public class PnnQuant {
 		}
 
 		if(hasSemiTransparency || nMaxColors < 256) {
-			for (int j = 0; j < height; j++) {
-				for (int i = 0; i < width; i++)
-					qPixels[pixelIndex++] = nearestColorIndex(palette, squares3, pixels[pixelIndex]);
-			}
+			for (int i = 0; i < qPixels.length; i++)
+				qPixels[i] = nearestColorIndex(palette, squares3, pixels[i]);
 		}
 		else {
-			for (int j = 0; j < height; j++) {
-				for (int i = 0; i < width; i++)
-					qPixels[pixelIndex++] = closestColorIndex(palette, squares3, pixels[pixelIndex]);
-			}
+			for (int i = 0; i < qPixels.length; i++)
+				qPixels[i] = closestColorIndex(palette, squares3, pixels[i]);
 		}
 
 		return true;
@@ -419,14 +415,9 @@ public class PnnQuant {
 
 	boolean quantize_image(final Color[] pixels, int[] qPixels, int width, int height)
 	{
-		int[] sqr_tbl = new int[BYTE_MAX + BYTE_MAX + 1];
-
-		for (int i = (-BYTE_MAX); i <= BYTE_MAX; i++)
-			sqr_tbl[i + BYTE_MAX] = i * i;
-
-		int[] squares3 = new int[sqr_tbl.length - BYTE_MAX];
+		int[] squares3 = new int[BYTE_MAX + 1];
 		for (int i = 0; i < squares3.length; i++)
-			squares3[i] = sqr_tbl[i + BYTE_MAX];
+			squares3[i] = i * i;
 
 		short pixelIndex = 0;
 		boolean odd_scanline = false;
@@ -486,7 +477,7 @@ public class PnnQuant {
 						rgba1 = new Color((c1.getRed() & 0xF8), (c1.getGreen() & 0xF8), (c1.getBlue() & 0xF8), (c1.getAlpha() < BYTE_MAX) ? 0 : BYTE_MAX);
 					lookup[offset] = rgba1;
 				}
-				qPixels[pixelIndex] = (char) offset;
+				qPixels[pixelIndex] = offset;
 
 				Color c2 = lookup[offset];
 
@@ -573,11 +564,11 @@ public class PnnQuant {
 
 		int[] qPixels = new int[cPixels.length];		
 		quantize_image(cPixels, palette, qPixels, w, h, true);
+		closestMap.clear();
 		
 		for (int i = 0; i < qPixels.length; i++)
 			qPixels[i] = colorIndexToRGBA(palette, qPixels[i]);
-
-		closestMap.clear();
+		
 		return qPixels;
 	}
 
