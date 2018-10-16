@@ -28,8 +28,8 @@ public class PQCanvas extends Canvas {
 			try {
 				tracker.waitForID(0);
 			} catch (InterruptedException e) { }
-			System.out.println("w = " + img.getWidth (this));
-			System.out.println("h = " + img.getHeight (this));
+			System.out.println("w = " + img.getWidth(this));
+			System.out.println("h = " + img.getHeight(this));
 			set(img);
 		} catch (Exception ex) {
 			ex.printStackTrace();

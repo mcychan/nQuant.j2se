@@ -8,7 +8,9 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.ImageObserver;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PnnQuant {
@@ -64,7 +66,7 @@ public class PnnQuant {
 
 	private void find_nn(Pnnbin[] bins, int idx)
 	{
-		int i, nn = 0;
+		int nn = 0;
 		double err = 1e100;
 
 		Pnnbin bin1 = bins[idx];
@@ -73,7 +75,7 @@ public class PnnQuant {
 		double wr = bin1.rc;
 		double wg = bin1.gc;
 		double wb = bin1.bc;
-		for (i = bin1.fw; i != 0; i = bins[i].fw) {
+		for (int i = bin1.fw; i != 0; i = bins[i].fw) {
 			double nerr = Math.pow((bins[i].ac - wa), 2) + Math.pow((bins[i].rc - wr), 2) + Math.pow((bins[i].gc - wg), 2) + Math.pow((bins[i].bc - wb), 2);
 			double n2 = bins[i].cnt;
 			nerr *= (n1 * n2) / (n1 + n2);
@@ -86,9 +88,9 @@ public class PnnQuant {
 		bin1.nn = nn;
 	}
 
-	private int pnnquan(final Color[] pixels, Pnnbin[] bins, Color[] palette, boolean quan_sqrt)
+	private Color[] pnnquan(final Color[] pixels, Pnnbin[] bins, int nMaxColors, boolean quan_sqrt)
 	{
-		short[] heap = new short[65537];
+		int[] heap = new int[65537];
 		double err, n1, n2;
 		int l, l2, h, b1, maxbins, extbins;
 
@@ -140,13 +142,13 @@ public class PnnQuant {
 				l2 = l >> 1;
 				if (bins[h = heap[l2]].err <= err)
 					break;
-				heap[l] = (short) h;
+				heap[l] = h;
 			}
-			heap[l] = (short) i;
+			heap[l] = i;
 		}
 
 		/* Merge bins which increase error the least */
-		extbins = maxbins - palette.length;
+		extbins = maxbins - nMaxColors;
 		for (int i = 0; i < extbins; ) {
 			/* Use heap to find which bins to merge */
 			for (;;) {
@@ -168,9 +170,9 @@ public class PnnQuant {
 						l2++;
 					if (err <= bins[h = heap[l2]].err)
 						break;
-					heap[l] = (short) h;
+					heap[l] = h;
 				}
-				heap[l] = (short) b1;
+				heap[l] = b1;
 			}
 
 			/* Do a merge */
@@ -179,10 +181,10 @@ public class PnnQuant {
 			n1 = tb.cnt;
 			n2 = nb.cnt;
 			double d = 1.0 / (n1 + n2);
-			tb.ac = d * Math.rint(n1 * tb.ac + n2 * nb.ac);
-			tb.rc = d * Math.rint(n1 * tb.rc + n2 * nb.rc);
-			tb.gc = d * Math.rint(n1 * tb.gc + n2 * nb.gc);
-			tb.bc = d * Math.rint(n1 * tb.bc + n2 * nb.bc);
+			tb.ac = d * (n1 * tb.ac + n2 * nb.ac);
+			tb.rc = d * (n1 * tb.rc + n2 * nb.rc);
+			tb.gc = d * (n1 * tb.gc + n2 * nb.gc);
+			tb.bc = d * (n1 * tb.bc + n2 * nb.bc);
 			tb.cnt += nb.cnt;
 			tb.mtm = ++i;
 
@@ -193,21 +195,22 @@ public class PnnQuant {
 		}
 
 		/* Fill palette */
+		List<Color> palette = new ArrayList<>();
 		short k = 0;
 		for (int i = 0;; ++k) {
 			int alpha = (int) Math.rint(bins[i].ac);
-			palette[k] = new Color((int) Math.rint(bins[i].rc), (int) Math.rint(bins[i].gc), (int) Math.rint(bins[i].bc), alpha);
-			if (hasTransparency && palette[k] == m_transparentColor) {
-				Color temp = palette[0];
-				palette[0] = palette[k];
-				palette[k] = temp;
+			palette.add(new Color((int) Math.rint(bins[i].rc), (int) Math.rint(bins[i].gc), (int) Math.rint(bins[i].bc), alpha));
+			if (hasTransparency && palette.get(k).equals(m_transparentColor)) {
+				Color temp = palette.get(0);
+				palette.set(0, palette.get(k));
+				palette.set(k, temp);
 			}
 
 			if ((i = bins[i].fw) == 0)
 				break;
 		}
 
-		return 0;
+		return palette.toArray(new Color[0]);
 	}
 	
 	private  int colorIndexToRGBA(final Color[] palette, final int k)
@@ -222,8 +225,6 @@ public class PnnQuant {
 		int curdist, mindist = SHORT_MAX;
 		for (int i=0; i<palette.length; ++i) {
 			Color c2 = palette[i];
-			if(c2 == null)
-				break;
 			
 			int adist = Math.abs(c2.getAlpha() - c.getAlpha());
 			curdist = squares3[adist];
@@ -261,8 +262,6 @@ public class PnnQuant {
 
 			for (; k < palette.length; k++) {
 				Color c2 = palette[k];
-				if(c2 == null)
-					break;
 				
 				closest[4] = (short) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
 				if (closest[4] < closest[2]) {
@@ -545,12 +544,12 @@ public class PnnQuant {
 			quantize_image(cPixels, qPixels, w, h);
 			return qPixels;
 		}
-
-		final Color[] palette = new Color[nMaxColors];
+		
 		Pnnbin[] bins = new Pnnbin[65536];
 		boolean quan_sqrt = nMaxColors > BYTE_MAX;
+		Color[] palette = new Color[nMaxColors];
 		if (nMaxColors > 2)
-			pnnquan(cPixels, bins, palette, quan_sqrt);
+			palette = pnnquan(cPixels, bins, nMaxColors, quan_sqrt);
 		else {
 			if (hasSemiTransparency) {
 				palette[0] = new Color(0, 0, 0, 0);
