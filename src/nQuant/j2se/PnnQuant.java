@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class PnnQuant {
 	private final short SHORT_MAX = Short.MAX_VALUE;
@@ -282,7 +283,8 @@ public class PnnQuant {
 		else
 			closest = got;
 
-		if (closest[2] == 0 || (Math.random() % (closest[3] + closest[2])) <= closest[3])
+		Random rand = new Random();
+		if (closest[2] == 0 || (rand.nextInt(SHORT_MAX) % (closest[3] + closest[2])) <= closest[3])
 			k = closest[0];
 		else
 			k = closest[1];
