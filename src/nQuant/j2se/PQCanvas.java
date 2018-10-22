@@ -62,7 +62,7 @@ public class PQCanvas extends Canvas {
 		if ((pg.getStatus() & java.awt.image.ImageObserver.ABORT) != 0)
 			throw new IOException ("Image pixel grab aborted or errored");
 
-		pixels = pq.convert(w, h, 256, true);
+		pixels = pq.convert(w, h, 256, false);
 		this.image = this.createImage(new MemoryImageSource(w, h, pixels, 0, w));
 		this.getParent().setSize(w + 16, h + 38);
 	}

@@ -562,7 +562,7 @@ public class PnnQuant {
 		}
 
 		int[] qPixels = new int[cPixels.length];		
-		quantize_image(cPixels, palette, qPixels, w, h, true);
+		quantize_image(cPixels, palette, qPixels, w, h, dither);
 		closestMap.clear();
 		
 		for (int i = 0; i < qPixels.length; i++)
