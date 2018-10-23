@@ -431,8 +431,11 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			}			
 		}
 		
-		if (nMaxColors > 256)
-			nMaxColors = 256;
+		if (nMaxColors > 256) {
+			int[] qPixels = new int[cPixels.length];		
+			quantize_image(cPixels, qPixels, w, h);
+			return qPixels;
+		}
 		
 		Pnnbin[] bins = new Pnnbin[65536];
 		Color[] palette = new Color[nMaxColors];

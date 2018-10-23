@@ -416,11 +416,7 @@ public class PnnQuantizer {
 
 	protected boolean quantize_image(final Color[] pixels, int[] qPixels, int width, int height)
 	{
-		int[] squares3 = new int[BYTE_MAX + 1];
-		for (int i = 0; i < squares3.length; i++)
-			squares3[i] = i * i;
-
-		short pixelIndex = 0;
+		int pixelIndex = 0;
 		boolean odd_scanline = false;
 		short[] row0, row1;
 		int a_pix, r_pix, g_pix, b_pix, dir, k;
@@ -478,9 +474,9 @@ public class PnnQuantizer {
 						rgba1 = new Color((c1.getRed() & 0xF8), (c1.getGreen() & 0xF8), (c1.getBlue() & 0xF8), (c1.getAlpha() < BYTE_MAX) ? 0 : BYTE_MAX);
 					lookup[offset] = rgba1;
 				}
-				qPixels[pixelIndex] = offset;
 
 				Color c2 = lookup[offset];
+				qPixels[pixelIndex] = (c2.getAlpha() << 24) | (c2.getRed() << 16) | (c2.getGreen() << 8) | c2.getBlue();
 
 				r_pix = limtb[r_pix - c2.getRed() + 256];
 				g_pix = limtb[g_pix - c2.getGreen() + 256];
