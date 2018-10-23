@@ -56,9 +56,9 @@ public class PnnQuantizer {
 		int nn, fw, bk, tm, mtm;
 	}
 
-	protected int getColorIndex(final Color c, boolean semiTransparency)
+	protected int getColorIndex(final Color c)
 	{
-		if(semiTransparency)
+		if(hasSemiTransparency)
 			return (c.getAlpha() & 0xF0) << 8 | (c.getRed() & 0xF0) << 4 | (c.getGreen() & 0xF0) | (c.getBlue() >> 4);
 		if (hasTransparency)
 			return (c.getAlpha() & 0x80) << 8 | (c.getRed() & 0xF8) << 7 | (c.getGreen() & 0xF8) << 2 | (c.getBlue() >> 3);
@@ -99,7 +99,7 @@ public class PnnQuantizer {
 		for (final Color pixel : pixels) {
 			// !!! Can throw gamma correction in here, but what to do about perceptual
 			// !!! nonuniformity then?
-			int index = getColorIndex(pixel, true);
+			int index = getColorIndex(pixel);
 			if(bins[index] == null)
 				bins[index] = new Pnnbin();
 			Pnnbin tb = bins[index];
@@ -214,7 +214,7 @@ public class PnnQuantizer {
 		return palette.toArray(new Color[0]);
 	}
 	
-	private  int colorIndexToRGBA(final Color[] palette, final int k)
+	protected  int colorIndexToRGBA(final Color[] palette, final int k)
 	{
 		Color c1 = palette[k];
 		return (c1.getAlpha() << 24) | (c1.getRed() << 16) | (c1.getGreen() << 8) | c1.getBlue();
@@ -313,7 +313,7 @@ public class PnnQuantizer {
 			final int DJ = 4;
 			final int DITHER_MAX = 20;
 			final int err_len = (width + 2) * DJ;
-			short[] clamp = new short[DJ * 256];
+			int[] clamp = new int[DJ * 256];
 			int[] limtb = new int[512];
 			short[] erowerr = new short[err_len];
 			short[] orowerr = new short[err_len];
@@ -354,7 +354,7 @@ public class PnnQuantizer {
 					a_pix = clamp[((row0[cursor0 + 3] + 0x1008) >> 4) + c.getAlpha()];
 
 					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-					int offset = getColorIndex(c1, true);
+					int offset = getColorIndex(c1);
 					if (lookup[offset] == 0)
 						lookup[offset] = nearestColorIndex(palette, squares3, c1) + 1;
 					qPixels[pixelIndex] = lookup[offset] - 1;
@@ -465,7 +465,7 @@ public class PnnQuantizer {
 				a_pix = clamp[((row0[cursor0 + 3] + 0x1008) >> 4) + c.getAlpha()];
 
 				Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-				int offset = getColorIndex(c1, false);
+				int offset = getColorIndex(c1);
 				if (lookup[offset] == null) {
 					Color rgba1 = new Color((c1.getRed() & 0xF8), (c1.getGreen() & 0xFC), (c1.getBlue() & 0xF8), BYTE_MAX);
 					if (hasSemiTransparency)

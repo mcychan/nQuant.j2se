@@ -1,6 +1,7 @@
 package nQuant.j2se;
 
 import java.awt.Color;
+import java.math.BigDecimal;
 
 public class CIELABConvertor {
 	private final static char BYTE_MAX = -Byte.MIN_VALUE + Byte.MAX_VALUE;
@@ -90,9 +91,9 @@ public class CIELABConvertor {
 		g = x * -0.9689 + y *  1.8758 + z *  0.0415;
 		b = x *  0.0557 + y * -0.2040 + z *  1.0570;
 
-		r = (r > 0.0031308) ? (1.055 * Math.pow(r, 1 / 2.4) - 0.055) : 12.92 * r;
-		g = (g > 0.0031308) ? (1.055 * Math.pow(g, 1 / 2.4) - 0.055) : 12.92 * g;
-		b = (b > 0.0031308) ? (1.055 * Math.pow(b, 1 / 2.4) - 0.055) : 12.92 * b;
+		r = (r > 0.0031308) ? (1.055 * Math.pow(r, 1.0 / 2.4) - 0.055) : 12.92 * r;
+		g = (g > 0.0031308) ? (1.055 * Math.pow(g, 1.0 / 2.4) - 0.055) : 12.92 * g;
+		b = (b > 0.0031308) ? (1.055 * Math.pow(b, 1.0 / 2.4) - 0.055) : 12.92 * b;
 
 		return new Color((int) (Math.max(0, Math.min(1, r)) * BYTE_MAX), (int) (Math.max(0, Math.min(1, g)) * BYTE_MAX), (int) (Math.max(0, Math.min(1, b)) * BYTE_MAX), lab.alpha);
 	}
@@ -142,7 +143,7 @@ public class CIELABConvertor {
 		final double deg180InRad = deg2Rad(180.0);
 		double CPrimeProduct = CPrime1.doubleValue() * CPrime2.doubleValue();
 		double hPrime1;
-		if (lab1.B == 0 && a1Prime.doubleValue() == 0)
+		if (BigDecimal.ZERO.equals(new BigDecimal(lab1.B)) && BigDecimal.ZERO.equals(new BigDecimal(a1Prime.doubleValue())))
 			hPrime1 = 0.0;
 		else {
 			hPrime1 = Math.atan2(lab1.B, a1Prime.doubleValue());
@@ -154,7 +155,7 @@ public class CIELABConvertor {
 				hPrime1 += deg360InRad;
 		}
 		double hPrime2;
-		if (lab2.B == 0 && a2Prime.doubleValue() == 0)
+		if (BigDecimal.ZERO.equals(new BigDecimal(lab2.B)) && BigDecimal.ZERO.equals(new BigDecimal(a2Prime.doubleValue())))
 			hPrime2 = 0.0;
 		else {
 			hPrime2 = Math.atan2(lab2.B, a2Prime.doubleValue());
@@ -166,7 +167,7 @@ public class CIELABConvertor {
 				hPrime2 += deg360InRad;
 		}
 		double deltahPrime;
-		if (CPrimeProduct == 0)
+		if (BigDecimal.ZERO.equals(new BigDecimal(CPrimeProduct)))
 			deltahPrime = 0;
 		else {
 			/* Avoid the Math.abs() call */
@@ -179,7 +180,7 @@ public class CIELABConvertor {
 
 		double deltaHPrime = 2.0 * Math.sqrt(CPrimeProduct) * Math.sin(deltahPrime / 2.0);
 		double hPrimeSum = hPrime1 + hPrime2;
-		if (CPrime1.doubleValue() * CPrime2.doubleValue() == 0) {
+		if (BigDecimal.ZERO.equals(new BigDecimal(CPrime1.doubleValue() * CPrime2.doubleValue()))) {
 			barhPrime.setValue(hPrimeSum);
 		}
 		else {
