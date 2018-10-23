@@ -1,6 +1,7 @@
 package nQuant.j2se;
 
 import java.awt.Canvas;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -17,7 +18,7 @@ import javax.imageio.ImageIO;
 public class PQCanvas extends Canvas {
 
 	private static final long serialVersionUID = -5166271928949046848L;
-	private PnnQuant pq = null;
+	private PnnQuantizer pq = null;
 	private Image image = null;
 
 	public void set(final File file) {
@@ -51,20 +52,25 @@ public class PQCanvas extends Canvas {
     }
 
 	public void set(Image img) throws Exception {
-		pq = new PnnQuant(img, this);
-		int w = img.getWidth(this);
-		int h = img.getHeight(this);
-		int pixels[] = null;
-		java.awt.image.PixelGrabber pg = new java.awt.image.PixelGrabber(img, 0, 0, w, h, pixels, 0, w);
 		try {
-			pg.grabPixels();
-		} catch (InterruptedException e) { }
-		if ((pg.getStatus() & java.awt.image.ImageObserver.ABORT) != 0)
-			throw new IOException ("Image pixel grab aborted or errored");
+			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+			pq = new PnnLABQuantizer(img, this);
+			int w = img.getWidth(this);
+			int h = img.getHeight(this);
+			int pixels[] = null;
+			java.awt.image.PixelGrabber pg = new java.awt.image.PixelGrabber(img, 0, 0, w, h, pixels, 0, w);
+			try {
+				pg.grabPixels();
+			} catch (InterruptedException e) { }
+			if ((pg.getStatus() & java.awt.image.ImageObserver.ABORT) != 0)
+				throw new IOException ("Image pixel grab aborted or errored");
 
-		pixels = pq.convert(w, h, 256, false);
-		this.image = this.createImage(new MemoryImageSource(w, h, pixels, 0, w));
-		this.getParent().setSize(w + 16, h + 38);
+			pixels = pq.convert(w, h, 256, true);
+			this.image = this.createImage(new MemoryImageSource(w, h, pixels, 0, w));
+			this.getParent().setSize(w + 16, h + 38);
+		} finally {
+			setCursor(Cursor.getDefaultCursor());
+		}
 	}
 
 	public void paint(Graphics graphics) {
