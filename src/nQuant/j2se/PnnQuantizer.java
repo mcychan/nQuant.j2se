@@ -6,7 +6,10 @@ Copyright (c) 2018 Miller Cy Chan
 
 import java.awt.Color;
 import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
 import java.awt.image.ImageObserver;
+import java.awt.image.IndexColorModel;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +23,7 @@ public class PnnQuantizer {
 	protected boolean hasTransparency = false, hasSemiTransparency = false;
 	protected int pixels[] = null;
 	protected Color m_transparentColor;
+	protected IndexColorModel m_colorModel;
 	protected Map<Color, short[]> closestMap = new HashMap<>();	
 	
 	public PnnQuantizer(Image im, int w, int h) throws IOException {
@@ -87,6 +91,26 @@ public class PnnQuantizer {
 		}
 		bin1.err = err;
 		bin1.nn = nn;
+	}
+	
+	protected void setIndexColorModel(final List<Color> palette, int nMaxColors)
+	{
+		int[] paletteARGB = new int[palette.size()];
+		for(int i=0; i<palette.size(); ++i) {
+			Color c1 = palette.get(i);
+			paletteARGB[i] = (c1.getAlpha() << 24) | (c1.getRed() << 16) | (c1.getGreen() << 8) | c1.getBlue();
+		}
+		
+		int transparentARGB = -1;
+		if(m_transparentColor != null)
+			transparentARGB = (m_transparentColor.getAlpha() << 24) | (m_transparentColor.getRed() << 16) | (m_transparentColor.getGreen() << 8) | m_transparentColor.getBlue();
+		m_colorModel = new IndexColorModel(Integer.toBinaryString(nMaxColors).length() - 1,         // bits per pixel
+				palette.size(),         // size of color component array
+                paletteARGB,   // color map
+                0,         // offset in the map
+                hasTransparency,      // has alpha
+                transparentARGB,         // the pixel value that should be transparent
+                DataBuffer.TYPE_BYTE); // ARGB
 	}
 
 	private Color[] pnnquan(final Color[] pixels, Pnnbin[] bins, int nMaxColors, boolean quan_sqrt)
@@ -211,13 +235,8 @@ public class PnnQuantizer {
 				break;
 		}
 
+		setIndexColorModel(palette, nMaxColors);
 		return palette.toArray(new Color[0]);
-	}
-	
-	protected  int colorIndexToRGBA(final Color[] palette, final int k)
-	{
-		Color c1 = palette[k];
-		return (c1.getAlpha() << 24) | (c1.getRed() << 16) | (c1.getGreen() << 8) | c1.getBlue();
 	}
 
 	private int nearestColorIndex(final Color[] palette, final int[] squares3, final Color c)
@@ -476,7 +495,7 @@ public class PnnQuantizer {
 				}
 
 				Color c2 = lookup[offset];
-				qPixels[pixelIndex] = (c2.getAlpha() << 24) | (c2.getRed() << 16) | (c2.getGreen() << 8) | c2.getBlue();
+				qPixels[pixelIndex] = offset;
 
 				r_pix = limtb[r_pix - c2.getRed() + 256];
 				g_pix = limtb[g_pix - c2.getGreen() + 256];
@@ -538,9 +557,13 @@ public class PnnQuantizer {
 		}
 		
 		if (nMaxColors > 256) {
-			int[] qPixels = new int[cPixels.length];		
-			quantize_image(cPixels, qPixels, w, h);
-			return qPixels;
+			if(hasTransparency)
+				nMaxColors = 256; // no such type: BufferedImage.TYPE_USHORT_1555_ARGB
+			else {
+				int[] qPixels = new int[cPixels.length];		
+				quantize_image(cPixels, qPixels, w, h);
+				return qPixels;
+			}
 		}
 		
 		Pnnbin[] bins = new Pnnbin[65536];
@@ -563,10 +586,12 @@ public class PnnQuantizer {
 		quantize_image(cPixels, palette, qPixels, w, h, dither);
 		closestMap.clear();
 		
-		for (int i = 0; i < qPixels.length; i++)
-			qPixels[i] = colorIndexToRGBA(palette, qPixels[i]);
-		
 		return qPixels;
 	}
+
+	public IndexColorModel getColorModel() {
+		return m_colorModel;
+	}	
+	
 
 }

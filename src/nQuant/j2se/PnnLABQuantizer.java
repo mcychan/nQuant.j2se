@@ -187,6 +187,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				break;
 		}
 
+		setIndexColorModel(palette, nMaxColors);
 		return palette.toArray(new Color[0]);
 	}
 
@@ -426,9 +427,13 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 		
 		if (nMaxColors > 256) {
-			int[] qPixels = new int[cPixels.length];		
-			quantize_image(cPixels, qPixels, w, h);
-			return qPixels;
+			if(hasTransparency)
+				nMaxColors = 256; // no such type: BufferedImage.TYPE_USHORT_1555_ARGB
+			else {
+				int[] qPixels = new int[cPixels.length];		
+				quantize_image(cPixels, qPixels, w, h);
+				return qPixels;
+			}
 		}
 		
 		Pnnbin[] bins = new Pnnbin[65536];
@@ -450,9 +455,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		quantize_image(cPixels, palette, qPixels, w, h, dither);
 		pixelMap.clear();
 		closestMap.clear();
-		
-		for (int i = 0; i < qPixels.length; i++)
-			qPixels[i] = colorIndexToRGBA(palette, qPixels[i]);
 		
 		return qPixels;
 	}
