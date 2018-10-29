@@ -427,13 +427,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 		
 		if (nMaxColors > 256) {
-			if(hasTransparency)
-				nMaxColors = 256; // no such type: BufferedImage.TYPE_USHORT_1555_ARGB
-			else {
-				int[] qPixels = new int[cPixels.length];		
-				quantize_image(cPixels, qPixels, w, h);
-				return qPixels;
-			}
+			int[] qPixels = new int[cPixels.length];		
+			quantize_image(cPixels, qPixels, w, h);
+			return qPixels;
 		}
 		
 		Pnnbin[] bins = new Pnnbin[65536];

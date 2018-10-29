@@ -10,6 +10,8 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.DirectColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
@@ -77,19 +79,25 @@ public class PQCanvas extends Canvas {
 			if ((pg.getStatus() & java.awt.image.ImageObserver.ABORT) != 0)
 				throw new IOException ("Image pixel grab aborted or errored");
 
-			final int nMaxColors = 256;
-			pixels = pq.convert(w, h, nMaxColors, true);
-			if(pq.getColorModel() == null) {
-				BufferedImage highColorImage= new BufferedImage(w, h, BufferedImage.TYPE_USHORT_565_RGB);
+			pixels = pq.convert(w, h, 256, true);
+			if(pq.getColorModel() instanceof IndexColorModel)
+				this.image = toIndexedBufferedImage(pixels, (IndexColorModel) pq.getColorModel(), w, h);
+			else {
+				BufferedImage highColorImage= null;
+				if(pq.getColorModel() instanceof DirectColorModel) {
+					ColorModel cmSw = pq.getColorModel();
+					WritableRaster wr = cmSw.createCompatibleWritableRaster(w, h);
+					highColorImage = new BufferedImage(cmSw, wr, cmSw.isAlphaPremultiplied(), null);
+				}
+				else
+					highColorImage = new BufferedImage(w, h, BufferedImage.TYPE_USHORT_565_RGB);
 				short[] data = new short[pixels.length];
 				for(int i=0; i<data.length; ++i)
 					data[i] = (short) pixels[i];
 				highColorImage.getRaster().setDataElements(0, 0, w, h, data);
 			    this.image = highColorImage;
 			}
-			else
-				this.image = toIndexedBufferedImage(pixels, pq.getColorModel(), w, h);
-			//this.image = createImage(new MemoryImageSource(w, h, pixels, 0, w));
+
 			this.getParent().setSize(w + 16, h + 38);
 		} finally {
 			setCursor(Cursor.getDefaultCursor());

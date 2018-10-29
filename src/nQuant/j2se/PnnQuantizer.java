@@ -6,8 +6,9 @@ Copyright (c) 2018 Miller Cy Chan
 
 import java.awt.Color;
 import java.awt.Image;
-import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
+import java.awt.image.DirectColorModel;
 import java.awt.image.ImageObserver;
 import java.awt.image.IndexColorModel;
 import java.io.IOException;
@@ -23,7 +24,7 @@ public class PnnQuantizer {
 	protected boolean hasTransparency = false, hasSemiTransparency = false;
 	protected int pixels[] = null;
 	protected Color m_transparentColor;
-	protected IndexColorModel m_colorModel;
+	protected ColorModel m_colorModel;
 	protected Map<Color, short[]> closestMap = new HashMap<>();	
 	
 	public PnnQuantizer(Image im, int w, int h) throws IOException {
@@ -535,6 +536,29 @@ public class PnnQuantizer {
 
 			odd_scanline = !odd_scanline;
 		}
+		
+		if (hasSemiTransparency) {
+			final int DCM_4444_RED_MASK = 0x0f00;
+			final int DCM_4444_GRN_MASK = 0x00f0;
+			final int DCM_4444_BLU_MASK = 0x000f;
+			final int DCM_4444_ALP_MASK = 0xf000;
+			m_colorModel = new DirectColorModel(16,
+                DCM_4444_RED_MASK,
+                DCM_4444_GRN_MASK,
+                DCM_4444_BLU_MASK,
+                DCM_4444_ALP_MASK);
+		}
+		else if (hasTransparency) {
+			final int DCM_1555_RED_MASK = 0x7c00;
+			final int DCM_1555_GRN_MASK = 0x03e0;
+			final int DCM_1555_BLU_MASK = 0x001f;
+			final int DCM_1555_ALP_MASK = 0x8000;
+			m_colorModel = new DirectColorModel(16,
+                DCM_1555_RED_MASK,
+                DCM_1555_GRN_MASK,
+                DCM_1555_BLU_MASK,
+                DCM_1555_ALP_MASK);
+		}
 		return true;
 	}
 
@@ -557,13 +581,9 @@ public class PnnQuantizer {
 		}
 		
 		if (nMaxColors > 256) {
-			if(hasTransparency)
-				nMaxColors = 256; // no such type: BufferedImage.TYPE_USHORT_1555_ARGB
-			else {
-				int[] qPixels = new int[cPixels.length];		
-				quantize_image(cPixels, qPixels, w, h);
-				return qPixels;
-			}
+			int[] qPixels = new int[cPixels.length];		
+			quantize_image(cPixels, qPixels, w, h);
+			return qPixels;
 		}
 		
 		Pnnbin[] bins = new Pnnbin[65536];
@@ -589,7 +609,7 @@ public class PnnQuantizer {
 		return qPixels;
 	}
 
-	public IndexColorModel getColorModel() {
+	public ColorModel getColorModel() {
 		return m_colorModel;
 	}	
 	
