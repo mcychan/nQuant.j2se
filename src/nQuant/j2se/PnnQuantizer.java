@@ -240,11 +240,11 @@ public class PnnQuantizer {
 		return palette.toArray(new Color[0]);
 	}
 
-	private int nearestColorIndex(final Color[] palette, final int[] squares3, final Color c)
+	private short nearestColorIndex(final Color[] palette, final int[] squares3, final Color c)
 	{
-		int k = 0;
+		short k = 0;
 		int curdist, mindist = SHORT_MAX;
-		for (int i=0; i<palette.length; ++i) {
+		for (short i=0; i<palette.length; ++i) {
 			Color c2 = palette[i];
 			
 			int adist = Math.abs(c2.getAlpha() - c.getAlpha());
@@ -273,9 +273,9 @@ public class PnnQuantizer {
 		return k;
 	}
 
-	private int closestColorIndex(final Color[] palette, final int[] squares3, final Color c)
+	private short closestColorIndex(final Color[] palette, final int[] squares3, final Color c)
 	{
-		int k = 0;
+		short k = 0;
 		short[] closest = new short[5];
 		short[] got = closestMap.get(c);
 		if (got == null) {
@@ -288,11 +288,11 @@ public class PnnQuantizer {
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
 					closest[3] = closest[2];
-					closest[0] = (short) k;
+					closest[0] = k;
 					closest[2] = closest[4];
 				}
 				else if (closest[4] < closest[3]) {
-					closest[1] = (short) k;
+					closest[1] = k;
 					closest[3] = closest[4];
 				}
 			}
@@ -313,7 +313,7 @@ public class PnnQuantizer {
 		return k;
 	}
 
-	boolean quantize_image(final Color[] pixels, final Color[] palette, int[] qPixels, final int width, final int height, final boolean dither)
+	boolean quantize_image(final Color[] pixels, final Color[] palette, Short[] qPixels, final int width, final int height, final boolean dither)
 	{
 		int nMaxColors = palette.length;
 		int[] sqr_tbl = new int[BYTE_MAX + BYTE_MAX + 1];
@@ -377,7 +377,7 @@ public class PnnQuantizer {
 					int offset = getColorIndex(c1);
 					if (lookup[offset] == 0)
 						lookup[offset] = nearestColorIndex(palette, squares3, c1) + 1;
-					qPixels[pixelIndex] = lookup[offset] - 1;
+					qPixels[pixelIndex] = (short) (lookup[offset] - 1);
 
 					Color c2 = palette[qPixels[pixelIndex]];
 
@@ -434,7 +434,7 @@ public class PnnQuantizer {
 		return true;
 	}
 
-	protected boolean quantize_image(final Color[] pixels, int[] qPixels, int width, int height)
+	protected boolean quantize_image(final Color[] pixels, Short[] qPixels, int width, int height)
 	{
 		int pixelIndex = 0;
 		boolean odd_scanline = false;
@@ -496,7 +496,7 @@ public class PnnQuantizer {
 				}
 
 				Color c2 = lookup[offset];
-				qPixels[pixelIndex] = offset;
+				qPixels[pixelIndex] = (short) offset;
 
 				r_pix = limtb[r_pix - c2.getRed() + 256];
 				g_pix = limtb[g_pix - c2.getGreen() + 256];
@@ -562,7 +562,7 @@ public class PnnQuantizer {
 		return true;
 	}
 
-	public int[] convert (int w, int h, int nMaxColors, boolean dither) {
+	public Number[] convert (int w, int h, int nMaxColors, boolean dither) {
 		final Color[] cPixels = new Color[pixels.length];		
 		for (int i =0; i<cPixels.length; ++i) {
 			int pixel = pixels[i];
@@ -581,7 +581,7 @@ public class PnnQuantizer {
 		}
 		
 		if (nMaxColors > 256) {
-			int[] qPixels = new int[cPixels.length];		
+			Short[] qPixels = new Short[cPixels.length];		
 			quantize_image(cPixels, qPixels, w, h);
 			return qPixels;
 		}
@@ -602,7 +602,7 @@ public class PnnQuantizer {
 			}
 		}
 
-		int[] qPixels = new int[cPixels.length];		
+		Short[] qPixels = new Short[cPixels.length];		
 		quantize_image(cPixels, palette, qPixels, w, h, dither);
 		closestMap.clear();
 		

@@ -11,12 +11,12 @@ import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.image.DataBufferByte;
 import java.awt.image.DirectColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
-import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
@@ -56,11 +56,13 @@ public class PQCanvas extends Canvas {
         }); // end FileDrop.Listener
     }
 	
-	private BufferedImage toIndexedBufferedImage(int[] pixels, IndexColorModel icm, int width, int height) {
+	private BufferedImage toIndexedBufferedImage(Number[] qPixels, IndexColorModel icm, int width, int height) {
 	    //With this constructor we create an indexed bufferedimage with the same dimensiosn and with a default 256 color model
 	    BufferedImage indexedImage= new BufferedImage(width, height,BufferedImage.TYPE_BYTE_INDEXED, icm);
-	    WritableRaster raster = Raster.createWritableRaster(indexedImage.getSampleModel(), null);
-		raster.setPixels(0, 0, width, height, pixels);
+	    byte[] data = new byte[qPixels.length];
+		for(int i=0; i<data.length; ++i)
+			data[i] = qPixels[i].byteValue();
+	    WritableRaster raster = Raster.createWritableRaster(indexedImage.getSampleModel(), new DataBufferByte(data, data.length), null);
 		indexedImage.setData(raster);
 	    return indexedImage;
 	}
@@ -71,17 +73,10 @@ public class PQCanvas extends Canvas {
 			pq = new PnnLABQuantizer(img, this);
 			int w = img.getWidth(this);
 			int h = img.getHeight(this);
-			int pixels[] = null;
-			java.awt.image.PixelGrabber pg = new java.awt.image.PixelGrabber(img, 0, 0, w, h, pixels, 0, w);
-			try {
-				pg.grabPixels();
-			} catch (InterruptedException e) { }
-			if ((pg.getStatus() & java.awt.image.ImageObserver.ABORT) != 0)
-				throw new IOException ("Image pixel grab aborted or errored");
 
-			pixels = pq.convert(w, h, 256, true);
+			Number[] qPixels = pq.convert(w, h, 256, true);
 			if(pq.getColorModel() instanceof IndexColorModel)
-				this.image = toIndexedBufferedImage(pixels, (IndexColorModel) pq.getColorModel(), w, h);
+				this.image = toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), w, h);
 			else {
 				BufferedImage highColorImage= null;
 				if(pq.getColorModel() instanceof DirectColorModel) {
@@ -91,10 +86,8 @@ public class PQCanvas extends Canvas {
 				}
 				else
 					highColorImage = new BufferedImage(w, h, BufferedImage.TYPE_USHORT_565_RGB);
-				short[] data = new short[pixels.length];
-				for(int i=0; i<data.length; ++i)
-					data[i] = (short) pixels[i];
-				highColorImage.getRaster().setDataElements(0, 0, w, h, data);
+
+				highColorImage.getRaster().setDataElements(0, 0, w, h, qPixels);
 			    this.image = highColorImage;
 			}
 
