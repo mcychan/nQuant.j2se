@@ -56,12 +56,12 @@ public class PQCanvas extends Canvas {
         }); // end FileDrop.Listener
     }
 	
-	private BufferedImage toIndexedBufferedImage(Number[] qPixels, IndexColorModel icm, int width, int height) {
+	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {
 	    //With this constructor we create an indexed bufferedimage with the same dimensiosn and with a default 256 color model
 	    BufferedImage indexedImage= new BufferedImage(width, height,BufferedImage.TYPE_BYTE_INDEXED, icm);
 	    byte[] data = new byte[qPixels.length];
 		for(int i=0; i<data.length; ++i)
-			data[i] = qPixels[i].byteValue();
+			data[i] = (byte) qPixels[i];
 	    WritableRaster raster = Raster.createWritableRaster(indexedImage.getSampleModel(), new DataBufferByte(data, data.length), null);
 		indexedImage.setData(raster);
 	    return indexedImage;
@@ -74,7 +74,7 @@ public class PQCanvas extends Canvas {
 			int w = img.getWidth(this);
 			int h = img.getHeight(this);
 
-			Number[] qPixels = pq.convert(w, h, 256, true);
+			short[] qPixels = pq.convert(w, h, 256, true);
 			if(pq.getColorModel() instanceof IndexColorModel)
 				this.image = toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), w, h);
 			else {

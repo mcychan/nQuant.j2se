@@ -290,7 +290,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	}
 
 	@Override
-	protected boolean quantize_image(final Color[] pixels, final Color[] palette, Short[] qPixels, final int width, final int height, final boolean dither)
+	protected boolean quantize_image(final Color[] pixels, final Color[] palette, short[] qPixels, final int width, final int height, final boolean dither)
 	{
 		int nMaxColors = palette.length;
 
@@ -408,7 +408,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	}
 
 	@Override
-	public Number[] convert (int w, int h, int nMaxColors, boolean dither) {
+	public short[] convert (int w, int h, int nMaxColors, boolean dither) {
 		final Color[] cPixels = new Color[pixels.length];		
 		for (int i =0; i<cPixels.length; ++i) {
 			int pixel = pixels[i];
@@ -427,7 +427,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 		
 		if (nMaxColors > 256) {
-			Short[] qPixels = new Short[cPixels.length];		
+			short[] qPixels = new short[cPixels.length];		
 			quantize_image(cPixels, qPixels, w, h);
 			return qPixels;
 		}
@@ -447,7 +447,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			}
 		}
 
-		Short[] qPixels = new Short[cPixels.length];		
+		short[] qPixels = new short[cPixels.length];		
 		quantize_image(cPixels, palette, qPixels, w, h, dither);
 		pixelMap.clear();
 		closestMap.clear();
