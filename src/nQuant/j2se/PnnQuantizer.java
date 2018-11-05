@@ -55,7 +55,7 @@ public class PnnQuantizer {
 		}
 	}
 
-	private static class Pnnbin {
+	private static final class Pnnbin {
 		double ac = 0, rc = 0, gc = 0, bc = 0, err = 0;
 		int cnt = 0;
 		int nn, fw, bk, tm, mtm;
@@ -69,6 +69,11 @@ public class PnnQuantizer {
 			return (c.getAlpha() & 0x80) << 8 | (c.getRed() & 0xF8) << 7 | (c.getGreen() & 0xF8) << 2 | (c.getBlue() >> 3);
 		return (c.getRed() & 0xF8) << 8 | (c.getGreen() & 0xFC) << 3 | (c.getBlue() >> 3);
 	}
+	
+	protected double sqr(double value)
+    {
+        return value * value;
+    }
 
 	private void find_nn(Pnnbin[] bins, int idx)
 	{
@@ -82,7 +87,7 @@ public class PnnQuantizer {
 		double wg = bin1.gc;
 		double wb = bin1.bc;
 		for (int i = bin1.fw; i != 0; i = bins[i].fw) {
-			double nerr = Math.pow((bins[i].ac - wa), 2) + Math.pow((bins[i].rc - wr), 2) + Math.pow((bins[i].gc - wg), 2) + Math.pow((bins[i].bc - wb), 2);
+			double nerr = sqr(bins[i].ac - wa) + sqr(bins[i].rc - wr) + sqr(bins[i].gc - wg) + sqr(bins[i].bc - wb);
 			double n2 = bins[i].cnt;
 			nerr *= (n1 * n2) / (n1 + n2);
 			if (nerr >= err)
@@ -118,7 +123,6 @@ public class PnnQuantizer {
 	{
 		int[] heap = new int[65537];
 		double err, n1, n2;
-		int l, l2, h, b1, maxbins, extbins;
 
 		/* Build histogram */
 		for (final Color pixel : pixels) {
@@ -136,7 +140,7 @@ public class PnnQuantizer {
 		}
 
 		/* Cluster nonempty bins at one end of array */
-		maxbins = 0;
+		int maxbins = 0;
 
 		for (int i = 0; i < 65536; ++i) {
 			if (bins[i] == null)
@@ -159,6 +163,7 @@ public class PnnQuantizer {
 		// !!! Already zeroed out by calloc()
 		//	bins[0].bk = bins[i].fw = 0;
 
+		int h, l, l2 ;
 		/* Initialize nearest neighbors and build heap of them */
 		for (int i = 0; i < maxbins; i++) {
 			find_nn(bins, i);
@@ -174,11 +179,13 @@ public class PnnQuantizer {
 		}
 
 		/* Merge bins which increase error the least */
-		extbins = maxbins - nMaxColors;
+		int extbins = maxbins - nMaxColors;
 		for (int i = 0; i < extbins; ) {
+			Pnnbin tb = null;
 			/* Use heap to find which bins to merge */
 			for (;;) {
-				Pnnbin tb = bins[b1 = heap[1]]; /* One with least error */
+				int b1 = heap[1];
+				tb = bins[b1]; /* One with least error */
 											   /* Is stored error up to date? */
 				if ((tb.tm >= tb.mtm) && (bins[tb.nn].mtm <= tb.tm))
 					break;
@@ -202,7 +209,6 @@ public class PnnQuantizer {
 			}
 
 			/* Do a merge */
-			Pnnbin tb = bins[b1];
 			Pnnbin nb = bins[tb.nn];
 			n1 = tb.cnt;
 			n2 = nb.cnt;
