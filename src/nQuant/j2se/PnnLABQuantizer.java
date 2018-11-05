@@ -64,8 +64,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		bin1.nn = nn;
 	}
 
-	private Color[] pnnquan(final Color[] pixels, Pnnbin[] bins, int nMaxColors)
+	private Color[] pnnquan(final Color[] pixels, int nMaxColors)
 	{
+		Pnnbin[] bins = new Pnnbin[65536];
 		int[] heap = new int[65537];
 		double err, n1, n2;
 
@@ -88,7 +89,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		/* Cluster nonempty bins at one end of array */
 		int maxbins = 0;
 
-		for (int i = 0; i < 65536; ++i) {
+		for (int i = 0; i < bins.length; ++i) {
 			if (bins[i] == null)
 				continue;
 
@@ -433,10 +434,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			return qPixels;
 		}
 		
-		Pnnbin[] bins = new Pnnbin[65536];
 		Color[] palette = new Color[nMaxColors];
 		if (nMaxColors > 2)
-			palette = pnnquan(cPixels, bins, nMaxColors);
+			palette = pnnquan(cPixels, nMaxColors);
 		else {
 			if (hasSemiTransparency) {
 				palette[0] = new Color(0, 0, 0, 0);

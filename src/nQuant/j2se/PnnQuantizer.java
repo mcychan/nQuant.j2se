@@ -119,8 +119,9 @@ public class PnnQuantizer {
                 DataBuffer.TYPE_BYTE); // ARGB
 	}
 
-	private Color[] pnnquan(final Color[] pixels, Pnnbin[] bins, int nMaxColors, boolean quan_sqrt)
+	private Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
 	{
+		Pnnbin[] bins = new Pnnbin[65536];
 		int[] heap = new int[65537];
 		double err, n1, n2;
 
@@ -142,7 +143,7 @@ public class PnnQuantizer {
 		/* Cluster nonempty bins at one end of array */
 		int maxbins = 0;
 
-		for (int i = 0; i < 65536; ++i) {
+		for (int i = 0; i < bins.length; ++i) {
 			if (bins[i] == null)
 				continue;
 
@@ -590,13 +591,12 @@ public class PnnQuantizer {
 			short[] qPixels = new short[cPixels.length];		
 			quantize_image(cPixels, qPixels, w, h);
 			return qPixels;
-		}
+		}		
 		
-		Pnnbin[] bins = new Pnnbin[65536];
 		boolean quan_sqrt = nMaxColors > BYTE_MAX;
 		Color[] palette = new Color[nMaxColors];
 		if (nMaxColors > 2)
-			palette = pnnquan(cPixels, bins, nMaxColors, quan_sqrt);
+			palette = pnnquan(cPixels, nMaxColors, quan_sqrt);
 		else {
 			if (hasSemiTransparency) {
 				palette[0] = new Color(0, 0, 0, 0);
