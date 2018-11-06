@@ -19,11 +19,11 @@ import java.awt.image.WritableRaster;
 import java.io.File;
 
 import javax.imageio.ImageIO;
+import javax.swing.SwingWorker;
 
 public class PQCanvas extends Canvas {
 
 	private static final long serialVersionUID = -5166271928949046848L;
-	private PnnQuantizer pq = null;
 	private Image image = null;
 
 	public void set(final File file) {
@@ -66,32 +66,54 @@ public class PQCanvas extends Canvas {
 		indexedImage.setData(raster);
 	    return indexedImage;
 	}
-
-	public void set(Image img) throws Exception {
-		try {
-			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-			pq = new PnnLABQuantizer(img, this);
-			int w = img.getWidth(this);
-			int h = img.getHeight(this);
+	
+	private class PnnWorker extends SwingWorker<Image, String> { 
+		private final PnnQuantizer pq;
+		
+		PnnWorker(PnnQuantizer pq) {
+			this.pq = pq;
+		}
+		
+	    @Override
+	    protected Image doInBackground() throws Exception {
+	    	setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+			int w = pq.getWidth();
+			int h = pq.getHeight();
 
 			short[] qPixels = pq.convert(w, h, 256, true);
 			if(pq.getColorModel() instanceof IndexColorModel)
-				this.image = toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), w, h);
-			else {
-				BufferedImage highColorImage= null;
-				if(pq.getColorModel() instanceof DirectColorModel) {
-					ColorModel cmSw = pq.getColorModel();
-					WritableRaster wr = cmSw.createCompatibleWritableRaster(w, h);
-					highColorImage = new BufferedImage(cmSw, wr, cmSw.isAlphaPremultiplied(), null);
-				}
-				else
-					highColorImage = new BufferedImage(w, h, BufferedImage.TYPE_USHORT_565_RGB);
-
-				highColorImage.getRaster().setDataElements(0, 0, w, h, qPixels);
-			    this.image = highColorImage;
+				return toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), w, h);
+			
+			BufferedImage highColorImage= null;
+			if(pq.getColorModel() instanceof DirectColorModel) {
+				ColorModel cmSw = pq.getColorModel();
+				WritableRaster wr = cmSw.createCompatibleWritableRaster(w, h);
+				highColorImage = new BufferedImage(cmSw, wr, cmSw.isAlphaPremultiplied(), null);
 			}
+			else
+				highColorImage = new BufferedImage(w, h, BufferedImage.TYPE_USHORT_565_RGB);
 
-			this.getParent().setSize(w + 16, h + 38);
+			highColorImage.getRaster().setDataElements(0, 0, w, h, qPixels);
+			return highColorImage;
+	    }
+
+	    @Override
+	    protected void done() {
+	    	try {
+				image = get();
+			} catch (Exception e) {
+				e.printStackTrace();
+			} finally {	    	
+				getParent().setSize(pq.getWidth() + 16, pq.getHeight() + 38);	    	
+				setCursor(Cursor.getDefaultCursor());
+			}
+	    }
+	};
+
+	public void set(Image img) throws Exception {
+		try {			
+			PnnQuantizer pq = new PnnLABQuantizer(img, this);
+			new PnnWorker(pq).execute();
 		} finally {
 			setCursor(Cursor.getDefaultCursor());
 		}

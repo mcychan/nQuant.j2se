@@ -22,31 +22,34 @@ public class PnnQuantizer {
 	protected final short SHORT_MAX = Short.MAX_VALUE;
 	protected final char BYTE_MAX = -Byte.MIN_VALUE + Byte.MAX_VALUE;
 	protected boolean hasTransparency = false, hasSemiTransparency = false;
+	protected final int width, height;
 	protected int pixels[] = null;
 	protected Color m_transparentColor;
 	protected ColorModel m_colorModel;
 	protected Map<Color, short[]> closestMap = new HashMap<>();	
 	
 	public PnnQuantizer(Image im, int w, int h) throws IOException {
-		setPixels(im, w, h);
+		width = w;
+		height = h;
+		setPixels(im);
 	}
 
 	public PnnQuantizer(Image im, ImageObserver obs) throws IOException {
+		width = im.getWidth(obs);
+		height = im.getHeight(obs);
 		setPixels(im, obs);
 	}
 	
 	private void setPixels(Image im, ImageObserver obs) throws IOException {
 		if (im == null)
-			throw new IOException ("Image is null");
-		int w = im.getWidth(obs);
-		int h = im.getHeight(obs);
-		setPixels(im, w, h);
+			throw new IOException ("Image is null");		
+		setPixels(im);
 	}
 
-	private void setPixels(Image im, int w, int h) throws IOException {
-		pixels = new int [w * h];
+	private void setPixels(Image im) throws IOException {
+		pixels = new int [width * height];
 		java.awt.image.PixelGrabber pg
-		= new java.awt.image.PixelGrabber(im, 0, 0, w, h, pixels, 0, w);
+		= new java.awt.image.PixelGrabber(im, 0, 0, width, height, pixels, 0, width);
 		try {
 			pg.grabPixels();
 		} catch (InterruptedException e) { }
@@ -617,7 +620,14 @@ public class PnnQuantizer {
 
 	public ColorModel getColorModel() {
 		return m_colorModel;
-	}	
-	
+	}
+
+	public int getWidth() {
+		return width;
+	}
+
+	public int getHeight() {
+		return height;
+	}		
 
 }
