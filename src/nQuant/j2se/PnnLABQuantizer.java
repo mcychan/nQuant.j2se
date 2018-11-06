@@ -15,7 +15,7 @@ import nQuant.j2se.CIELABConvertor.MutableDouble;
 
 public class PnnLABQuantizer extends PnnQuantizer {
 	private Map<Color, Lab> pixelMap = new HashMap<>();	
-	
+
 	public PnnLABQuantizer(Image im, int w, int h) throws IOException {
 		super(im, w, h);
 	}
@@ -29,7 +29,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		int cnt = 0;
 		int nn, fw, bk, tm, mtm;
 	}
-	
+
 	private Lab getLab(final Color c)
 	{
 		Lab lab1 = pixelMap.get(c);
@@ -116,9 +116,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			err = bins[i].err;
 			for (l = ++heap[0]; l > 1; l = l2) {
 				l2 = l >> 1;
-				if (bins[h = heap[l2]].err <= err)
-					break;
-				heap[l] = h;
+		if (bins[h = heap[l2]].err <= err)
+			break;
+		heap[l] = h;
 			}
 			heap[l] = i;
 		}
@@ -131,7 +131,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			for (;;) {
 				int b1 = heap[1];
 				tb = bins[b1]; /* One with least error */
-											   /* Is stored error up to date? */
+				/* Is stored error up to date? */
 				if ((tb.tm >= tb.mtm) && (bins[tb.nn].mtm <= tb.tm))
 					break;
 				if (tb.mtm == 0xFFFF) /* Deleted node */
@@ -201,7 +201,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		for (short i=0; i<palette.length; ++i) {
 			Color c2 = palette[i];
 			Lab lab2 = getLab(c2);
-			
+
 			double curdist = sqr(c2.getAlpha() - c.getAlpha());
 			if (curdist > mindist)
 				continue;
@@ -260,7 +260,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			for (; k < palette.length; k++) {
 				Color c2 = palette[k];
 				Lab lab2 = getLab(c2);
-				
+
 				closest[4] = (short) (sqr(lab2.alpha - lab1.alpha) + CIELABConvertor.CIEDE2000(lab2, lab1));
 				//closest[4] = Math.abs(lab2.alpha - lab1.alpha) + Math.abs(lab2.L - lab1.L) + Math.abs(lab2.A - lab1.A) + Math.abs(lab2.B - lab1.B);
 				if (closest[4] < closest[2]) {
@@ -334,7 +334,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					row0 = erowerr;
 					row1 = orowerr;
 				}
-				
+
 				int cursor0 = DJ, cursor1 = width * DJ;
 				row1[cursor1] = row1[cursor1 + 1] = row1[cursor1 + 2] = row1[cursor1 + 3] = 0;
 				for (short j = 0; j < width; j++) {
@@ -427,13 +427,13 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				}
 			}			
 		}
-		
+
 		if (nMaxColors > 256) {
 			short[] qPixels = new short[cPixels.length];		
 			quantize_image(cPixels, qPixels, w, h);
 			return qPixels;
 		}
-		
+
 		Color[] palette = new Color[nMaxColors];
 		if (nMaxColors > 2)
 			palette = pnnquan(cPixels, nMaxColors);
@@ -452,8 +452,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		quantize_image(cPixels, palette, qPixels, w, h, dither);
 		pixelMap.clear();
 		closestMap.clear();
-		
+
 		return qPixels;
 	}
-	
+
 }

@@ -2,7 +2,7 @@ package nQuant.j2se;
 /* Fast pairwise nearest neighbor based algorithm for multilevel thresholding
 Copyright (C) 2004-2016 Mark Tyler and Dmitry Groshev
 Copyright (c) 2018 Miller Cy Chan
-* error measure; time used is proportional to number of bins squared - WJ */
+ * error measure; time used is proportional to number of bins squared - WJ */
 
 import java.awt.Color;
 import java.awt.Image;
@@ -27,7 +27,7 @@ public class PnnQuantizer {
 	protected Color m_transparentColor;
 	protected ColorModel m_colorModel;
 	protected Map<Color, short[]> closestMap = new HashMap<>();	
-	
+
 	public PnnQuantizer(Image im, int w, int h) throws IOException {
 		width = w;
 		height = h;
@@ -39,7 +39,7 @@ public class PnnQuantizer {
 		height = im.getHeight(obs);
 		setPixels(im, obs);
 	}
-	
+
 	private void setPixels(Image im, ImageObserver obs) throws IOException {
 		if (im == null)
 			throw new IOException ("Image is null");		
@@ -72,11 +72,11 @@ public class PnnQuantizer {
 			return (c.getAlpha() & 0x80) << 8 | (c.getRed() & 0xF8) << 7 | (c.getGreen() & 0xF8) << 2 | (c.getBlue() >> 3);
 		return (c.getRed() & 0xF8) << 8 | (c.getGreen() & 0xFC) << 3 | (c.getBlue() >> 3);
 	}
-	
+
 	protected double sqr(double value)
-    {
-        return value * value;
-    }
+	{
+		return value * value;
+	}
 
 	private void find_nn(Pnnbin[] bins, int idx)
 	{
@@ -101,7 +101,7 @@ public class PnnQuantizer {
 		bin1.err = err;
 		bin1.nn = nn;
 	}
-	
+
 	protected void setIndexColorModel(final List<Color> palette, int nMaxColors)
 	{
 		int[] paletteARGB = new int[palette.size()];
@@ -109,17 +109,17 @@ public class PnnQuantizer {
 			Color c1 = palette.get(i);
 			paletteARGB[i] = (c1.getAlpha() << 24) | (c1.getRed() << 16) | (c1.getGreen() << 8) | c1.getBlue();
 		}
-		
+
 		int transparentARGB = -1;
 		if(m_transparentColor != null)
 			transparentARGB = (m_transparentColor.getAlpha() << 24) | (m_transparentColor.getRed() << 16) | (m_transparentColor.getGreen() << 8) | m_transparentColor.getBlue();
 		m_colorModel = new IndexColorModel(Integer.toBinaryString(nMaxColors).length() - 1,         // bits per pixel
 				palette.size(),         // size of color component array
-                paletteARGB,   // color map
-                0,         // offset in the map
-                hasTransparency,      // has alpha
-                transparentARGB,         // the pixel value that should be transparent
-                DataBuffer.TYPE_BYTE); // ARGB
+				paletteARGB,   // color map
+				0,         // offset in the map
+				hasTransparency,      // has alpha
+				transparentARGB,         // the pixel value that should be transparent
+				DataBuffer.TYPE_BYTE); // ARGB
 	}
 
 	private Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
@@ -175,9 +175,9 @@ public class PnnQuantizer {
 			err = bins[i].err;
 			for (l = ++heap[0]; l > 1; l = l2) {
 				l2 = l >> 1;
-				if (bins[h = heap[l2]].err <= err)
-					break;
-				heap[l] = h;
+		if (bins[h = heap[l2]].err <= err)
+			break;
+		heap[l] = h;
 			}
 			heap[l] = i;
 		}
@@ -190,7 +190,7 @@ public class PnnQuantizer {
 			for (;;) {
 				int b1 = heap[1];
 				tb = bins[b1]; /* One with least error */
-											   /* Is stored error up to date? */
+				/* Is stored error up to date? */
 				if ((tb.tm >= tb.mtm) && (bins[tb.nn].mtm <= tb.tm))
 					break;
 				if (tb.mtm == 0xFFFF) /* Deleted node */
@@ -256,7 +256,7 @@ public class PnnQuantizer {
 		int curdist, mindist = SHORT_MAX;
 		for (short i=0; i<palette.length; ++i) {
 			Color c2 = palette[i];
-			
+
 			int adist = Math.abs(c2.getAlpha() - c.getAlpha());
 			curdist = squares3[adist];
 			if (curdist > mindist)
@@ -293,7 +293,7 @@ public class PnnQuantizer {
 
 			for (; k < palette.length; k++) {
 				Color c2 = palette[k];
-				
+
 				closest[4] = (short) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
@@ -373,7 +373,7 @@ public class PnnQuantizer {
 					row0 = erowerr;
 					row1 = orowerr;
 				}
-				
+
 				int cursor0 = DJ, cursor1 = width * DJ;
 				row1[cursor1] = row1[cursor1 + 1] = row1[cursor1 + 2] = row1[cursor1 + 3] = 0;
 				for (short j = 0; j < width; j++) {
@@ -483,7 +483,7 @@ public class PnnQuantizer {
 				row0 = erowerr;
 				row1 = orowerr;
 			}
-			
+
 			int cursor0 = DJ, cursor1 = width * DJ;
 			row1[cursor1] = row1[cursor1 + 1] = row1[cursor1 + 2] = row1[cursor1 + 3] = 0;
 			for (short j = 0; j < width; j++) {
@@ -546,17 +546,17 @@ public class PnnQuantizer {
 
 			odd_scanline = !odd_scanline;
 		}
-		
+
 		if (hasSemiTransparency) {
 			final int DCM_4444_RED_MASK = 0x0f00;
 			final int DCM_4444_GRN_MASK = 0x00f0;
 			final int DCM_4444_BLU_MASK = 0x000f;
 			final int DCM_4444_ALP_MASK = 0xf000;
 			m_colorModel = new DirectColorModel(16,
-                DCM_4444_RED_MASK,
-                DCM_4444_GRN_MASK,
-                DCM_4444_BLU_MASK,
-                DCM_4444_ALP_MASK);
+					DCM_4444_RED_MASK,
+					DCM_4444_GRN_MASK,
+					DCM_4444_BLU_MASK,
+					DCM_4444_ALP_MASK);
 		}
 		else if (hasTransparency) {
 			final int DCM_1555_RED_MASK = 0x7c00;
@@ -564,10 +564,10 @@ public class PnnQuantizer {
 			final int DCM_1555_BLU_MASK = 0x001f;
 			final int DCM_1555_ALP_MASK = 0x8000;
 			m_colorModel = new DirectColorModel(16,
-                DCM_1555_RED_MASK,
-                DCM_1555_GRN_MASK,
-                DCM_1555_BLU_MASK,
-                DCM_1555_ALP_MASK);
+					DCM_1555_RED_MASK,
+					DCM_1555_GRN_MASK,
+					DCM_1555_BLU_MASK,
+					DCM_1555_ALP_MASK);
 		}
 		return true;
 	}
@@ -589,13 +589,13 @@ public class PnnQuantizer {
 				}
 			}			
 		}
-		
+
 		if (nMaxColors > 256) {
 			short[] qPixels = new short[cPixels.length];		
 			quantize_image(cPixels, qPixels, w, h);
 			return qPixels;
 		}		
-		
+
 		boolean quan_sqrt = nMaxColors > BYTE_MAX;
 		Color[] palette = new Color[nMaxColors];
 		if (nMaxColors > 2)
@@ -614,7 +614,7 @@ public class PnnQuantizer {
 		short[] qPixels = new short[cPixels.length];		
 		quantize_image(cPixels, palette, qPixels, w, h, dither);
 		closestMap.clear();
-		
+
 		return qPixels;
 	}
 
