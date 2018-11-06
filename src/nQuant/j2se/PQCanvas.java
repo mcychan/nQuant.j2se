@@ -41,49 +41,49 @@ public class PQCanvas extends Canvas {
 			ex.printStackTrace();
 		}
 	}
-	
+
 	private void addFileDrop() {
-        new FileDrop(this, /*dragBorder,*/ new FileDrop.Listener() {
-            public void filesDropped(java.io.File[] files) {
-                try {
-                    if (files.length > 0)
-                        set(files[0]);
-                } catch (Exception ex) {
-                    java.util.logging.Logger.getLogger(PQCanvas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-                    javax.swing.JOptionPane.showMessageDialog(PQCanvas.this, ex.getMessage(), "File not found", javax.swing.JOptionPane.ERROR_MESSAGE);
-                }
-            }   // end filesDropped
-        }); // end FileDrop.Listener
-    }
-	
+		new FileDrop(this, /*dragBorder,*/ new FileDrop.Listener() {
+			public void filesDropped(java.io.File[] files) {
+				try {
+					if (files.length > 0)
+						set(files[0]);
+				} catch (Exception ex) {
+					java.util.logging.Logger.getLogger(PQCanvas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+					javax.swing.JOptionPane.showMessageDialog(PQCanvas.this, ex.getMessage(), "File not found", javax.swing.JOptionPane.ERROR_MESSAGE);
+				}
+			}   // end filesDropped
+		}); // end FileDrop.Listener
+	}
+
 	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {
-	    //With this constructor we create an indexed bufferedimage with the same dimensiosn and with a default 256 color model
-	    BufferedImage indexedImage= new BufferedImage(width, height,BufferedImage.TYPE_BYTE_INDEXED, icm);
-	    byte[] data = new byte[qPixels.length];
+		//With this constructor we create an indexed bufferedimage with the same dimensiosn and with a default 256 color model
+		BufferedImage indexedImage= new BufferedImage(width, height,BufferedImage.TYPE_BYTE_INDEXED, icm);
+		byte[] data = new byte[qPixels.length];
 		for(int i=0; i<data.length; ++i)
 			data[i] = (byte) qPixels[i];
-	    WritableRaster raster = Raster.createWritableRaster(indexedImage.getSampleModel(), new DataBufferByte(data, data.length), null);
+		WritableRaster raster = Raster.createWritableRaster(indexedImage.getSampleModel(), new DataBufferByte(data, data.length), null);
 		indexedImage.setData(raster);
-	    return indexedImage;
+		return indexedImage;
 	}
-	
+
 	private class PnnWorker extends SwingWorker<Image, String> { 
 		private final PnnQuantizer pq;
-		
+
 		PnnWorker(PnnQuantizer pq) {
 			this.pq = pq;
 		}
-		
-	    @Override
-	    protected Image doInBackground() throws Exception {
-	    	setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
+		@Override
+		protected Image doInBackground() throws Exception {
+			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 			int w = pq.getWidth();
 			int h = pq.getHeight();
 
 			short[] qPixels = pq.convert(w, h, 256, true);
 			if(pq.getColorModel() instanceof IndexColorModel)
 				return toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), w, h);
-			
+
 			BufferedImage highColorImage= null;
 			if(pq.getColorModel() instanceof DirectColorModel) {
 				ColorModel cmSw = pq.getColorModel();
@@ -95,11 +95,11 @@ public class PQCanvas extends Canvas {
 
 			highColorImage.getRaster().setDataElements(0, 0, w, h, qPixels);
 			return highColorImage;
-	    }
+		}
 
-	    @Override
-	    protected void done() {
-	    	try {
+		@Override
+		protected void done() {
+			try {
 				image = get();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -107,16 +107,12 @@ public class PQCanvas extends Canvas {
 				getParent().setSize(pq.getWidth() + 16, pq.getHeight() + 38);	    	
 				setCursor(Cursor.getDefaultCursor());
 			}
-	    }
+		}
 	};
 
 	public void set(Image img) throws Exception {
-		try {			
-			PnnQuantizer pq = new PnnLABQuantizer(img, this);
-			new PnnWorker(pq).execute();
-		} finally {
-			setCursor(Cursor.getDefaultCursor());
-		}
+		PnnQuantizer pq = new PnnLABQuantizer(img, this);
+		new PnnWorker(pq).execute();		
 	}
 
 	public void paint(Graphics graphics) {
