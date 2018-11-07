@@ -104,7 +104,8 @@ public class PQCanvas extends Canvas {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {	    	
-				getParent().setSize(pq.getWidth() + 16, pq.getHeight() + 38);	    	
+				getParent().setSize(pq.getWidth() + 16, pq.getHeight() + 38);
+				repaint();
 				setCursor(Cursor.getDefaultCursor());
 			}
 		}
