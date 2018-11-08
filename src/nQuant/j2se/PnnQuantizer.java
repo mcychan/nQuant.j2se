@@ -323,7 +323,7 @@ public class PnnQuantizer {
 		return k;
 	}
 
-	boolean quantize_image(final Color[] pixels, final Color[] palette, short[] qPixels, final int width, final int height, final boolean dither)
+	boolean quantize_image(final Color[] pixels, final Color[] palette, short[] qPixels, final boolean dither)
 	{
 		int nMaxColors = palette.length;
 		int[] sqr_tbl = new int[BYTE_MAX + BYTE_MAX + 1];
@@ -444,7 +444,7 @@ public class PnnQuantizer {
 		return true;
 	}
 
-	protected boolean quantize_image(final Color[] pixels, short[] qPixels, int width, int height)
+	protected boolean quantize_image(final Color[] pixels, short[] qPixels)
 	{
 		int pixelIndex = 0;
 		boolean odd_scanline = false;
@@ -572,7 +572,7 @@ public class PnnQuantizer {
 		return true;
 	}
 
-	public short[] convert (int w, int h, int nMaxColors, boolean dither) {
+	public short[] convert (int nMaxColors, boolean dither) {
 		final Color[] cPixels = new Color[pixels.length];		
 		for (int i =0; i<cPixels.length; ++i) {
 			int pixel = pixels[i];
@@ -592,7 +592,7 @@ public class PnnQuantizer {
 
 		if (nMaxColors > 256) {
 			short[] qPixels = new short[cPixels.length];		
-			quantize_image(cPixels, qPixels, w, h);
+			quantize_image(cPixels, qPixels);
 			return qPixels;
 		}		
 
@@ -612,7 +612,7 @@ public class PnnQuantizer {
 		}
 
 		short[] qPixels = new short[cPixels.length];		
-		quantize_image(cPixels, palette, qPixels, w, h, dither);
+		quantize_image(cPixels, palette, qPixels, dither);
 		closestMap.clear();
 
 		return qPixels;
