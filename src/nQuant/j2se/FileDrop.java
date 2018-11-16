@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.util.List;
 
 /**
  * This class makes it easy to drag and drop files from the operating
@@ -311,14 +312,10 @@ public class FileDrop
                             log( out, "FileDrop: file list accepted." );
 
                             // Get a useful list
-                            java.util.List fileList = (java.util.List) 
-                                tr.getTransferData(java.awt.datatransfer.DataFlavor.javaFileListFlavor);
-                            java.util.Iterator iterator = fileList.iterator();
+                            List<File> fileList = (List<File>) tr.getTransferData(java.awt.datatransfer.DataFlavor.javaFileListFlavor);
 
                             // Convert list to array
-                            java.io.File[] filesTemp = new java.io.File[ fileList.size() ];
-                            fileList.toArray( filesTemp );
-                            final java.io.File[] files = filesTemp;
+                            final java.io.File[] files = fileList.toArray(new File[0]);
 
                             // Alert listener to drop.
                             if( listener != null )

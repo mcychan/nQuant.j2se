@@ -14,7 +14,7 @@ import nQuant.j2se.CIELABConvertor.Lab;
 import nQuant.j2se.CIELABConvertor.MutableDouble;
 
 public class PnnLABQuantizer extends PnnQuantizer {
-	private Map<Color, Lab> pixelMap = new HashMap<>();	
+	private Map<Color, Lab> pixelMap = new HashMap<Color, Lab>();	
 
 	public PnnLABQuantizer(Image im, int w, int h) throws IOException {
 		super(im, w, h);
@@ -172,7 +172,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 
 		/* Fill palette */
-		List<Color> palette = new ArrayList<>();
+		List<Color> palette = new ArrayList<Color>();
 		short k = 0;
 		for (int i = 0;; ++k) {
 			Lab lab1 = new Lab();

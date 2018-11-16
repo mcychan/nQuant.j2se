@@ -26,7 +26,7 @@ public class PnnQuantizer {
 	protected int pixels[] = null;
 	protected Color m_transparentColor;
 	protected ColorModel m_colorModel;
-	protected Map<Color, short[]> closestMap = new HashMap<>();	
+	protected Map<Color, short[]> closestMap = new HashMap<Color, short[]>();	
 
 	public PnnQuantizer(Image im, int w, int h) throws IOException {
 		width = w;
@@ -231,7 +231,7 @@ public class PnnQuantizer {
 		}
 
 		/* Fill palette */
-		List<Color> palette = new ArrayList<>();
+		List<Color> palette = new ArrayList<Color>();
 		short k = 0;
 		for (int i = 0;; ++k) {
 			int alpha = (int) Math.rint(bins[i].ac);
