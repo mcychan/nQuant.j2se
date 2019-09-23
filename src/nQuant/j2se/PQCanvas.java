@@ -118,7 +118,7 @@ public class PQCanvas extends Canvas {
 		Graphics2D g2d = (Graphics2D) graphics.create();		
 		if (image != null) {
 			g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE); 
-			graphics.drawImage(image, 0, 0, this);
+			graphics.drawImage(image, 0, 0, getWidth(), getHeight(), this);
 		}
 		else {
 			graphics.setFont(new Font("Arial", Font.BOLD, 20));

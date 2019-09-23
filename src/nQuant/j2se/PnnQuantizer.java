@@ -13,6 +13,7 @@ import java.awt.image.ImageObserver;
 import java.awt.image.IndexColorModel;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +22,10 @@ import java.util.Random;
 public class PnnQuantizer {
 	protected final short SHORT_MAX = Short.MAX_VALUE;
 	protected final char BYTE_MAX = -Byte.MIN_VALUE + Byte.MAX_VALUE;
-	protected boolean hasTransparency = false, hasSemiTransparency = false;
+	protected boolean hasSemiTransparency = false;
+	protected int m_transparentPixelIndex = -1;
 	protected final int width, height;
+	protected double PR = .2126, PG = .7152, PB = .0722;
 	protected int pixels[] = null;
 	protected Color m_transparentColor;
 	protected ColorModel m_colorModel;
@@ -64,11 +67,11 @@ public class PnnQuantizer {
 		int nn, fw, bk, tm, mtm;
 	}
 
-	protected int getColorIndex(final Color c)
+	protected int getColorIndex(final Color c, boolean hasSemiTransparency, int transparentPixelIndex )
 	{
 		if(hasSemiTransparency)
 			return (c.getAlpha() & 0xF0) << 8 | (c.getRed() & 0xF0) << 4 | (c.getGreen() & 0xF0) | (c.getBlue() >> 4);
-		if (hasTransparency)
+		if (transparentPixelIndex >= 0)
 			return (c.getAlpha() & 0x80) << 8 | (c.getRed() & 0xF8) << 7 | (c.getGreen() & 0xF8) << 2 | (c.getBlue() >> 3);
 		return (c.getRed() & 0xF8) << 8 | (c.getGreen() & 0xFC) << 3 | (c.getBlue() >> 3);
 	}
@@ -102,10 +105,10 @@ public class PnnQuantizer {
 		bin1.nn = nn;
 	}
 
-	protected void setIndexColorModel(final List<Color> palette, int nMaxColors)
+	protected void setColorModel(final List<Color> palette, int nMaxColors)
 	{
-		int[] paletteARGB = new int[palette.size()];
-		for(int i=0; i<palette.size(); ++i) {
+		int[] paletteARGB = new int[nMaxColors];
+		for(int i=0; i<nMaxColors; ++i) {
 			Color c1 = palette.get(i);
 			paletteARGB[i] = (c1.getAlpha() << 24) | (c1.getRed() << 16) | (c1.getGreen() << 8) | c1.getBlue();
 		}
@@ -113,13 +116,38 @@ public class PnnQuantizer {
 		int transparentARGB = -1;
 		if(m_transparentColor != null)
 			transparentARGB = (m_transparentColor.getAlpha() << 24) | (m_transparentColor.getRed() << 16) | (m_transparentColor.getGreen() << 8) | m_transparentColor.getBlue();
-		m_colorModel = new IndexColorModel(Integer.toBinaryString(nMaxColors).length() - 1,         // bits per pixel
-				palette.size(),         // size of color component array
+		
+		if(nMaxColors <= 256) {
+			m_colorModel = new IndexColorModel(8,         // bits per pixel
+				nMaxColors,         // size of color component array
 				paletteARGB,   // color map
 				0,         // offset in the map
-				hasTransparency,      // has alpha
+				m_transparentPixelIndex >= 0,      // has alpha
 				transparentARGB,         // the pixel value that should be transparent
 				DataBuffer.TYPE_BYTE); // ARGB
+		}
+		else if (hasSemiTransparency) {
+			final int DCM_4444_RED_MASK = 0x0f00;
+			final int DCM_4444_GRN_MASK = 0x00f0;
+			final int DCM_4444_BLU_MASK = 0x000f;
+			final int DCM_4444_ALP_MASK = 0xf000;
+			m_colorModel = new DirectColorModel(16,
+					DCM_4444_RED_MASK,
+					DCM_4444_GRN_MASK,
+					DCM_4444_BLU_MASK,
+					DCM_4444_ALP_MASK);
+		}
+		else if (m_transparentPixelIndex >= 0) {
+			final int DCM_1555_RED_MASK = 0x7c00;
+			final int DCM_1555_GRN_MASK = 0x03e0;
+			final int DCM_1555_BLU_MASK = 0x001f;
+			final int DCM_1555_ALP_MASK = 0x8000;
+			m_colorModel = new DirectColorModel(16,
+					DCM_1555_RED_MASK,
+					DCM_1555_GRN_MASK,
+					DCM_1555_BLU_MASK,
+					DCM_1555_ALP_MASK);
+		}
 	}
 
 	private Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
@@ -132,7 +160,7 @@ public class PnnQuantizer {
 		for (final Color pixel : pixels) {
 			// !!! Can throw gamma correction in here, but what to do about perceptual
 			// !!! nonuniformity then?
-			int index = getColorIndex(pixel);
+			int index = getColorIndex(pixel, hasSemiTransparency, m_transparentPixelIndex);
 			if(bins[index] == null)
 				bins[index] = new Pnnbin();
 			Pnnbin tb = bins[index];
@@ -236,49 +264,46 @@ public class PnnQuantizer {
 		for (int i = 0;; ++k) {
 			int alpha = (int) Math.rint(bins[i].ac);
 			palette.add(new Color((int) Math.rint(bins[i].rc), (int) Math.rint(bins[i].gc), (int) Math.rint(bins[i].bc), alpha));
-			if (hasTransparency && palette.get(k).equals(m_transparentColor)) {
-				Color temp = palette.get(0);
-				palette.set(0, palette.get(k));
-				palette.set(k, temp);
-			}
+			if (m_transparentPixelIndex >= 0 && palette.get(k).equals(m_transparentColor))
+				Collections.swap(palette, 0, k);
 
 			if ((i = bins[i].fw) == 0)
 				break;
 		}
 
-		setIndexColorModel(palette, nMaxColors);
+		setColorModel(palette, nMaxColors);
 		return palette.toArray(new Color[0]);
 	}
 
-	private short nearestColorIndex(final Color[] palette, final int[] squares3, final Color c)
+	private short nearestColorIndex(final Color[] palette, final int nMaxColors, final Color c)
 	{
 		short k = 0;
-		int curdist, mindist = SHORT_MAX;
-		for (short i=0; i<palette.length; ++i) {
+		double curdist, mindist = SHORT_MAX;
+		for (int i=0; i<nMaxColors; ++i) {
 			Color c2 = palette[i];
 
-			int adist = Math.abs(c2.getAlpha() - c.getAlpha());
-			curdist = squares3[adist];
+			double adist = Math.abs(c2.getAlpha() - c.getAlpha());
+			curdist = adist;
 			if (curdist > mindist)
 				continue;
 
-			int rdist = Math.abs(c2.getRed() - c.getRed());
-			curdist += squares3[rdist];
+			double rdist = PR * Math.abs(c2.getRed() - c.getRed());
+			curdist += rdist;
 			if (curdist > mindist)
 				continue;
 
-			int gdist = Math.abs(c2.getGreen() - c.getGreen());
-			curdist += squares3[gdist];
+			double gdist = PG *Math.abs(c2.getGreen() - c.getGreen());
+			curdist += gdist;
 			if (curdist > mindist)
 				continue;
 
-			int bdist = Math.abs(c2.getBlue() - c.getBlue());
-			curdist += squares3[bdist];
+			double bdist = PB * Math.abs(c2.getBlue() - c.getBlue());
+			curdist += bdist;
 			if (curdist > mindist)
 				continue;
 
 			mindist = curdist;
-			k = i;
+			k = (short) i;
 		}
 		return k;
 	}
@@ -384,9 +409,9 @@ public class PnnQuantizer {
 					a_pix = clamp[((row0[cursor0 + 3] + 0x1008) >> 4) + c.getAlpha()];
 
 					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-					int offset = getColorIndex(c1);
+					int offset = getColorIndex(c1, hasSemiTransparency, m_transparentPixelIndex);
 					if (lookup[offset] == 0)
-						lookup[offset] = nearestColorIndex(palette, squares3, c1) + 1;
+						lookup[offset] = nearestColorIndex(palette, nMaxColors, c1) + 1;
 					qPixels[pixelIndex] = (short) (lookup[offset] - 1);
 
 					Color c2 = palette[qPixels[pixelIndex]];
@@ -434,7 +459,7 @@ public class PnnQuantizer {
 
 		if(hasSemiTransparency || nMaxColors < 256) {
 			for (int i = 0; i < qPixels.length; i++)
-				qPixels[i] = nearestColorIndex(palette, squares3, pixels[i]);
+				qPixels[i] = nearestColorIndex(palette, nMaxColors, pixels[i]);
 		}
 		else {
 			for (int i = 0; i < qPixels.length; i++)
@@ -495,12 +520,12 @@ public class PnnQuantizer {
 				a_pix = clamp[((row0[cursor0 + 3] + 0x1008) >> 4) + c.getAlpha()];
 
 				Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-				int offset = getColorIndex(c1);
+				int offset = getColorIndex(c1, hasSemiTransparency, m_transparentPixelIndex);
 				if (lookup[offset] == null) {
 					Color rgba1 = new Color((c1.getRed() & 0xF8), (c1.getGreen() & 0xFC), (c1.getBlue() & 0xF8), BYTE_MAX);
 					if (hasSemiTransparency)
 						rgba1 = new Color((c1.getRed() & 0xF0), (c1.getGreen() & 0xF0), (c1.getBlue() & 0xF0), (c1.getAlpha() & 0xF0));
-					else if (hasTransparency)
+					else if (m_transparentPixelIndex >= 0)
 						rgba1 = new Color((c1.getRed() & 0xF8), (c1.getGreen() & 0xF8), (c1.getBlue() & 0xF8), (c1.getAlpha() < BYTE_MAX) ? 0 : BYTE_MAX);
 					lookup[offset] = rgba1;
 				}
@@ -546,45 +571,23 @@ public class PnnQuantizer {
 
 			odd_scanline = !odd_scanline;
 		}
-
-		if (hasSemiTransparency) {
-			final int DCM_4444_RED_MASK = 0x0f00;
-			final int DCM_4444_GRN_MASK = 0x00f0;
-			final int DCM_4444_BLU_MASK = 0x000f;
-			final int DCM_4444_ALP_MASK = 0xf000;
-			m_colorModel = new DirectColorModel(16,
-					DCM_4444_RED_MASK,
-					DCM_4444_GRN_MASK,
-					DCM_4444_BLU_MASK,
-					DCM_4444_ALP_MASK);
-		}
-		else if (hasTransparency) {
-			final int DCM_1555_RED_MASK = 0x7c00;
-			final int DCM_1555_GRN_MASK = 0x03e0;
-			final int DCM_1555_BLU_MASK = 0x001f;
-			final int DCM_1555_ALP_MASK = 0x8000;
-			m_colorModel = new DirectColorModel(16,
-					DCM_1555_RED_MASK,
-					DCM_1555_GRN_MASK,
-					DCM_1555_BLU_MASK,
-					DCM_1555_ALP_MASK);
-		}
+		
 		return true;
 	}
 
 	public short[] convert (int nMaxColors, boolean dither) {
 		final Color[] cPixels = new Color[pixels.length];		
-		for (int i =0; i<cPixels.length; ++i) {
+		for (int i =0; i<pixels.length; ++i) {
 			int pixel = pixels[i];
 			int alfa = (pixel >> 24) & 0xff;
 			int r   = (pixel >> 16) & 0xff;
 			int g = (pixel >>  8) & 0xff;
 			int b  = (pixel      ) & 0xff;
-			cPixels[i] = new Color(r, g, b, alfa);
+			cPixels[i] = new Color(pixels[i]);
 			if (alfa < BYTE_MAX) {
 				hasSemiTransparency = true;
 				if (alfa == 0) {
-					hasTransparency = true;
+					m_transparentPixelIndex = i;
 					m_transparentColor = cPixels[i];
 				}
 			}			
@@ -596,6 +599,8 @@ public class PnnQuantizer {
 			return qPixels;
 		}		
 
+		if (hasSemiTransparency || nMaxColors <= 32)
+			PR = PG = PB = 1.0;
 		boolean quan_sqrt = nMaxColors > BYTE_MAX;
 		Color[] palette = new Color[nMaxColors];
 		if (nMaxColors > 2)
@@ -613,6 +618,14 @@ public class PnnQuantizer {
 
 		short[] qPixels = new short[cPixels.length];		
 		quantize_image(cPixels, palette, qPixels, dither);
+		if (m_transparentPixelIndex >= 0) {
+			short k = qPixels[m_transparentPixelIndex];
+			if (nMaxColors > 2)
+				palette[k] = m_transparentColor;
+			else if (!palette[k].equals(m_transparentColor)) {
+				Color c1 = palette[0]; palette[0] = palette[1]; palette[1] = c1;
+			}
+		}
 		closestMap.clear();
 
 		return qPixels;
