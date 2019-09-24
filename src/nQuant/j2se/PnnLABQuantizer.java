@@ -64,23 +64,23 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				continue;
 			
 			double deltaL_prime_div_k_L_S_L = CIELABConvertor.L_prime_div_k_L_S_L(lab1, lab2);
-			nerr += sqr(deltaL_prime_div_k_L_S_L);
+			nerr += nerr2 * sqr(deltaL_prime_div_k_L_S_L);
 			if (nerr > err)
 				continue;
 
 			MutableDouble a1Prime = new MutableDouble(), a2Prime = new MutableDouble(), CPrime1 = new MutableDouble(), CPrime2 = new MutableDouble();
 			double deltaC_prime_div_k_L_S_L = CIELABConvertor.C_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2);
-			nerr += sqr(deltaC_prime_div_k_L_S_L);
+			nerr += nerr2 * sqr(deltaC_prime_div_k_L_S_L);
 			if (nerr > err)
 				continue;
 
 			MutableDouble barCPrime = new MutableDouble(), barhPrime = new MutableDouble();
 			double deltaH_prime_div_k_L_S_L = CIELABConvertor.H_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2, barCPrime, barhPrime);
-			nerr += sqr(deltaH_prime_div_k_L_S_L);
+			nerr += nerr2 * sqr(deltaH_prime_div_k_L_S_L);
 			if (nerr > err)
 				continue;
 
-			nerr += CIELABConvertor.R_T(barCPrime, barhPrime, deltaC_prime_div_k_L_S_L, deltaH_prime_div_k_L_S_L);
+			nerr += nerr2 * CIELABConvertor.R_T(barCPrime, barhPrime, deltaC_prime_div_k_L_S_L, deltaH_prime_div_k_L_S_L);
 			if (nerr > err)
 				continue;
 
