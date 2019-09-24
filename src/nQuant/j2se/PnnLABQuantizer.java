@@ -450,6 +450,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			return qPixels;
 		}
 
+		if (hasSemiTransparency || nMaxColors <= 32)
+			PR = PG = PB = 1.0;
 		Color[] palette = new Color[nMaxColors];
 		if (nMaxColors > 2)
 			palette = pnnquan(cPixels, nMaxColors);
