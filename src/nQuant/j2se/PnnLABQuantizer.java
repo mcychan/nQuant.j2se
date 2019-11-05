@@ -458,7 +458,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			}
 		}
 
-		short[] qPixels = new short[cPixels.length];		
+		short[] qPixels = new short[cPixels.length];
+		if (nMaxColors > 256)
+			dither = true;
 		quantize_image(cPixels, palette, qPixels, dither);
 		if (m_transparentPixelIndex >= 0) {
 			short k = qPixels[m_transparentPixelIndex];
