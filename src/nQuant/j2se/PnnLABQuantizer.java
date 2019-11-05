@@ -200,7 +200,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		/* Fill palette */
 		List<Color> palette = new ArrayList<Color>();
-		short k = 0;
+		int k = 0;
 		for (int i = 0;; ++k) {
 			Lab lab1 = new Lab();
 			lab1.alpha = (int) Math.rint(bins[i].ac);
@@ -213,7 +213,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				break;
 		}
 
-		setColorModel(palette, nMaxColors);
+		setColorModel(palette);
 		return palette.toArray(new Color[0]);
 	}
 
@@ -367,10 +367,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					qPixels[pixelIndex] = (short) (lookup[offset] - 1);
 
 					Color c2 = palette[qPixels[pixelIndex]];
-					if (c2.getAlpha() < BYTE_MAX && c.getAlpha() == BYTE_MAX) {
-						lookup[offset] = nearestColorIndex(palette, pixels[pixelIndex]) + 1;
-						qPixels[pixelIndex] = (short) (lookup[offset] - 1);
-					}
+					if(nMaxColors > 256)
+						qPixels[pixelIndex] = (short) getColorIndex(c2, hasSemiTransparency, m_transparentPixelIndex);
 
 					r_pix = limtb[r_pix - c2.getRed() + 256];
 					g_pix = limtb[g_pix - c2.getGreen() + 256];
@@ -442,12 +440,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					m_transparentColor = cPixels[i];
 				}
 			}			
-		}
-
-		if (nMaxColors > 256) {
-			short[] qPixels = new short[cPixels.length];		
-			quantize_image(cPixels, qPixels);
-			return qPixels;
 		}
 
 		if (hasSemiTransparency || nMaxColors <= 32)

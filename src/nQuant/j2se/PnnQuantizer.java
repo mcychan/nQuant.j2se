@@ -105,19 +105,21 @@ public class PnnQuantizer {
 		bin1.nn = nn;
 	}
 
-	protected void setColorModel(final List<Color> palette, int nMaxColors)
+	protected void setColorModel(final List<Color> palette)
 	{
-		int[] paletteARGB = new int[nMaxColors];
-		for(int i=0; i<nMaxColors; ++i) {
-			Color c1 = palette.get(i);
-			paletteARGB[i] = (c1.getAlpha() << 24) | (c1.getRed() << 16) | (c1.getGreen() << 8) | c1.getBlue();
-		}
+		int nMaxColors = palette.size();
 
 		int transparentARGB = -1;
 		if(m_transparentColor != null)
 			transparentARGB = (m_transparentColor.getAlpha() << 24) | (m_transparentColor.getRed() << 16) | (m_transparentColor.getGreen() << 8) | m_transparentColor.getBlue();
 		
 		if(nMaxColors <= 256) {
+			int[] paletteARGB = new int[nMaxColors];
+			for(int i=0; i<nMaxColors; ++i) {
+				Color c1 = palette.get(i);
+				paletteARGB[i] = (c1.getAlpha() << 24) | (c1.getRed() << 16) | (c1.getGreen() << 8) | c1.getBlue();
+			}
+			
 			m_colorModel = new IndexColorModel(8,         // bits per pixel
 				nMaxColors,         // size of color component array
 				paletteARGB,   // color map
@@ -271,7 +273,7 @@ public class PnnQuantizer {
 				break;
 		}
 
-		setColorModel(palette, nMaxColors);
+		setColorModel(palette);
 		return palette.toArray(new Color[0]);
 	}
 
@@ -407,6 +409,8 @@ public class PnnQuantizer {
 					qPixels[pixelIndex] = (short) (lookup[offset] - 1);
 
 					Color c2 = palette[qPixels[pixelIndex]];
+					if(nMaxColors > 256)
+						qPixels[pixelIndex] = (short) getColorIndex(c2, hasSemiTransparency, m_transparentPixelIndex);
 
 					r_pix = limtb[r_pix - c2.getRed() + 256];
 					g_pix = limtb[g_pix - c2.getGreen() + 256];
@@ -461,112 +465,6 @@ public class PnnQuantizer {
 		return true;
 	}
 
-	protected boolean quantize_image(final Color[] pixels, short[] qPixels)
-	{
-		int pixelIndex = 0;
-		boolean odd_scanline = false;
-		short[] row0, row1;
-		int a_pix, r_pix, g_pix, b_pix, dir, k;
-		final int DJ = 4;
-		final int DITHER_MAX = 20;
-		final int err_len = (width + 2) * DJ;
-		short[] clamp = new short[DJ * 256];
-		int[] limtb = new int[512];
-		short[] erowerr = new short[err_len];
-		short[] orowerr = new short[err_len];
-		Color[] lookup = new Color[65536];
-
-		for (int i = 0; i < 256; i++) {
-			clamp[i] = 0;
-			clamp[i + 256] = (short) i;
-			clamp[i + 512] = BYTE_MAX;
-			clamp[i + 768] = BYTE_MAX;
-
-			limtb[i] = -DITHER_MAX;
-			limtb[i + 256] = DITHER_MAX;
-		}
-		for (int i = -DITHER_MAX; i <= DITHER_MAX; i++)
-			limtb[i + 256] = i;
-
-		for (int i = 0; i < height; i++) {
-			if (odd_scanline) {
-				dir = -1;
-				pixelIndex += (width - 1);
-				row0 = orowerr;
-				row1 = erowerr;
-			}
-			else {
-				dir = 1;
-				row0 = erowerr;
-				row1 = orowerr;
-			}
-
-			int cursor0 = DJ, cursor1 = width * DJ;
-			row1[cursor1] = row1[cursor1 + 1] = row1[cursor1 + 2] = row1[cursor1 + 3] = 0;
-			for (short j = 0; j < width; j++) {
-				Color c = pixels[pixelIndex];
-
-				r_pix = clamp[((row0[cursor0] + 0x1008) >> 4) + c.getRed()];
-				g_pix = clamp[((row0[cursor0 + 1] + 0x1008) >> 4) + c.getGreen()];
-				b_pix = clamp[((row0[cursor0 + 2] + 0x1008) >> 4) + c.getBlue()];
-				a_pix = clamp[((row0[cursor0 + 3] + 0x1008) >> 4) + c.getAlpha()];
-
-				Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-				int offset = getColorIndex(c1, hasSemiTransparency, m_transparentPixelIndex);
-				if (lookup[offset] == null) {
-					Color rgba1 = new Color((c1.getRed() & 0xF8), (c1.getGreen() & 0xFC), (c1.getBlue() & 0xF8), BYTE_MAX);
-					if (hasSemiTransparency)
-						rgba1 = new Color((c1.getRed() & 0xF0), (c1.getGreen() & 0xF0), (c1.getBlue() & 0xF0), (c1.getAlpha() & 0xF0));
-					else if (m_transparentPixelIndex >= 0)
-						rgba1 = new Color((c1.getRed() & 0xF8), (c1.getGreen() & 0xF8), (c1.getBlue() & 0xF8), (c1.getAlpha() < BYTE_MAX) ? 0 : BYTE_MAX);
-					lookup[offset] = rgba1;
-				}
-
-				Color c2 = lookup[offset];
-				qPixels[pixelIndex] = (short) offset;
-
-				r_pix = limtb[r_pix - c2.getRed() + 256];
-				g_pix = limtb[g_pix - c2.getGreen() + 256];
-				b_pix = limtb[b_pix - c2.getBlue() + 256];
-				a_pix = limtb[a_pix - c2.getAlpha() + 256];
-
-				k = r_pix * 2;
-				row1[cursor1 - DJ] = (short) r_pix;
-				row1[cursor1 + DJ] += (r_pix += k);
-				row1[cursor1] += (r_pix += k);
-				row0[cursor0 + DJ] += (r_pix += k);
-
-				k = g_pix * 2;
-				row1[cursor1 + 1 - DJ] = (short) g_pix;
-				row1[cursor1 + 1 + DJ] += (g_pix += k);
-				row1[cursor1 + 1] += (g_pix += k);
-				row0[cursor0 + 1 + DJ] += (g_pix += k);
-
-				k = b_pix * 2;
-				row1[cursor1 + 2 - DJ] = (short) b_pix;
-				row1[cursor1 + 2 + DJ] += (b_pix += k);
-				row1[cursor1 + 2] += (b_pix += k);
-				row0[cursor0 + 2 + DJ] += (b_pix += k);
-
-				k = a_pix * 2;
-				row1[cursor1 + 3 - DJ] = (short) a_pix;
-				row1[cursor1 + 3 + DJ] += (a_pix += k);
-				row1[cursor1 + 3] += (a_pix += k);
-				row0[cursor0 + 3 + DJ] += (a_pix += k);
-
-				cursor0 += DJ;
-				cursor1 -= DJ;
-				pixelIndex += dir;
-			}
-			if ((i % 2) == 1)
-				pixelIndex += (width + 1);
-
-			odd_scanline = !odd_scanline;
-		}
-		
-		return true;
-	}
-
 	public short[] convert (int nMaxColors, boolean dither) {
 		final Color[] cPixels = new Color[pixels.length];		
 		for (int i =0; i<pixels.length; ++i) {
@@ -584,12 +482,6 @@ public class PnnQuantizer {
 				}
 			}			
 		}
-
-		if (nMaxColors > 256) {
-			short[] qPixels = new short[cPixels.length];		
-			quantize_image(cPixels, qPixels);
-			return qPixels;
-		}		
 
 		if (hasSemiTransparency || nMaxColors <= 32)
 			PR = PG = PB = 1.0;
