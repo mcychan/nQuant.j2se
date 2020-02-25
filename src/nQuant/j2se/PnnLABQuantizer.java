@@ -15,6 +15,7 @@ import nQuant.j2se.CIELABConvertor.Lab;
 import nQuant.j2se.CIELABConvertor.MutableDouble;
 
 public class PnnLABQuantizer extends PnnQuantizer {
+	private double PR = .2126, PG = .7152, PB = .0722;
 	private Map<Color, Lab> pixelMap = new HashMap<Color, Lab>();	
 
 	public PnnLABQuantizer(Image im, int w, int h) throws IOException {
@@ -126,6 +127,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			bins[i].Lc *= d;
 			bins[i].Ac *= d;
 			bins[i].Bc *= d;
+			bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
 			bins[maxbins++] = bins[i];
 		}
 

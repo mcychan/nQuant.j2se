@@ -24,8 +24,7 @@ public class PnnQuantizer {
 	protected final char BYTE_MAX = -Byte.MIN_VALUE + Byte.MAX_VALUE;
 	protected boolean hasSemiTransparency = false;
 	protected int m_transparentPixelIndex = -1;
-	protected final int width, height;
-	protected double PR = .2126, PG = .7152, PB = .0722;
+	protected final int width, height;	
 	protected int pixels[] = null;
 	protected Color m_transparentColor;
 	protected ColorModel m_colorModel;
@@ -152,7 +151,7 @@ public class PnnQuantizer {
 		}
 	}
 
-	private Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
+	private Color[] pnnquan(final Color[] pixels, int nMaxColors)
 	{
 		Pnnbin[] bins = new Pnnbin[65536];
 		int[] heap = new int[65537];
@@ -185,8 +184,7 @@ public class PnnQuantizer {
 			bins[i].rc *= d;
 			bins[i].gc *= d;
 			bins[i].bc *= d;
-			if (quan_sqrt)
-				bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
+			bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
 			bins[maxbins++] = bins[i];
 		}
 
@@ -289,17 +287,17 @@ public class PnnQuantizer {
 			if (curdist > mindist)
 				continue;
 
-			double rdist = PR * Math.abs(c2.getRed() - c.getRed());
+			double rdist = Math.abs(c2.getRed() - c.getRed());
 			curdist += rdist;
 			if (curdist > mindist)
 				continue;
 
-			double gdist = PG *Math.abs(c2.getGreen() - c.getGreen());
+			double gdist = Math.abs(c2.getGreen() - c.getGreen());
 			curdist += gdist;
 			if (curdist > mindist)
 				continue;
 
-			double bdist = PB * Math.abs(c2.getBlue() - c.getBlue());
+			double bdist = Math.abs(c2.getBlue() - c.getBlue());
 			curdist += bdist;
 			if (curdist > mindist)
 				continue;
@@ -483,12 +481,9 @@ public class PnnQuantizer {
 			}			
 		}
 
-		if (hasSemiTransparency || nMaxColors <= 32)
-			PR = PG = PB = 1.0;
-		boolean quan_sqrt = nMaxColors > BYTE_MAX;
 		Color[] palette = new Color[nMaxColors];
 		if (nMaxColors > 2)
-			palette = pnnquan(cPixels, nMaxColors, quan_sqrt);
+			palette = pnnquan(cPixels, nMaxColors);
 		else {
 			if (hasSemiTransparency) {
 				palette[0] = new Color(0, 0, 0, 0);
