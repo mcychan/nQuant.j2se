@@ -151,7 +151,7 @@ public class PnnQuantizer {
 		}
 	}
 
-	private Color[] pnnquan(final Color[] pixels, int nMaxColors)
+	private Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
 	{
 		Pnnbin[] bins = new Pnnbin[65536];
 		int[] heap = new int[65537];
@@ -184,7 +184,8 @@ public class PnnQuantizer {
 			bins[i].rc *= d;
 			bins[i].gc *= d;
 			bins[i].bc *= d;
-			bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
+			if(quan_sqrt)
+				bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
 			bins[maxbins++] = bins[i];
 		}
 
@@ -203,9 +204,9 @@ public class PnnQuantizer {
 			err = bins[i].err;
 			for (l = ++heap[0]; l > 1; l = l2) {
 				l2 = l >> 1;
-		if (bins[h = heap[l2]].err <= err)
-			break;
-		heap[l] = h;
+				if (bins[h = heap[l2]].err <= err)
+					break;
+				heap[l] = h;
 			}
 			heap[l] = i;
 		}
@@ -482,8 +483,9 @@ public class PnnQuantizer {
 		}
 
 		Color[] palette = new Color[nMaxColors];
+		boolean quan_sqrt = nMaxColors > BYTE_MAX;
 		if (nMaxColors > 2)
-			palette = pnnquan(cPixels, nMaxColors);
+			palette = pnnquan(cPixels, nMaxColors, quan_sqrt);
 		else {
 			if (hasSemiTransparency) {
 				palette[0] = new Color(0, 0, 0, 0);
