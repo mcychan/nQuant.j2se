@@ -57,7 +57,7 @@ public class PQCanvas extends Canvas {
 	}
 
 	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {
-		//With this constructor we create an indexed bufferedimage with the same dimensiosn and with a default 256 color model
+		//With this constructor we create an indexed bufferedimage with the same dimensions and with a default 256 color model
 		byte[] data = new byte[qPixels.length];
 		for(int i=0; i<data.length; ++i)
 			data[i] = (byte) qPixels[i];
@@ -117,13 +117,18 @@ public class PQCanvas extends Canvas {
 	public void paint(Graphics graphics) {
 		Graphics2D g2d = (Graphics2D) graphics.create();		
 		if (image != null) {
-			g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE); 
-			graphics.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+		    g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+		    g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+		    g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
+		    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+		    g2d.drawImage(image, 0, 0, getWidth(), getHeight(), this);
 		}
 		else {
-			graphics.setFont(new Font("Arial", Font.BOLD, 20));
-			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-			graphics.drawString("Please drag an image file to here!", getWidth() / 5, getHeight() / 2);
+			g2d.setFont(new Font("Arial", Font.BOLD, 20));
+			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+			g2d.drawString("Please drag an image file to here!", getWidth() / 5, getHeight() / 2);
 		}
 		g2d.dispose();
 	} 

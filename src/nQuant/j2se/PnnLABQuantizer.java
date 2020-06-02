@@ -103,7 +103,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		for (final Color pixel : pixels) {
 			// !!! Can throw gamma correction in here, but what to do about perceptual
 			// !!! nonuniformity then?
-			int index = getColorIndex(pixel, hasSemiTransparency, m_transparentPixelIndex);
+			int index = getColorIndex(pixel, hasSemiTransparency);
 			Lab lab1 = getLab(pixel);
 			if(bins[index] == null)
 				bins[index] = new Pnnbin();
@@ -320,7 +320,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if (dither) {
 			boolean odd_scanline = false;
 			short[] row0, row1;
-			int a_pix, r_pix, g_pix, b_pix, dir, k;
+			int dir, k;
 			final int DJ = 4;
 			final int DITHER_MAX = 20;
 			final int err_len = (width + 2) * DJ;
@@ -328,7 +328,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			int[] limtb = new int[512];
 			short[] erowerr = new short[err_len];
 			short[] orowerr = new short[err_len];
-			int[] lookup = new int[65536];
+			short[] lookup = new short[65536];
 
 			for (int i = 0; i < 256; i++) {
 				clamp[i] = 0;
@@ -359,20 +359,21 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				row1[cursor1] = row1[cursor1 + 1] = row1[cursor1 + 2] = row1[cursor1 + 3] = 0;
 				for (short j = 0; j < width; j++) {
 					Color c = pixels[pixelIndex];
-					r_pix = clamp[((row0[cursor0] + 0x1008) >> 4) + c.getRed()];
-					g_pix = clamp[((row0[cursor0 + 1] + 0x1008) >> 4) + c.getGreen()];
-					b_pix = clamp[((row0[cursor0 + 2] + 0x1008) >> 4) + c.getBlue()];
-					a_pix = clamp[((row0[cursor0 + 3] + 0x1008) >> 4) + c.getAlpha()];
+					int[] ditherPixel = calcDitherPixel(c, clamp, row0, cursor0, hasSemiTransparency);
+					int r_pix = ditherPixel[0];
+                    int g_pix = ditherPixel[1];
+                    int b_pix = ditherPixel[2];
+                    int a_pix = ditherPixel[3];
 
 					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-					int offset = getColorIndex(c1, hasSemiTransparency, m_transparentPixelIndex);
+					int offset = getColorIndex(c1, hasSemiTransparency);
 					if (lookup[offset] == 0)
-						lookup[offset] = nearestColorIndex(palette, c1) + 1;
+						lookup[offset] = (short)(nearestColorIndex(palette, c1) + 1);
 					qPixels[pixelIndex] = (short) (lookup[offset] - 1);
 
 					Color c2 = palette[qPixels[pixelIndex]];
 					if(nMaxColors > 256)
-						qPixels[pixelIndex] = (short) getColorIndex(c2, hasSemiTransparency, m_transparentPixelIndex);
+						qPixels[pixelIndex] = (short) getARGB1555(c2);
 
 					r_pix = limtb[r_pix - c2.getRed() + 256];
 					g_pix = limtb[g_pix - c2.getGreen() + 256];
@@ -415,7 +416,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			return true;
 		}
 
-		if(hasSemiTransparency || nMaxColors < 256) {
+		if(hasSemiTransparency || nMaxColors < 64) {
 			for (int i = 0; i < qPixels.length; i++)
 				qPixels[i] = nearestColorIndex(palette, pixels[i]);
 		}
@@ -428,7 +429,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	}
 
 	@Override
-	public short[] convert (int nMaxColors, boolean dither) {
+	public short[] convert(int nMaxColors, boolean dither) {
 		final Color[] cPixels = new Color[pixels.length];		
 		for (int i =0; i<pixels.length; ++i) {
 			int pixel = pixels[i];
