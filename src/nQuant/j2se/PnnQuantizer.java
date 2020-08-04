@@ -364,7 +364,7 @@ public class PnnQuantizer {
         }
 
         ditherPixel[0] = clamp[((rowerr[cursor] + 0x2010) >> 5) + c.getRed()];
-        ditherPixel[1] = clamp[((rowerr[cursor + 1] + 0x1008) >> 4) + c.getGreen()];
+        ditherPixel[1] = clamp[((rowerr[cursor + 1] + 0x4020) >> 6) + c.getGreen()];
         ditherPixel[2] = clamp[((rowerr[cursor + 2] + 0x2010) >> 5) + c.getBlue()];
         ditherPixel[3] = c.getAlpha();
         return ditherPixel;
@@ -502,9 +502,8 @@ public class PnnQuantizer {
 		}
 
 		Color[] palette = new Color[nMaxColors];
-		boolean quan_sqrt = nMaxColors > BYTE_MAX;
 		if (nMaxColors > 2)
-			palette = pnnquan(cPixels, nMaxColors, quan_sqrt);
+			palette = pnnquan(cPixels, nMaxColors, true);
 		else {
 			if (hasSemiTransparency) {
 				palette[0] = new Color(0, 0, 0, 0);
