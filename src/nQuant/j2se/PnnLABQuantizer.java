@@ -236,7 +236,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 
 		setColorModel(palette);
-		return palette.toArray(new Color[0]);
+		m_palette = palette.toArray(new Color[0]);
+		return m_palette;
 	}
 
 	private short nearestColorIndex(final Color[] palette, final Color c)

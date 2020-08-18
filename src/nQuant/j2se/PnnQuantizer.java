@@ -27,6 +27,7 @@ public class PnnQuantizer {
 	protected final int width, height;	
 	protected int pixels[] = null;
 	protected Color m_transparentColor;
+	protected Color[] m_palette;
 	protected ColorModel m_colorModel;
 	protected Map<Color, short[]> closestMap = new HashMap<Color, short[]>();	
 
@@ -532,6 +533,10 @@ public class PnnQuantizer {
 
 	public ColorModel getColorModel() {
 		return m_colorModel;
+	}	
+
+	public Color[] getPalette() {
+		return m_palette;
 	}
 
 	public int getWidth() {
