@@ -110,25 +110,23 @@ public class PnnQuantizer {
 	protected void setColorModel(final List<Color> palette)
 	{
 		int nMaxColors = palette.size();
-
-		int transparentARGB = -1;
-		if(m_transparentColor != null)
-			transparentARGB = (m_transparentColor.getAlpha() << 24) | (m_transparentColor.getRed() << 16) | (m_transparentColor.getGreen() << 8) | m_transparentColor.getBlue();
 		
 		if(nMaxColors <= 256) {
-			int[] paletteARGB = new int[nMaxColors];
+			byte[] red = new byte[nMaxColors];
+		    byte[] green = new byte[nMaxColors];
+		    byte[] blue = new byte[nMaxColors];
+		    byte[] alpha = new byte[nMaxColors];
 			for(int i=0; i<nMaxColors; ++i) {
 				Color c1 = palette.get(i);
-				paletteARGB[i] = (c1.getAlpha() << 24) | (c1.getRed() << 16) | (c1.getGreen() << 8) | c1.getBlue();
+				red[i] = (byte) c1.getRed();
+				green[i] = (byte) c1.getGreen();
+				blue[i] = (byte) c1.getBlue();
+				alpha[i] = (byte) c1.getAlpha();
 			}
 			
 			m_colorModel = new IndexColorModel(8,         // bits per pixel
 				nMaxColors,         // size of color component array
-				paletteARGB,   // color map
-				0,         // offset in the map
-				m_transparentPixelIndex >= 0,      // has alpha
-				transparentARGB,         // the pixel value that should be transparent
-				DataBuffer.TYPE_BYTE); // ARGB
+				red, green, blue, alpha);
 		}
 		else if (hasSemiTransparency) {
 			final int DCM_4444_RED_MASK = 0x0f00;
@@ -400,7 +398,7 @@ public class PnnQuantizer {
 			for (int i = -DITHER_MAX; i <= DITHER_MAX; i++)
 				limtb[i + 256] = i;
 
-			for (short i = 0; i < height; i++) {
+			for (int i = 0; i < height; ++i) {
 				if (odd_scanline) {
 					dir = -1;
 					pixelIndex += (width - 1);
@@ -415,7 +413,7 @@ public class PnnQuantizer {
 
 				int cursor0 = DJ, cursor1 = width * DJ;
 				row1[cursor1] = row1[cursor1 + 1] = row1[cursor1 + 2] = row1[cursor1 + 3] = 0;
-				for (short j = 0; j < width; j++) {
+				for (int j = 0; j < width; ++j) {
 					Color c = pixels[pixelIndex];
 					int[] ditherPixel = calcDitherPixel(c, clamp, row0, cursor0, hasSemiTransparency);
 					int r_pix = ditherPixel[0];

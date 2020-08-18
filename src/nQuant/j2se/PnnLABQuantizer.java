@@ -16,6 +16,7 @@ import nQuant.j2se.CIELABConvertor.MutableDouble;
 
 public class PnnLABQuantizer extends PnnQuantizer {
 	private double PR = .2126, PG = .7152, PB = .0722;
+	private double ratio = 1.0;
 	private Map<Color, Lab> pixelMap = new HashMap<Color, Lab>();	
 
 	public PnnLABQuantizer(Image im, int w, int h) throws IOException {
@@ -52,6 +53,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		
 		Lab lab1 = new Lab();
 		lab1.alpha = bin1.ac; lab1.L = bin1.Lc; lab1.A = bin1.Ac; lab1.B = bin1.Bc;
+		boolean crossover = Math.random() < ratio;
 		for (int i = bin1.fw; i != 0; i = bins[i].fw) {
 			double n2 = bins[i].cnt;
 			double nerr2 = (n1 * n2) / (n1 + n2);
@@ -65,7 +67,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if (nerr >= err)
 				continue;
 			
-			if (nMaxColors > 32) {
+			if (crossover) {
 				double deltaL_prime_div_k_L_S_L = CIELABConvertor.L_prime_div_k_L_S_L(lab1, lab2);
 				nerr += nerr2 * sqr(deltaL_prime_div_k_L_S_L);
 				if (nerr > err)
@@ -141,7 +143,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			bins[i].Lc *= d;
 			bins[i].Ac *= d;
 			bins[i].Bc *= d;
-			quan_sqrt = Math.random() < nMaxColors / 64.0;
+			
 			if(quan_sqrt)
 				bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
 			bins[maxbins++] = bins[i];
@@ -155,6 +157,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		//	bins[0].bk = bins[i].fw = 0;
 
 		int h, l, l2;
+		ratio = quan_sqrt ? 0.003125 * nMaxColors : 1.0;
 		/* Initialize nearest neighbors and build heap of them */
 		for (int i = 0; i < maxbins; i++) {
 			find_nn(bins, i, nMaxColors);
@@ -325,9 +328,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		Random rand = new Random();
 		if (closest[2] == 0 || (rand.nextInt(SHORT_MAX) % (closest[3] + closest[2])) <= closest[3])
-			k = (byte) closest[0];
+			k = closest[0];
 		else
-			k = (byte) closest[1];
+			k = closest[1];
 
 		closestMap.put(c, closest);
 		return k;
@@ -453,7 +456,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	@Override
 	public short[] convert(int nMaxColors, boolean dither) {
 		final Color[] cPixels = new Color[pixels.length];		
-		for (int i =0; i<pixels.length; ++i) {
+		for (int i = 0; i<pixels.length; ++i) {
 			int pixel = pixels[i];
 			int alfa = (pixel >> 24) & 0xff;
 			int r   = (pixel >> 16) & 0xff;
@@ -472,8 +475,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if (hasSemiTransparency)
 			PR = PG = PB = 1.0;
 		Color[] palette = new Color[nMaxColors];
+		boolean quan_sqrt = Math.random() < nMaxColors / 64.0;
 		if (nMaxColors > 2)
-			palette = pnnquan(cPixels, nMaxColors, true);
+			palette = pnnquan(cPixels, nMaxColors, quan_sqrt);
 		else {
 			if (hasSemiTransparency) {
 				palette[0] = new Color(0, 0, 0, 0);
