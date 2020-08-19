@@ -157,7 +157,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		//	bins[0].bk = bins[i].fw = 0;
 
 		int h, l, l2;
-		ratio = quan_sqrt ? 0.003125 * nMaxColors : 1.0;
+		ratio = 0.003125 * nMaxColors;
 		/* Initialize nearest neighbors and build heap of them */
 		for (int i = 0; i < maxbins; i++) {
 			find_nn(bins, i, nMaxColors);
