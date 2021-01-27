@@ -385,7 +385,6 @@ public class PnnQuantizer {
 			int[] limtb = new int[512];
 			short[] erowerr = new short[err_len];
 			short[] orowerr = new short[err_len];
-			short[] lookup = new short[65536];
 
 			for (int i = 0; i < 256; i++) {
 				clamp[i] = 0;
@@ -423,10 +422,7 @@ public class PnnQuantizer {
                     int a_pix = ditherPixel[3];
 
 					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-					int offset = getColorIndex(c1, hasSemiTransparency);
-					if (lookup[offset] == 0)
-						lookup[offset] = (short)(nearestColorIndex(palette, nMaxColors, c1) + 1);
-					qPixels[pixelIndex] = (short) (lookup[offset] - 1);
+					qPixels[pixelIndex] = nearestColorIndex(palette, nMaxColors, c1);
 
 					Color c2 = palette[qPixels[pixelIndex]];
 					if(nMaxColors > 256)
