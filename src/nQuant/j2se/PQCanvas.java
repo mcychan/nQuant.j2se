@@ -57,8 +57,10 @@ public class PQCanvas extends Canvas {
 	}
 
 	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {
-		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), null);
-		return new BufferedImage(icm, raster, icm.isAlphaPremultiplied(), null);
+		BufferedImage dest = new BufferedImage(width, height, icm.getMapSize() < 256 ? BufferedImage.TYPE_BYTE_BINARY : BufferedImage.TYPE_BYTE_INDEXED, icm);
+		Raster raster = Raster.createRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), new java.awt.Point(0, 0));
+		dest.setData(raster);
+		return dest;
 	}
 
 	private class PnnWorker extends SwingWorker<Image, String> { 
@@ -112,7 +114,7 @@ public class PQCanvas extends Canvas {
 
 	public void paint(Graphics graphics) {
 		Graphics2D g2d = (Graphics2D) graphics.create();		
-		if (image != null) {
+		if (image != null) {			
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 		    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 		    g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);

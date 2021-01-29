@@ -395,7 +395,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 					Color c2 = palette[qPixels[pixelIndex]];
 					if(nMaxColors > 256)
-						qPixels[pixelIndex] = (short) getARGB1555(c2);
+						qPixels[pixelIndex] = (short) getColorIndex(c2, false);
 
 					r_pix = limtb[r_pix - c2.getRed() + 256];
 					g_pix = limtb[g_pix - c2.getGreen() + 256];

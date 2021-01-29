@@ -49,11 +49,10 @@ public class PnnQuantizer {
 	}
 
 	private void setPixels(Image im) throws IOException {
-		pixels = new int [width * height];
-		java.awt.image.PixelGrabber pg
-		= new java.awt.image.PixelGrabber(im, 0, 0, width, height, pixels, 0, width);
+		java.awt.image.PixelGrabber pg = new java.awt.image.PixelGrabber(im, 0, 0, width, height, true);
 		try {
 			pg.grabPixels();
+			pixels = (int[]) pg.getPixels();
 		} catch (InterruptedException e) { }
 		if ((pg.getStatus() & java.awt.image.ImageObserver.ABORT) != 0) {
 			throw new IOException ("Image pixel grab aborted or errored");
@@ -66,17 +65,12 @@ public class PnnQuantizer {
 		int nn, fw, bk, tm, mtm;
 	}
 
-	protected int getColorIndex(final Color c, boolean hasSemiTransparency )
+	protected int getColorIndex(final Color c, boolean hasSemiTransparency)
 	{
 		if(hasSemiTransparency)
 			return (c.getAlpha() & 0xF0) << 8 | (c.getRed() & 0xF0) << 4 | (c.getGreen() & 0xF0) | (c.getBlue() >> 4);
 		return (c.getRed() & 0xF8) << 8 | (c.getGreen() & 0xFC) << 3 | (c.getBlue() >> 3);
 	}
-	
-	protected int getARGB1555(final Color c)
-    {
-        return (c.getAlpha() & 0x80) << 8 | (c.getRed() & 0xF8) << 7 | (c.getGreen() & 0xF8) << 2 | (c.getBlue() >> 3);
-    }
 
 	protected double sqr(double value)
 	{
@@ -425,7 +419,7 @@ public class PnnQuantizer {
 
 					Color c2 = palette[qPixels[pixelIndex]];
 					if(nMaxColors > 256)
-						qPixels[pixelIndex] = (short) getARGB1555(c2);
+						qPixels[pixelIndex] = (short) getColorIndex(c2, false);
 
 					r_pix = limtb[r_pix - c2.getRed() + 256];
 					g_pix = limtb[g_pix - c2.getGreen() + 256];
