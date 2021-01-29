@@ -7,7 +7,6 @@ Copyright (c) 2018-2020 Miller Cy Chan
 import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.ColorModel;
-import java.awt.image.DataBuffer;
 import java.awt.image.DirectColorModel;
 import java.awt.image.ImageObserver;
 import java.awt.image.IndexColorModel;

@@ -11,7 +11,7 @@ import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
-import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferShort;
 import java.awt.image.DirectColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
@@ -57,11 +57,7 @@ public class PQCanvas extends Canvas {
 	}
 
 	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {
-		//With this constructor we create an indexed bufferedimage with the same dimensions and with a default 256 color model
-		byte[] data = new byte[qPixels.length];
-		for(int i=0; i<data.length; ++i)
-			data[i] = (byte) qPixels[i];
-		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferByte(data, data.length), null);
+		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), null);
 		return new BufferedImage(icm, raster, icm.isAlphaPremultiplied(), null);
 	}
 
