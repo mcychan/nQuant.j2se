@@ -56,11 +56,9 @@ public class PQCanvas extends Canvas {
 		}); // end FileDrop.Listener
 	}
 
-	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {
-		BufferedImage dest = new BufferedImage(width, height, icm.getMapSize() < 256 ? BufferedImage.TYPE_BYTE_BINARY : BufferedImage.TYPE_BYTE_INDEXED, icm);
-		Raster raster = Raster.createRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), new java.awt.Point(0, 0));
-		dest.setData(raster);
-		return dest;
+	private Image toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {
+		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), new java.awt.Point());
+		return new BufferedImage(icm, raster, icm.isAlphaPremultiplied(), new java.util.Hashtable<Object, Object>());
 	}
 
 	private class PnnWorker extends SwingWorker<Image, String> { 
@@ -80,7 +78,7 @@ public class PQCanvas extends Canvas {
 			if(pq.getColorModel() instanceof IndexColorModel)
 				return toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), w, h);
 
-			BufferedImage highColorImage= null;
+			BufferedImage highColorImage = null;
 			if(pq.getColorModel() instanceof DirectColorModel) {
 				ColorModel cmSw = pq.getColorModel();
 				WritableRaster wr = cmSw.createCompatibleWritableRaster(w, h);
@@ -113,10 +111,10 @@ public class PQCanvas extends Canvas {
 	}
 
 	public void paint(Graphics graphics) {
-		Graphics2D g2d = (Graphics2D) graphics.create();		
+		Graphics2D g2d = (Graphics2D) graphics.create();
+		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 		if (image != null) {			
-			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-		    g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);		    
 		    g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
 		    g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_DEFAULT);
 		    g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);

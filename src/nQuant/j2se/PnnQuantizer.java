@@ -100,6 +100,14 @@ public class PnnQuantizer {
 		bin1.err = err;
 		bin1.nn = nn;
 	}
+	
+	private static int determineBitDepth(int numberOfColors) {
+        if (numberOfColors <= 1)
+            return 1;
+        if(numberOfColors <= 16)
+            return 4;
+        return 8;
+    }
 
 	protected void setColorModel(final List<Color> palette)
 	{
@@ -118,7 +126,7 @@ public class PnnQuantizer {
 				alpha[i] = (byte) c1.getAlpha();
 			}
 			
-			m_colorModel = new IndexColorModel(8,         // bits per pixel
+			m_colorModel = new IndexColorModel(determineBitDepth(nMaxColors),         // bits per pixel
 				nMaxColors,         // size of color component array
 				red, green, blue, alpha);
 		}
@@ -258,8 +266,8 @@ public class PnnQuantizer {
 		List<Color> palette = new ArrayList<Color>();
 		short k = 0;
 		for (int i = 0;; ++k) {
-			int alpha = (int) Math.rint(bins[i].ac);
-			palette.add(new Color((int) Math.rint(bins[i].rc), (int) Math.rint(bins[i].gc), (int) Math.rint(bins[i].bc), alpha));
+			int alpha = (int) bins[i].ac;
+			palette.add(new Color((int) bins[i].rc, (int) bins[i].gc, (int) bins[i].bc, alpha));
 			if (m_transparentPixelIndex >= 0 && palette.get(k).equals(m_transparentColor))
 				Collections.swap(palette, 0, k);
 
