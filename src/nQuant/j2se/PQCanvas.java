@@ -7,8 +7,11 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.TexturePaint;
 import java.awt.Toolkit;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBufferShort;
@@ -23,8 +26,14 @@ import javax.swing.SwingWorker;
 
 public class PQCanvas extends Canvas {
 
-	private static final long serialVersionUID = -5166271928949046848L;
+	private static final long serialVersionUID = -5166271928949046848L;	
+	private boolean hasAlpha;
 	private Image image = null;
+	private final TexturePaint tp;
+	
+	public PQCanvas() {
+		tp = makeTexturePaint(16);
+	}
 
 	public void set(final File file) {
 		try {
@@ -58,7 +67,7 @@ public class PQCanvas extends Canvas {
 
 	private Image toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {
 		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), new java.awt.Point());
-		return new BufferedImage(icm, raster, icm.isAlphaPremultiplied(), new java.util.Hashtable<Object, Object>());
+		return new BufferedImage(icm, raster, icm.isAlphaPremultiplied(), null);
 	}
 
 	private class PnnWorker extends SwingWorker<Image, String> { 
@@ -95,6 +104,7 @@ public class PQCanvas extends Canvas {
 		protected void done() {
 			try {
 				image = get();
+				hasAlpha = pq.hasAlpha();
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {	    	
@@ -109,9 +119,27 @@ public class PQCanvas extends Canvas {
 		PnnQuantizer pq = new PnnLABQuantizer(img, this);
 		new PnnWorker(pq).execute();		
 	}
+	
+	private TexturePaint makeTexturePaint(int size) {
+		BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		java.awt.Color[] colors = new java.awt.Color[] {new java.awt.Color(255, 255, 255, 127), new java.awt.Color(192, 192, 192, 127)};
+        
+		int s2 = size / 2;
+		Graphics2D g2d = img.createGraphics();	        
+	    g2d.setColor(colors[0]);
+	    g2d.fillRect(0, 0, s2, s2);
+	    g2d.setColor(colors[1]);
+	    g2d.fillRect(0, s2, s2, s2);
+	    g2d.fillRect(s2, 0, s2, s2);
+	    g2d.setColor(colors[0]);
+	    g2d.fillRect(s2, s2, s2, s2);
+	    g2d.dispose();
+	    Rectangle2D bounds = new Rectangle2D.Float(0, 0, size, size);
+	    return new TexturePaint(img, bounds);
+	}
 
 	public void paint(Graphics graphics) {
-		Graphics2D g2d = (Graphics2D) graphics.create();
+		Graphics2D g2d = (Graphics2D) graphics;
 		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 		if (image != null) {			
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);		    
@@ -119,7 +147,16 @@ public class PQCanvas extends Canvas {
 		    g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_DEFAULT);
 		    g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
 		    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-		    g2d.drawImage(image, 0, 0, this);
+		    
+		    Dimension sz = getParent().getSize();
+		    sz.setSize(sz.getWidth() - 16, sz.getHeight() - 38);
+		    
+		    if(hasAlpha) {       
+		    	g2d.setPaint(tp);
+		        g2d.fill(new Rectangle(0, 0, (int) sz.getWidth(), (int) sz.getHeight()));
+		    }
+		    		    
+		    g2d.drawImage(image, 0, 0, (int) sz.getWidth(), (int) sz.getHeight(), this);
 		}
 		else {
 			g2d.setFont(new Font("Arial", Font.BOLD, 20));
@@ -142,7 +179,6 @@ public class PQCanvas extends Canvas {
 			public void windowClosing(java.awt.event.WindowEvent e) { 
 				System.out.println("Closing program");		
 				System.exit(0); }
-		} );
-
+		});
 	}
 }

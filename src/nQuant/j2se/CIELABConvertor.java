@@ -95,7 +95,7 @@ public class CIELABConvertor {
 		g = (g > 0.0031308) ? (1.055 * Math.pow(g, 1.0 / 2.4) - 0.055) : 12.92 * g;
 		b = (b > 0.0031308) ? (1.055 * Math.pow(b, 1.0 / 2.4) - 0.055) : 12.92 * b;
 
-		return new Color((int) (Math.max(0, Math.min(1, r)) * BYTE_MAX), (int) (Math.max(0, Math.min(1, g)) * BYTE_MAX), (int) (Math.max(0, Math.min(1, b)) * BYTE_MAX), (int) Math.min(lab.alpha, BYTE_MAX));
+		return new Color((float) Math.max(0, Math.min(1, r)), (float) Math.max(0, Math.min(1, g)), (float) Math.max(0, Math.min(1, b)), (float) Math.min(lab.alpha, BYTE_MAX) / 255.0f);
 	}
 
 	/*******************************************************************************
