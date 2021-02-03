@@ -27,7 +27,7 @@ public class PnnQuantizer {
 	protected Color m_transparentColor;
 	private Color[] m_palette;
 	protected ColorModel m_colorModel;
-	protected Map<Color, short[]> closestMap = new HashMap<Color, short[]>();	
+	protected Map<Integer, short[]> closestMap = new HashMap<Integer, short[]>();	
 
 	public PnnQuantizer(Image im, int w, int h) throws IOException {
 		width = w;
@@ -352,7 +352,7 @@ public class PnnQuantizer {
 		else
 			k = closest[1];
 
-		closestMap.put(c, closest);
+		closestMap.put(c.getRGB(), closest);
 		return k;
 	}
 	
@@ -505,10 +505,11 @@ public class PnnQuantizer {
 			}			
 		}
 
-		Color[] palette = new Color[nMaxColors];
+		Color[] palette;
 		if (nMaxColors > 2)
 			palette = pnnquan(cPixels, nMaxColors, true);
 		else {
+			palette = new Color[nMaxColors];
 			if (hasSemiTransparency) {
 				palette[0] = new Color(0, 0, 0, 0);
 				palette[1] = Color.BLACK;

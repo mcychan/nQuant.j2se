@@ -14,7 +14,7 @@ import nQuant.j2se.CIELABConvertor.MutableDouble;
 public class PnnLABQuantizer extends PnnQuantizer {
 	private double PR = .2126, PG = .7152, PB = .0722;
 	private double ratio = 1.0;
-	private Map<Color, Lab> pixelMap = new HashMap<Color, Lab>();	
+	private Map<Integer, Lab> pixelMap = new HashMap<Integer, Lab>();	
 
 	public PnnLABQuantizer(Image im, int w, int h) throws IOException {
 		super(im, w, h);
@@ -30,12 +30,12 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		int nn, fw, bk, tm, mtm;
 	}
 
-	private Lab getLab(final Color c)
+	private Lab getLab(final int pixel)
 	{
-		Lab lab1 = pixelMap.get(c);
+		Lab lab1 = pixelMap.get(pixel);
 		if (lab1 == null) {
-			lab1 = CIELABConvertor.RGB2LAB(c);
-			pixelMap.put(c, lab1);
+			lab1 = CIELABConvertor.RGB2LAB(pixel);
+			pixelMap.put(pixel, lab1);
 		}
 		return lab1;
 	}
@@ -113,15 +113,15 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		double err, n1, n2;
 
 		/* Build histogram */
-		for (final Color pixel : pixels) {
+		for (final Color c : pixels) {
 			// !!! Can throw gamma correction in here, but what to do about perceptual
 			// !!! nonuniformity then?
-			int index = getColorIndex(pixel, hasSemiTransparency);
-			Lab lab1 = getLab(pixel);
+			int index = getColorIndex(c, hasSemiTransparency);
+			Lab lab1 = getLab(c.getRGB());
 			if(bins[index] == null)
 				bins[index] = new Pnnbin();
 			Pnnbin tb = bins[index];
-			tb.ac += pixel.getAlpha();
+			tb.ac += c.getAlpha();
 			tb.Lc += lab1.L;
 			tb.Ac += lab1.A;
 			tb.Bc += lab1.B;
@@ -242,7 +242,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	{
 		short k = 0;
 		double mindist = SHORT_MAX;
-		Lab lab1 = getLab(c);
+		Lab lab1 = getLab(c.getRGB());
 		for (short i=0; i<palette.length; ++i) {
 			Color c2 = palette[i];			
 
@@ -262,7 +262,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				curdist += PB * sqr(c2.getBlue() - c.getBlue());
 			}
 			else {
-				Lab lab2 = getLab(c2);
+				Lab lab2 = getLab(c2.getRGB());
 				
 				double deltaL_prime_div_k_L_S_L = CIELABConvertor.L_prime_div_k_L_S_L(lab1, lab2);
 				curdist += sqr(deltaL_prime_div_k_L_S_L);
@@ -300,11 +300,11 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		short[] got = closestMap.get(c);
 		if (got == null) {
 			closest[2] = closest[3] = SHORT_MAX;
-			Lab lab1 = getLab(c);
+			Lab lab1 = getLab(c.getRGB());
 
 			for (; k < palette.length; k++) {
 				Color c2 = palette[k];
-				Lab lab2 = getLab(c2);
+				Lab lab2 = getLab(c2.getRGB());
 
 				closest[4] = (short) (sqr(lab2.alpha - lab1.alpha) + CIELABConvertor.CIEDE2000(lab2, lab1));
 				//closest[4] = Math.abs(lab2.alpha - lab1.alpha) + Math.abs(lab2.L - lab1.L) + Math.abs(lab2.A - lab1.A) + Math.abs(lab2.B - lab1.B);
@@ -332,7 +332,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		else
 			k = closest[1];
 
-		closestMap.put(c, closest);
+		closestMap.put(c.getRGB(), closest);
 		return k;
 	}
 
@@ -357,11 +357,12 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		if (hasSemiTransparency)
 			PR = PG = PB = 1.0;
-		Color[] palette = new Color[nMaxColors];
+		Color[] palette;
 		boolean quan_sqrt = Math.random() < nMaxColors / 64.0;
 		if (nMaxColors > 2)
 			palette = pnnquan(cPixels, nMaxColors, quan_sqrt);
 		else {
+			palette = new Color[nMaxColors];
 			if (hasSemiTransparency) {
 				palette[0] = new Color(0, 0, 0, 0);
 				palette[1] = Color.BLACK;
