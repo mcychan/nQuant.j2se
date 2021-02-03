@@ -284,7 +284,7 @@ public class PnnQuantizer {
 		return palette.toArray(new Color[0]);
 	}
 
-	private short nearestColorIndex(final Color[] palette, final int nMaxColors, final Color c)
+	protected short nearestColorIndex(final Color[] palette, final int nMaxColors, final Color c)
 	{
 		short k = 0;
 		double curdist, mindist = SHORT_MAX;
@@ -317,7 +317,7 @@ public class PnnQuantizer {
 		return k;
 	}
 
-	private short closestColorIndex(final Color[] palette, final Color c)
+	protected short closestColorIndex(final Color[] palette, final Color c)
 	{
 		short k = 0;
 		short[] closest = new short[5];
@@ -375,8 +375,9 @@ public class PnnQuantizer {
         return ditherPixel;
     }
 
-	boolean quantize_image(final Color[] pixels, final Color[] palette, short[] qPixels, final boolean dither)
+	protected final short[] quantize_image(final Color[] pixels, final Color[] palette, final boolean dither)
 	{
+		short[] qPixels = new short[pixels.length];
 		int nMaxColors = palette.length;
 
 		int pixelIndex = 0;
@@ -472,7 +473,7 @@ public class PnnQuantizer {
 
 				odd_scanline = !odd_scanline;
 			}
-			return true;
+			return qPixels;
 		}
 
 		if(hasSemiTransparency || nMaxColors < 64) {
@@ -484,7 +485,7 @@ public class PnnQuantizer {
 				qPixels[i] = closestColorIndex(palette, pixels[i]);
 		}
 
-		return true;
+		return qPixels;
 	}
 
 	public short[] convert(int nMaxColors, boolean dither) {
@@ -519,10 +520,9 @@ public class PnnQuantizer {
 			}
 		}
 
-		short[] qPixels = new short[cPixels.length];
 		if (nMaxColors > 256)
 			dither = true;
-		quantize_image(cPixels, palette, qPixels, dither);
+		short[] qPixels = quantize_image(cPixels, palette, dither);
 		if (m_transparentPixelIndex >= 0) {
 			short k = qPixels[m_transparentPixelIndex];
 			if (nMaxColors > 2)

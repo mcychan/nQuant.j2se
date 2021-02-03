@@ -240,7 +240,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		return m_palette;
 	}
 
-	private short nearestColorIndex(final Color[] palette, final Color c)
+	@Override
+	protected short nearestColorIndex(final Color[] palette, final int nMaxColors, final Color c)
 	{
 		short k = 0;
 		double mindist = SHORT_MAX;
@@ -294,7 +295,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		return k;
 	}
 
-	private short closestColorIndex(final Color[] palette, final Color c)
+	@Override
+	protected short closestColorIndex(final Color[] palette, final Color c)
 	{
 		short k = 0;
 		short[] closest = new short[5];
@@ -338,119 +340,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	}
 
 	@Override
-	protected boolean quantize_image(final Color[] pixels, final Color[] palette, short[] qPixels, final boolean dither)
-	{
-		int nMaxColors = palette.length;
-
-		int pixelIndex = 0;
-		if (dither) {
-			boolean odd_scanline = false;
-			short[] row0, row1;
-			int dir, k;
-			final int DJ = 4;
-			final int DITHER_MAX = 20;
-			final int err_len = (width + 2) * DJ;
-			int[] clamp = new int[DJ * 256];
-			int[] limtb = new int[512];
-			short[] erowerr = new short[err_len];
-			short[] orowerr = new short[err_len];
-
-			for (int i = 0; i < 256; i++) {
-				clamp[i] = 0;
-				clamp[i + 256] = (short) i;
-				clamp[i + 512] = BYTE_MAX;
-				clamp[i + 768] = BYTE_MAX;
-
-				limtb[i] = -DITHER_MAX;
-				limtb[i + 256] = DITHER_MAX;
-			}
-			for (int i = -DITHER_MAX; i <= DITHER_MAX; i++)
-				limtb[i + 256] = i;
-
-			for (short i = 0; i < height; i++) {
-				if (odd_scanline) {
-					dir = -1;
-					pixelIndex += (width - 1);
-					row0 = orowerr;
-					row1 = erowerr;
-				}
-				else {
-					dir = 1;
-					row0 = erowerr;
-					row1 = orowerr;
-				}
-
-				int cursor0 = DJ, cursor1 = width * DJ;
-				row1[cursor1] = row1[cursor1 + 1] = row1[cursor1 + 2] = row1[cursor1 + 3] = 0;
-				for (short j = 0; j < width; j++) {
-					Color c = pixels[pixelIndex];
-					int[] ditherPixel = calcDitherPixel(c, clamp, row0, cursor0, hasSemiTransparency);
-					int r_pix = ditherPixel[0];
-                    int g_pix = ditherPixel[1];
-                    int b_pix = ditherPixel[2];
-                    int a_pix = ditherPixel[3];
-
-					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-					qPixels[pixelIndex] = nearestColorIndex(palette, c1);
-
-					Color c2 = palette[qPixels[pixelIndex]];
-					if(nMaxColors > 256)
-						qPixels[pixelIndex] = (short) getColorIndex(c2);
-
-					r_pix = limtb[r_pix - c2.getRed() + 256];
-					g_pix = limtb[g_pix - c2.getGreen() + 256];
-					b_pix = limtb[b_pix - c2.getBlue() + 256];
-					a_pix = limtb[a_pix - c2.getAlpha() + 256];
-
-					k = r_pix * 2;
-					row1[cursor1 - DJ] = (short) r_pix;
-					row1[cursor1 + DJ] += (r_pix += k);
-					row1[cursor1] += (r_pix += k);
-					row0[cursor0 + DJ] += (r_pix += k);
-
-					k = g_pix * 2;
-					row1[cursor1 + 1 - DJ] = (short) g_pix;
-					row1[cursor1 + 1 + DJ] += (g_pix += k);
-					row1[cursor1 + 1] += (g_pix += k);
-					row0[cursor0 + 1 + DJ] += (g_pix += k);
-
-					k = b_pix * 2;
-					row1[cursor1 + 2 - DJ] = (short) b_pix;
-					row1[cursor1 + 2 + DJ] += (b_pix += k);
-					row1[cursor1 + 2] += (b_pix += k);
-					row0[cursor0 + 2 + DJ] += (b_pix += k);
-
-					k = a_pix * 2;
-					row1[cursor1 + 3 - DJ] = (short) a_pix;
-					row1[cursor1 + 3 + DJ] += (a_pix += k);
-					row1[cursor1 + 3] += (a_pix += k);
-					row0[cursor0 + 3 + DJ] += (a_pix += k);
-
-					cursor0 += DJ;
-					cursor1 -= DJ;
-					pixelIndex += dir;
-				}
-				if ((i % 2) == 1)
-					pixelIndex += (width + 1);
-
-				odd_scanline = !odd_scanline;
-			}
-			return true;
-		}
-
-		if(hasSemiTransparency || nMaxColors < 64) {
-			for (int i = 0; i < qPixels.length; i++)
-				qPixels[i] = nearestColorIndex(palette, pixels[i]);
-		}
-		else {
-			for (int i = 0; i < qPixels.length; i++)
-				qPixels[i] = closestColorIndex(palette, pixels[i]);
-		}
-
-		return true;
-	}
-
-	@Override
 	public short[] convert(int nMaxColors, boolean dither) {
 		final Color[] cPixels = new Color[pixels.length];		
 		for (int i = 0; i<pixels.length; ++i) {
@@ -486,10 +375,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			}
 		}
 
-		short[] qPixels = new short[cPixels.length];
 		if (nMaxColors > 256)
 			dither = true;
-		quantize_image(cPixels, palette, qPixels, dither);
+		short[] qPixels = quantize_image(cPixels, palette, dither);
 		if (m_transparentPixelIndex >= 0) {
 			short k = qPixels[m_transparentPixelIndex];
 			if (nMaxColors > 2)
