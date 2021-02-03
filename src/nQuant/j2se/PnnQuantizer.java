@@ -284,11 +284,11 @@ public class PnnQuantizer {
 		return palette.toArray(new Color[0]);
 	}
 
-	protected short nearestColorIndex(final Color[] palette, final int nMaxColors, final Color c)
+	protected short nearestColorIndex(final Color[] palette, final Color c)
 	{
 		short k = 0;
 		double curdist, mindist = SHORT_MAX;
-		for (int i=0; i<nMaxColors; ++i) {
+		for (int i=0; i<palette.length; ++i) {
 			Color c2 = palette[i];
 
 			double adist = Math.abs(c2.getAlpha() - c.getAlpha());
@@ -429,7 +429,7 @@ public class PnnQuantizer {
                     int a_pix = ditherPixel[3];
 
 					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-					qPixels[pixelIndex] = nearestColorIndex(palette, nMaxColors, c1);
+					qPixels[pixelIndex] = nearestColorIndex(palette, c1);
 
 					Color c2 = palette[qPixels[pixelIndex]];
 					if(nMaxColors > 256)
@@ -478,7 +478,7 @@ public class PnnQuantizer {
 
 		if(hasSemiTransparency || nMaxColors < 64) {
 			for (int i = 0; i < qPixels.length; i++)
-				qPixels[i] = nearestColorIndex(palette, nMaxColors, pixels[i]);
+				qPixels[i] = nearestColorIndex(palette, pixels[i]);
 		}
 		else {
 			for (int i = 0; i < qPixels.length; i++)

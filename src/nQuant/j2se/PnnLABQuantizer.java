@@ -241,7 +241,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	}
 
 	@Override
-	protected short nearestColorIndex(final Color[] palette, final int nMaxColors, final Color c)
+	protected short nearestColorIndex(final Color[] palette, final Color c)
 	{
 		short k = 0;
 		double mindist = SHORT_MAX;
