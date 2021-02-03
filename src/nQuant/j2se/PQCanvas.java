@@ -153,7 +153,7 @@ public class PQCanvas extends Canvas {
 		    
 		    if(hasAlpha) {       
 		    	g2d.setPaint(tp);
-		        g2d.fill(new Rectangle(0, 0, (int) sz.getWidth(), (int) sz.getHeight()));
+		        g2d.fill(new Rectangle(sz));
 		    }
 		    		    
 		    g2d.drawImage(image, 0, 0, (int) sz.getWidth(), (int) sz.getHeight(), this);
