@@ -52,8 +52,9 @@ public class CIELABConvertor {
 		double L = 0.0;
 	}
 	
-	static Lab RGB2LAB(final Color c1)
+	static Lab RGB2LAB(final int pixel)
 	{
+		final Color c1 = new Color(pixel);
 		double r = c1.getRed() / 255.0, g = c1.getGreen() / 255.0, b = c1.getBlue() / 255.0;
 		double x, y, z;
 
