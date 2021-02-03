@@ -4,10 +4,7 @@ import java.awt.Color;
 import java.awt.Image;
 import java.awt.image.ImageObserver;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -221,23 +218,23 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 
 		/* Fill palette */
-		List<Color> palette = new ArrayList<Color>();
+		Color[] palette = new Color[nMaxColors];
 		int k = 0;
 		for (int i = 0;; ++k) {
 			Lab lab1 = new Lab();
 			lab1.alpha = (int) bins[i].ac;
 			lab1.L = bins[i].Lc; lab1.A = bins[i].Ac; lab1.B = bins[i].Bc;
-			palette.add(CIELABConvertor.LAB2RGB(lab1));
-			if (m_transparentPixelIndex >= 0 && palette.get(k).equals(m_transparentColor))
-				Collections.swap(palette, 0, k);
+			palette[k] = CIELABConvertor.LAB2RGB(lab1);
+			if (m_transparentPixelIndex >= 0 && m_transparentColor.equals(palette[k])) {
+				Color temp = palette[0]; palette[0] = palette[k]; palette[k] = temp;
+			}
 
 			if ((i = bins[i].fw) == 0)
 				break;
 		}
 
-		setColorModel(palette);
-		m_palette = palette.toArray(new Color[0]);
-		return m_palette;
+		setColorModel(palette);		
+		return palette;
 	}
 
 	@Override

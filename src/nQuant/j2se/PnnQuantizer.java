@@ -13,10 +13,7 @@ import java.awt.image.DirectColorModel;
 import java.awt.image.ImageObserver;
 import java.awt.image.IndexColorModel;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
@@ -28,7 +25,7 @@ public class PnnQuantizer {
 	protected final int width, height;	
 	protected int[] pixels;
 	protected Color m_transparentColor;
-	protected Color[] m_palette;
+	private Color[] m_palette;
 	protected ColorModel m_colorModel;
 	protected Map<Color, short[]> closestMap = new HashMap<Color, short[]>();	
 
@@ -116,14 +113,15 @@ public class PnnQuantizer {
         return 8;
     }
 
-	protected void setColorModel(final List<Color> palette)
+	protected final void setColorModel(final Color[] palette)
 	{
-		int nMaxColors = palette.size();
+		m_palette = palette;
+		int nMaxColors = palette.length;
 		
 		if(nMaxColors <= 256) {
 			int[] palettes = new int[nMaxColors];
 			for(int i=0; i<nMaxColors; ++i) {
-				Color c1 = palette.get(i);
+				Color c1 = palette[i];
 				palettes[i] = c1.getRGB();
 			}
 			
@@ -268,20 +266,21 @@ public class PnnQuantizer {
 		}
 
 		/* Fill palette */
-		List<Color> palette = new ArrayList<Color>();
+		Color[] palette = new Color[nMaxColors];
 		short k = 0;
 		for (int i = 0;; ++k) {
 			float alpha = (float) bins[i].ac / 255.0f;
-			palette.add(new Color((float) bins[i].rc / 255.0f, (float) bins[i].gc / 255.0f, (float) bins[i].bc / 255.0f, alpha));
-			if (m_transparentPixelIndex >= 0 && palette.get(k).equals(m_transparentColor))
-				Collections.swap(palette, 0, k);
+			palette[k] = new Color((float) bins[i].rc / 255.0f, (float) bins[i].gc / 255.0f, (float) bins[i].bc / 255.0f, alpha);
+			if (m_transparentPixelIndex >= 0 && m_transparentColor.equals(palette[k])) {
+				Color temp = palette[0]; palette[0] = palette[k]; palette[k] = temp;
+			}
 
 			if ((i = bins[i].fw) == 0)
 				break;
 		}
 
 		setColorModel(palette);
-		return palette.toArray(new Color[0]);
+		return palette;
 	}
 
 	protected short nearestColorIndex(final Color[] palette, final Color c)
