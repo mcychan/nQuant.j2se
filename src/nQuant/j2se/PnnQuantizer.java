@@ -24,8 +24,8 @@ public class PnnQuantizer {
 	protected int m_transparentPixelIndex = -1;
 	protected final int width, height;	
 	protected int[] pixels;
-	protected Color m_transparentColor;
-	private Color[] m_palette;
+	protected int m_transparentColor;
+	private int[] m_palette;
 	protected ColorModel m_colorModel;
 	protected Map<Integer, short[]> closestMap = new HashMap<Integer, short[]>();	
 
@@ -104,27 +104,13 @@ public class PnnQuantizer {
 		bin1.err = err;
 		bin1.nn = nn;
 	}
-	
-	private static int determineBitDepth(int numberOfColors) {
-        if (numberOfColors <= 1)
-            return 1;
-        if(numberOfColors <= 16)
-            return 4;
-        return 8;
-    }
 
-	protected final void setColorModel(final Color[] palette)
+	protected final void setColorModel(final int[] palettes)
 	{
-		m_palette = palette;
-		int nMaxColors = palette.length;
+		m_palette = palettes;
+		int nMaxColors = palettes.length;
 		
-		if(nMaxColors <= 256) {
-			int[] palettes = new int[nMaxColors];
-			for(int i=0; i<nMaxColors; ++i) {
-				Color c1 = palette[i];
-				palettes[i] = c1.getRGB();
-			}
-			
+		if(nMaxColors <= 256) {			
 			m_colorModel = new IndexColorModel(8,         // bits per pixel
 				nMaxColors,         // size of color component array
 				palettes,   // color map
@@ -157,7 +143,7 @@ public class PnnQuantizer {
 		}
 	}
 
-	private Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
+	private int[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
 	{
 		Pnnbin[] bins = new Pnnbin[65536];
 		int[] heap = new int[65537];
@@ -266,13 +252,13 @@ public class PnnQuantizer {
 		}
 
 		/* Fill palette */
-		Color[] palette = new Color[nMaxColors];
+		int[] palette = new int[nMaxColors];
 		short k = 0;
 		for (int i = 0;; ++k) {
 			float alpha = (float) bins[i].ac / 255.0f;
-			palette[k] = new Color((float) bins[i].rc / 255.0f, (float) bins[i].gc / 255.0f, (float) bins[i].bc / 255.0f, alpha);
-			if (m_transparentPixelIndex >= 0 && m_transparentColor.equals(palette[k])) {
-				Color temp = palette[0]; palette[0] = palette[k]; palette[k] = temp;
+			palette[k] = new Color((float) bins[i].rc / 255.0f, (float) bins[i].gc / 255.0f, (float) bins[i].bc / 255.0f, alpha).getRGB();
+			if (m_transparentPixelIndex >= 0 && m_transparentColor == palette[k]) {
+				int temp = palette[0]; palette[0] = palette[k]; palette[k] = temp;
 			}
 
 			if ((i = bins[i].fw) == 0)
@@ -283,12 +269,12 @@ public class PnnQuantizer {
 		return palette;
 	}
 
-	protected short nearestColorIndex(final Color[] palette, final Color c)
+	protected short nearestColorIndex(final int[] palette, final Color c)
 	{
 		short k = 0;
 		double curdist, mindist = SHORT_MAX;
 		for (int i=0; i<palette.length; ++i) {
-			Color c2 = palette[i];
+			Color c2 = new Color(palette[i]);
 
 			double adist = Math.abs(c2.getAlpha() - c.getAlpha());
 			curdist = adist;
@@ -316,7 +302,7 @@ public class PnnQuantizer {
 		return k;
 	}
 
-	protected short closestColorIndex(final Color[] palette, final Color c)
+	protected short closestColorIndex(final int[] palette, final Color c)
 	{
 		short k = 0;
 		short[] closest = new short[5];
@@ -325,7 +311,7 @@ public class PnnQuantizer {
 			closest[2] = closest[3] = SHORT_MAX;
 
 			for (; k < palette.length; k++) {
-				Color c2 = palette[k];
+				Color c2 = new Color(palette[k]);
 
 				closest[4] = (short) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
 				if (closest[4] < closest[2]) {
@@ -374,7 +360,7 @@ public class PnnQuantizer {
         return ditherPixel;
     }
 
-	protected final short[] quantize_image(final Color[] pixels, final Color[] palette, final boolean dither)
+	protected final short[] quantize_image(final Color[] pixels, final int[] palette, final boolean dither)
 	{
 		short[] qPixels = new short[pixels.length];
 		int nMaxColors = palette.length;
@@ -430,7 +416,7 @@ public class PnnQuantizer {
 					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
 					qPixels[pixelIndex] = nearestColorIndex(palette, c1);
 
-					Color c2 = palette[qPixels[pixelIndex]];
+					Color c2 = new Color(palette[qPixels[pixelIndex]]);
 					if(nMaxColors > 256)
 						qPixels[pixelIndex] = (short) getColorIndex(c2);
 
@@ -500,23 +486,23 @@ public class PnnQuantizer {
 				hasSemiTransparency = true;
 				if (alfa == 0) {
 					m_transparentPixelIndex = i;
-					m_transparentColor = cPixels[i];
+					m_transparentColor = cPixels[i].getRGB();
 				}
 			}			
 		}
 
-		Color[] palette;
+		int[] palette;
 		if (nMaxColors > 2)
 			palette = pnnquan(cPixels, nMaxColors, true);
 		else {
-			palette = new Color[nMaxColors];
+			palette = new int[nMaxColors];
 			if (hasSemiTransparency) {
-				palette[0] = new Color(0, 0, 0, 0);
-				palette[1] = Color.BLACK;
+				palette[0] = new Color(0, 0, 0, 0).getRGB();
+				palette[1] = Color.BLACK.getRGB();
 			}
 			else {
-				palette[0] = Color.BLACK;
-				palette[1] = Color.WHITE;
+				palette[0] = Color.BLACK.getRGB();
+				palette[1] = Color.WHITE.getRGB();
 			}
 		}
 
@@ -527,8 +513,8 @@ public class PnnQuantizer {
 			short k = qPixels[m_transparentPixelIndex];
 			if (nMaxColors > 2)
 				palette[k] = m_transparentColor;
-			else if (!palette[k].equals(m_transparentColor)) {
-				Color c1 = palette[0]; palette[0] = palette[1]; palette[1] = c1;
+			else if (palette[k] != m_transparentColor) {
+				int c1 = palette[0]; palette[0] = palette[1]; palette[1] = c1;
 			}
 		}
 		closestMap.clear();
@@ -540,7 +526,7 @@ public class PnnQuantizer {
 		return m_colorModel;
 	}	
 
-	public Color[] getPalette() {
+	public int[] getPalette() {
 		return m_palette;
 	}
 
