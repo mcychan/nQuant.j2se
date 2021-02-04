@@ -295,7 +295,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	{
 		short k = 0;
 		short[] closest = new short[5];
-		short[] got = closestMap.get(c);
+		short[] got = closestMap.get(c.getRGB());
 		if (got == null) {
 			closest[2] = closest[3] = SHORT_MAX;
 			Lab lab1 = getLab(c.getRGB());
@@ -356,7 +356,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if (hasSemiTransparency)
 			PR = PG = PB = 1.0;
 		Color[] palette;
-		boolean quan_sqrt = true;
+		boolean quan_sqrt = nMaxColors > 64;
 		if (nMaxColors > 2)
 			palette = pnnquan(cPixels, nMaxColors, quan_sqrt);
 		else {

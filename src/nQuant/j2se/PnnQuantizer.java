@@ -125,7 +125,7 @@ public class PnnQuantizer {
 				palettes[i] = c1.getRGB();
 			}
 			
-			m_colorModel = new IndexColorModel(determineBitDepth(nMaxColors),         // bits per pixel
+			m_colorModel = new IndexColorModel(8,         // bits per pixel
 				nMaxColors,         // size of color component array
 				palettes,   // color map
                 0,         // offset in the map
@@ -320,7 +320,7 @@ public class PnnQuantizer {
 	{
 		short k = 0;
 		short[] closest = new short[5];
-		short[] got = closestMap.get(c);
+		short[] got = closestMap.get(c.getRGB());
 		if (got == null) {
 			closest[2] = closest[3] = SHORT_MAX;
 
