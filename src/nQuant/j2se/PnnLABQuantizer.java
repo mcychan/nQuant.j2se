@@ -152,7 +152,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		//	bins[0].bk = bins[i].fw = 0;
 
 		int h, l, l2;
-		ratio = Math.min(1.0, sqr(nMaxColors) / pixelMap.size());
+		ratio = Math.min(1.0, Math.pow(nMaxColors, 2.25) / pixelMap.size());
 		/* Initialize nearest neighbors and build heap of them */
 		for (int i = 0; i < maxbins; i++) {
 			find_nn(bins, i, nMaxColors);
@@ -356,7 +356,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if (hasSemiTransparency)
 			PR = PG = PB = 1.0;
 		Color[] palette;
-		boolean quan_sqrt = Math.random() < nMaxColors / 64.0;
+		boolean quan_sqrt = true;
 		if (nMaxColors > 2)
 			palette = pnnquan(cPixels, nMaxColors, quan_sqrt);
 		else {
