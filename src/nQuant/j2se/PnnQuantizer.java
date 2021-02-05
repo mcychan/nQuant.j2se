@@ -104,14 +104,6 @@ public class PnnQuantizer {
 		bin1.err = err;
 		bin1.nn = nn;
 	}
-	
-	private static int determineBitDepth(int numberOfColors) {
-        if (numberOfColors <= 1)
-            return 1;
-        if(numberOfColors <= 16)
-            return 4;
-        return 8;
-    }
 
 	protected final void setColorModel(final Color[] palette)
 	{
@@ -380,10 +372,7 @@ public class PnnQuantizer {
 		int nMaxColors = palette.length;
 
 		int pixelIndex = 0;
-		if (dither) {
-			boolean odd_scanline = false;
-			short[] row0, row1;
-			int dir, k;
+		if (dither) {			
 			final int DJ = 4;
 			final int DITHER_MAX = 20;
 			final int err_len = (width + 2) * DJ;
@@ -404,15 +393,12 @@ public class PnnQuantizer {
 			for (int i = -DITHER_MAX; i <= DITHER_MAX; i++)
 				limtb[i + 256] = i;
 
+			int dir = 1;
+			short[] row0 = null, row1 = null;
 			for (int i = 0; i < height; ++i) {
-				if (odd_scanline) {
-					dir = -1;
-					pixelIndex += (width - 1);
-					row0 = orowerr;
-					row1 = erowerr;
-				}
+				if (dir < 0)
+					pixelIndex += width - 1;					
 				else {
-					dir = 1;
 					row0 = erowerr;
 					row1 = orowerr;
 				}
@@ -439,7 +425,7 @@ public class PnnQuantizer {
 					b_pix = limtb[b_pix - c2.getBlue() + 256];
 					a_pix = limtb[a_pix - c2.getAlpha() + 256];
 
-					k = r_pix * 2;
+					int k = r_pix * 2;
 					row1[cursor1 - DJ] = (short) r_pix;
 					row1[cursor1 + DJ] += (r_pix += k);
 					row1[cursor1] += (r_pix += k);
@@ -468,9 +454,10 @@ public class PnnQuantizer {
 					pixelIndex += dir;
 				}
 				if ((i % 2) == 1)
-					pixelIndex += (width + 1);
+					pixelIndex += width + 1;
 
-				odd_scanline = !odd_scanline;
+				dir *= -1;
+				short[] temp = row0; row0 = row1; row1 = temp;
 			}
 			return qPixels;
 		}
