@@ -43,7 +43,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	private void find_nn(Pnnbin[] bins, int idx, int nMaxColors)
 	{
 		int nn = 0;
-		double err = Integer.MAX_VALUE;
+		double err = 1e100;
 
 		Pnnbin bin1 = bins[idx];
 		int n1 = bin1.cnt;
@@ -262,15 +262,24 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			else {
 				Lab lab2 = getLab(c2.getRGB());
 				
-				curdist += sqr(lab2.L - lab1.L);
-                if (curdist > mindist)
-                    continue;
-
-                curdist += sqr(lab2.A - lab1.A);
-                if (curdist > mindist)
-                    continue;
-
-                curdist += sqr(lab2.B - lab1.B);
+				double deltaL_prime_div_k_L_S_L = CIELABConvertor.L_prime_div_k_L_S_L(lab1, lab2);
+				curdist += sqr(deltaL_prime_div_k_L_S_L);
+				if (curdist > mindist)
+					continue;
+	
+				MutableDouble a1Prime = new MutableDouble(), a2Prime = new MutableDouble(), CPrime1 = new MutableDouble(), CPrime2 = new MutableDouble();
+				double deltaC_prime_div_k_L_S_L = CIELABConvertor.C_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2);
+				curdist += sqr(deltaC_prime_div_k_L_S_L);
+				if (curdist > mindist)
+					continue;
+	
+				MutableDouble barCPrime = new MutableDouble(), barhPrime = new MutableDouble();
+				double deltaH_prime_div_k_L_S_L = CIELABConvertor.H_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2, barCPrime, barhPrime);
+				curdist +=  sqr(deltaH_prime_div_k_L_S_L);
+				if (curdist > mindist)
+					continue;
+	
+				curdist += CIELABConvertor.R_T(barCPrime, barhPrime, deltaC_prime_div_k_L_S_L, deltaH_prime_div_k_L_S_L);
 			}
 
 			if (curdist > mindist)
