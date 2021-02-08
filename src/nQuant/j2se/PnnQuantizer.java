@@ -114,6 +114,10 @@ public class PnnQuantizer {
 			int[] palettes = new int[nMaxColors];
 			for(int i=0; i<nMaxColors; ++i) {
 				Color c1 = palette[i];
+				if(c1 == null) {
+					System.err.println(i);
+					continue;
+				}
 				palettes[i] = c1.getRGB();
 			}
 			
@@ -348,7 +352,7 @@ public class PnnQuantizer {
 		return k;
 	}
 	
-	protected int[] calcDitherPixel(Color c, char[] clamp, short[] rowerr, int cursor, boolean hasSemiTransparency)
+	protected int[] calcDitherPixel(Color c, short[] clamp, short[] rowerr, int cursor, boolean hasSemiTransparency)
     {
         int[] ditherPixel = new int[4];
         if (hasSemiTransparency) {
@@ -376,12 +380,12 @@ public class PnnQuantizer {
 			final int DJ = 4;
 			final int DITHER_MAX = 20;
 			final int err_len = (width + 2) * DJ;
-			char[] clamp = new char[DJ * 256];
+			short[] clamp = new short[DJ * 256];
 			short[] limtb = new short[512];			
 
 			for (int i = 0; i < 256; i++) {
 				clamp[i] = 0;
-				clamp[i + 256] = (char) i;
+				clamp[i + 256] = (short) i;
 				clamp[i + 512] = BYTE_MAX;
 				clamp[i + 768] = BYTE_MAX;
 
