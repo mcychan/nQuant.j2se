@@ -139,7 +139,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			bins[i].Bc *= d;
 			
 			if(quan_sqrt)
-				bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
+				bins[i].cnt = (int) Math.pow(bins[i].cnt, 0.75);
 			bins[maxbins++] = bins[i];
 		}
 
@@ -355,7 +355,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if (hasSemiTransparency)
 			PR = PG = PB = 1.0;
 		Color[] palette;
-		boolean quan_sqrt = nMaxColors > 64;
+		boolean quan_sqrt = true;
 		if (nMaxColors > 2)
 			palette = pnnquan(cPixels, nMaxColors, quan_sqrt);
 		else {
