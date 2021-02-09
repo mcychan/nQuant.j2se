@@ -151,7 +151,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		//	bins[0].bk = bins[i].fw = 0;
 
 		int h, l, l2;
-		ratio = Math.min(1.0, sqr(nMaxColors) / pixelMap.size());
+		if(nMaxColors < 64)
+			ratio = Math.min(1.0, sqr(nMaxColors) / maxbins);
+		else
+			ratio = Math.min(1.0, sqr(nMaxColors / pixelMap.size()));
 		/* Initialize nearest neighbors and build heap of them */
 		for (int i = 0; i < maxbins; i++) {
 			find_nn(bins, i, nMaxColors);
