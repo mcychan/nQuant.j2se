@@ -25,7 +25,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	}
 
 	private static final class Pnnbin {
-		double ac = 0, Lc = 0, Ac = 0, Bc = 0, err = 0;
+		float ac = 0, Lc = 0, Ac = 0, Bc = 0, err = 0;
 		int cnt = 0;
 		int nn, fw, bk, tm, mtm;
 	}
@@ -51,14 +51,14 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		Lab lab1 = new Lab();
 		lab1.alpha = bin1.ac; lab1.L = bin1.Lc; lab1.A = bin1.Ac; lab1.B = bin1.Bc;
 		for (int i = bin1.fw; i != 0; i = bins[i].fw) {
-			double n2 = bins[i].cnt;
+			float n2 = bins[i].cnt;
 			double nerr2 = (n1 * n2) / (n1 + n2);
 			if (nerr2 >= err)
 				continue;
 			
 			Lab lab2 = new Lab();
 			lab2.alpha = bins[i].ac; lab2.L = bins[i].Lc; lab2.A = bins[i].Ac; lab2.B = bins[i].Bc;
-			double alphaDiff = lab2.alpha - lab1.alpha;
+			float alphaDiff = lab2.alpha - lab1.alpha;
 			double nerr = nerr2 * sqr(alphaDiff) * alphaDiff / 3.0;
 			if (nerr >= err)
 				continue;
@@ -76,19 +76,19 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if (nerr > err)
 				continue;
 			
-			double deltaL_prime_div_k_L_S_L = CIELABConvertor.L_prime_div_k_L_S_L(lab1, lab2);
+			float deltaL_prime_div_k_L_S_L = CIELABConvertor.L_prime_div_k_L_S_L(lab1, lab2);
 			nerr += ratio * nerr2 * sqr(deltaL_prime_div_k_L_S_L);
 			if (nerr > err)
 				continue;
 
 			MutableDouble a1Prime = new MutableDouble(), a2Prime = new MutableDouble(), CPrime1 = new MutableDouble(), CPrime2 = new MutableDouble();
-			double deltaC_prime_div_k_L_S_L = CIELABConvertor.C_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2);
+			float deltaC_prime_div_k_L_S_L = CIELABConvertor.C_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2);
 			nerr += ratio * nerr2 * sqr(deltaC_prime_div_k_L_S_L);
 			if (nerr > err)
 				continue;
 
 			MutableDouble barCPrime = new MutableDouble(), barhPrime = new MutableDouble();
-			double deltaH_prime_div_k_L_S_L = CIELABConvertor.H_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2, barCPrime, barhPrime);
+			float deltaH_prime_div_k_L_S_L = CIELABConvertor.H_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2, barCPrime, barhPrime);
 			nerr += ratio * nerr2 * sqr(deltaH_prime_div_k_L_S_L);
 			if (nerr > err)
 				continue;
@@ -100,7 +100,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			err = nerr;
 			nn = i;
 		}
-		bin1.err = err;
+		bin1.err = (float) err;
 		bin1.nn = nn;
 	}
 
@@ -108,7 +108,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	{
 		Pnnbin[] bins = new Pnnbin[65536];
 		int[] heap = new int[65537];
-		double err, n1, n2;
 
 		/* Build histogram */
 		for (final Color c : pixels) {
@@ -133,7 +132,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if (bins[i] == null)
 				continue;
 
-			double d = 1.0 / (double)bins[i].cnt;
+			float d = 1f / (float)bins[i].cnt;
 			bins[i].ac *= d;
 			bins[i].Lc *= d;
 			bins[i].Ac *= d;
@@ -152,12 +151,12 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		//	bins[0].bk = bins[i].fw = 0;
 
 		int h, l, l2;
-		ratio = Math.min(1.0, Math.pow(nMaxColors, 2.0) / pixelMap.size());
+		ratio = Math.min(1.0, sqr(nMaxColors) / pixelMap.size());
 		/* Initialize nearest neighbors and build heap of them */
 		for (int i = 0; i < maxbins; i++) {
 			find_nn(bins, i, nMaxColors);
 			/* Push slot on heap */
-			err = bins[i].err;
+			float err = bins[i].err;
 			for (l = ++heap[0]; l > 1; l = l2) {
 				l2 = l >> 1;
 				if (bins[h = heap[l2]].err <= err)
@@ -186,7 +185,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					tb.tm = i;
 				}
 				/* Push slot down */
-				err = bins[b1].err;
+				float err = bins[b1].err;
 				for (l = 1; (l2 = l + l) <= heap[0]; l = l2) {
 					if ((l2 < heap[0]) && (bins[heap[l2]].err > bins[heap[l2 + 1]].err))
 						l2++;
@@ -199,9 +198,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 			/* Do a merge */
 			Pnnbin nb = bins[tb.nn];
-			n1 = tb.cnt;
-			n2 = nb.cnt;
-			double d = 1.0 / (n1 + n2);
+			float n1 = tb.cnt;
+			float n2 = nb.cnt;
+			float d = 1.0f / (n1 + n2);
 			tb.ac = d * (n1 * tb.ac + n2 * nb.ac);
 			tb.Lc = d * (n1 * tb.Lc + n2 * nb.Lc);
 			tb.Ac = d * (n1 * tb.Ac + n2 * nb.Ac);
@@ -268,13 +267,13 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					continue;
 	
 				MutableDouble a1Prime = new MutableDouble(), a2Prime = new MutableDouble(), CPrime1 = new MutableDouble(), CPrime2 = new MutableDouble();
-				double deltaC_prime_div_k_L_S_L = CIELABConvertor.C_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2);
+				float deltaC_prime_div_k_L_S_L = CIELABConvertor.C_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2);
 				curdist += sqr(deltaC_prime_div_k_L_S_L);
 				if (curdist > mindist)
 					continue;
 	
 				MutableDouble barCPrime = new MutableDouble(), barhPrime = new MutableDouble();
-				double deltaH_prime_div_k_L_S_L = CIELABConvertor.H_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2, barCPrime, barhPrime);
+				float deltaH_prime_div_k_L_S_L = CIELABConvertor.H_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2, barCPrime, barhPrime);
 				curdist +=  sqr(deltaH_prime_div_k_L_S_L);
 				if (curdist > mindist)
 					continue;

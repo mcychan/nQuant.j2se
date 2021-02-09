@@ -55,7 +55,7 @@ public class PnnQuantizer {
 	}
 
 	private static final class Pnnbin {
-		double ac = 0, rc = 0, gc = 0, bc = 0, err = 0;
+		float ac = 0, rc = 0, gc = 0, bc = 0, err = 0;
 		int cnt = 0;
 		int nn, fw, bk, tm, mtm;
 	}
@@ -101,7 +101,7 @@ public class PnnQuantizer {
 			err = nerr;
 			nn = i;
 		}
-		bin1.err = err;
+		bin1.err = (float) err;
 		bin1.nn = nn;
 	}
 
@@ -157,7 +157,6 @@ public class PnnQuantizer {
 	{
 		Pnnbin[] bins = new Pnnbin[65536];
 		int[] heap = new int[65537];
-		double err, n1, n2;
 
 		/* Build histogram */
 		for (final Color pixel : pixels) {
@@ -181,7 +180,7 @@ public class PnnQuantizer {
 			if (bins[i] == null)
 				continue;
 
-			double d = 1.0 / (double)bins[i].cnt;
+			float d = 1f / (float)bins[i].cnt;
 			bins[i].ac *= d;
 			bins[i].rc *= d;
 			bins[i].gc *= d;
@@ -203,7 +202,7 @@ public class PnnQuantizer {
 		for (int i = 0; i < maxbins; i++) {
 			find_nn(bins, i);
 			/* Push slot on heap */
-			err = bins[i].err;
+			float err = bins[i].err;
 			for (l = ++heap[0]; l > 1; l = l2) {
 				l2 = l >> 1;
 				if (bins[h = heap[l2]].err <= err)
@@ -232,7 +231,7 @@ public class PnnQuantizer {
 					tb.tm = i;
 				}
 				/* Push slot down */
-				err = bins[b1].err;
+				float err = bins[b1].err;
 				for (l = 1; (l2 = l + l) <= heap[0]; l = l2) {
 					if ((l2 < heap[0]) && (bins[heap[l2]].err > bins[heap[l2 + 1]].err))
 						l2++;
@@ -245,9 +244,9 @@ public class PnnQuantizer {
 
 			/* Do a merge */
 			Pnnbin nb = bins[tb.nn];
-			n1 = tb.cnt;
-			n2 = nb.cnt;
-			double d = 1.0 / (n1 + n2);
+			float n1 = tb.cnt;
+			float n2 = nb.cnt;
+			float d = 1f / (n1 + n2);
 			tb.ac = d * (n1 * tb.ac + n2 * nb.ac);
 			tb.rc = d * (n1 * tb.rc + n2 * nb.rc);
 			tb.gc = d * (n1 * tb.gc + n2 * nb.gc);
@@ -265,8 +264,8 @@ public class PnnQuantizer {
 		Color[] palette = new Color[nMaxColors];
 		short k = 0;
 		for (int i = 0;; ++k) {
-			float alpha = (float) bins[i].ac / 255.0f;
-			palette[k] = new Color((float) bins[i].rc / 255.0f, (float) bins[i].gc / 255.0f, (float) bins[i].bc / 255.0f, alpha);
+			float alpha = bins[i].ac / 255f;
+			palette[k] = new Color(bins[i].rc / 255f, bins[i].gc / 255f, bins[i].bc / 255f, alpha);
 			if (m_transparentPixelIndex >= 0 && m_transparentColor.equals(palette[k])) {
 				Color temp = palette[0]; palette[0] = palette[k]; palette[k] = temp;
 			}
