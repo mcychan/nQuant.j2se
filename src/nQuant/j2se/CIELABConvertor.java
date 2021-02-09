@@ -151,7 +151,7 @@ public class CIELABConvertor {
 			hPrime1 = Math.atan2(lab1.B, a1Prime.doubleValue());
 			/*
 			* This must be converted to a hue angle in degrees between 0
-			* and 360 by addition of 2􏰏 to negative hue angles.
+			* and 360 by addition of 2π to negative hue angles.
 			*/
 			if (hPrime1 < 0)
 				hPrime1 += deg360InRad;
@@ -163,7 +163,7 @@ public class CIELABConvertor {
 			hPrime2 = Math.atan2(lab2.B, a2Prime.doubleValue());
 			/*
 			* This must be converted to a hue angle in degrees between 0
-			* and 360 by addition of 2􏰏 to negative hue angles.
+			* and 360 by addition of 2π to negative hue angles.
 			*/
 			if (hPrime2 < 0)
 				hPrime2 += deg360InRad;
