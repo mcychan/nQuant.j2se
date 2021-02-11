@@ -12,6 +12,7 @@ import nQuant.j2se.CIELABConvertor.Lab;
 import nQuant.j2se.CIELABConvertor.MutableDouble;
 
 public class PnnLABQuantizer extends PnnQuantizer {
+	private double PR = .2126, PG = .7152, PB = .0722;
 	private double ratio = 1.0;
 	private Map<Integer, Lab> pixelMap = new HashMap<Integer, Lab>();	
 
@@ -151,7 +152,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		int h, l, l2;
 		if(nMaxColors < 64)
-			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.01) / maxbins);
+			ratio = Math.min(1.0, sqr(nMaxColors) / maxbins);
 		else
 			ratio = Math.min(1.0, sqr(nMaxColors / pixelMap.size()));
 		/* Initialize nearest neighbors and build heap of them */
@@ -249,19 +250,20 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if (curdist > mindist)
 				continue;
 
-			Lab lab2 = getLab(c2.getRGB());
 			if (palette.length > 32) {
-				curdist += sqr(lab2.L - lab1.L);
+				curdist += PR * sqr(c2.getRed() - c.getRed());
 				if (curdist > mindist)
 					continue;
 
-				curdist += sqr(lab2.A - lab1.A);
+				curdist += PG * sqr(c2.getGreen() - c.getGreen());
 				if (curdist > mindist)
 					continue;
 
-				curdist += sqr(lab2.B - lab1.B);
+				curdist += PB * sqr(c2.getBlue() - c.getBlue());
 			}
-			else {				
+			else {
+				Lab lab2 = getLab(c2.getRGB());
+				
 				double deltaL_prime_div_k_L_S_L = CIELABConvertor.L_prime_div_k_L_S_L(lab1, lab2);
 				curdist += sqr(deltaL_prime_div_k_L_S_L);
 				if (curdist > mindist)
@@ -353,6 +355,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			}			
 		}
 
+		if (hasSemiTransparency)
+			PR = PG = PB = 1.0;
 		Color[] palette;
 		boolean quan_sqrt = true;
 		if (nMaxColors > 2)
