@@ -58,7 +58,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			
 			Lab lab2 = new Lab();
 			lab2.alpha = bins[i].ac; lab2.L = bins[i].Lc; lab2.A = bins[i].Ac; lab2.B = bins[i].Bc;
-			float alphaDiff = lab2.alpha - lab1.alpha;
+			float alphaDiff = hasSemiTransparency ? Math.abs(lab2.alpha - lab1.alpha) : 0;
 			double nerr = nerr2 * sqr(alphaDiff) * alphaDiff / 3.0;
 			if (nerr >= err)
 				continue;
@@ -152,9 +152,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		int h, l, l2;
 		if(nMaxColors < 64)
-			ratio = Math.min(1.0, sqr(nMaxColors) / maxbins);
+			ratio = Math.min(1.0, Math.pow(nMaxColors, 1.76) / maxbins);
 		else
-			ratio = Math.min(1.0, sqr(nMaxColors / pixelMap.size()));
+			ratio = Math.min(1.0, Math.pow(nMaxColors, 1.05) / pixelMap.size());
 		/* Initialize nearest neighbors and build heap of them */
 		for (int i = 0; i < maxbins; i++) {
 			find_nn(bins, i, nMaxColors);
@@ -244,7 +244,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		double mindist = SHORT_MAX;
 		Lab lab1 = getLab(c.getRGB());
 		for (short i=0; i<palette.length; ++i) {
-			Color c2 = palette[i];			
+			Color c2 = palette[i];
+			if(c2 == null)
+				break;
 
 			double curdist = sqr(c2.getAlpha() - c.getAlpha());
 			if (curdist > mindist)
@@ -265,7 +267,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					if (curdist > mindist)
 						continue;
 
-					curdist += .333 * sqr(lab2.B - lab1.B);
+					double yDiff = Math.abs(lab2.B - lab1.B);
+					curdist += yDiff * sqr(yDiff) / 3.0;
 				}
 			}
 			else {				

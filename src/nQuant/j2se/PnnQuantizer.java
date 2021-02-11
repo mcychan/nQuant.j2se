@@ -114,10 +114,9 @@ public class PnnQuantizer {
 			int[] palettes = new int[nMaxColors];
 			for(int i=0; i<nMaxColors; ++i) {
 				Color c1 = palette[i];
-				if(c1 == null) {
-					System.err.println(i);
+				if(c1 == null)
 					continue;
-				}
+
 				palettes[i] = c1.getRGB();
 			}
 			
