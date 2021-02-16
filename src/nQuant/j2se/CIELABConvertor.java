@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 
 public class CIELABConvertor {
 	private final static char BYTE_MAX = -Byte.MIN_VALUE + Byte.MAX_VALUE;
-	private final static double M_PI = 3.14159265358979323846;
 	
 	static class MutableDouble extends Number {
 
@@ -106,7 +105,7 @@ public class CIELABConvertor {
 
 	private static final float deg2Rad(final float deg)
 	{
-		return (float) (deg * (M_PI / 180f));
+		return (float) (deg * (Math.PI / 180f));
 	}
 
 	static float L_prime_div_k_L_S_L(final Lab lab1, final Lab lab2)

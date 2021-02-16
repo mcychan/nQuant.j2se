@@ -27,7 +27,8 @@ public class PnnQuantizer {
 	protected Color m_transparentColor;
 	private Color[] m_palette;
 	protected ColorModel m_colorModel;
-	protected Map<Integer, short[]> closestMap = new HashMap<Integer, short[]>();	
+	protected Map<Integer, short[]> closestMap = new HashMap<>();
+	protected Map<Integer, Short> nearestMap = new HashMap<>();
 
 	public PnnQuantizer(Image im, int w, int h) throws IOException {
 		width = w;
@@ -279,7 +280,11 @@ public class PnnQuantizer {
 
 	protected short nearestColorIndex(final Color[] palette, final Color c)
 	{
-		short k = 0;
+		Short got = nearestMap.get(c.getRGB());
+		if (got != null)
+			return got;
+		
+		short k = 0;		
 		double curdist, mindist = SHORT_MAX;
 		for (int i=0; i<palette.length; ++i) {
 			Color c2 = palette[i];
@@ -307,6 +312,7 @@ public class PnnQuantizer {
 			mindist = curdist;
 			k = (short) i;
 		}
+		nearestMap.put(c.getRGB(), k);
 		return k;
 	}
 
@@ -516,6 +522,7 @@ public class PnnQuantizer {
 			}
 		}
 		closestMap.clear();
+		nearestMap.clear();
 
 		return qPixels;
 	}

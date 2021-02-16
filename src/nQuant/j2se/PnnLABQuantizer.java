@@ -63,15 +63,15 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if (nerr >= err)
 				continue;
 			
-			nerr += (1- ratio) * nerr2 * sqr(lab2.L - lab1.L);
+			nerr += (1 - ratio) * nerr2 * sqr(lab2.L - lab1.L);
 			if (nerr >= err)
 				continue;
 
-			nerr += (1- ratio) * nerr2 * sqr(lab2.A - lab1.A);
+			nerr += (1 - ratio) * nerr2 * sqr(lab2.A - lab1.A);
 			if (nerr >= err)
 				continue;
 
-			nerr += (1- ratio) * nerr2 * sqr(lab2.B - lab1.B);
+			nerr += (1 - ratio) * nerr2 * sqr(lab2.B - lab1.B);
 
 			if (nerr > err)
 				continue;
@@ -139,7 +139,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			bins[i].Bc *= d;
 			
 			if(quan_sqrt)
-				bins[i].cnt = (int) Math.pow(bins[i].cnt, 0.75);
+				bins[i].cnt = (int) Math.pow(bins[i].cnt, 0.6);
 			bins[maxbins++] = bins[i];
 		}
 
@@ -152,7 +152,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		int h, l, l2;
 		if(nMaxColors < 64)
-			ratio = Math.min(1.0, Math.pow(nMaxColors, 1.76) / maxbins);
+			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.1) / maxbins);
 		else
 			ratio = Math.min(1.0, Math.pow(nMaxColors, 1.05) / pixelMap.size());
 		/* Initialize nearest neighbors and build heap of them */
@@ -240,6 +240,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	@Override
 	protected short nearestColorIndex(final Color[] palette, final Color c)
 	{
+		Short got = nearestMap.get(c.getRGB());
+		if (got != null)
+			return got;
+		
 		short k = 0;
 		double mindist = SHORT_MAX;
 		Lab lab1 = getLab(c.getRGB());
@@ -297,6 +301,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			mindist = curdist;
 			k = i;
 		}
+		nearestMap.put(c.getRGB(), k);
 		return k;
 	}
 
@@ -394,6 +399,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 		pixelMap.clear();
 		closestMap.clear();
+		nearestMap.clear();
 
 		return qPixels;
 	}
