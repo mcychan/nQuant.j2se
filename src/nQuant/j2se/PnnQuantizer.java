@@ -185,21 +185,27 @@ public class PnnQuantizer {
 			bins[i].rc *= d;
 			bins[i].gc *= d;
 			bins[i].bc *= d;
-			if(quan_sqrt)
-				bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
+
 			bins[maxbins++] = bins[i];
 		}
+		
+		if (sqr(nMaxColors) / maxbins < .022)
+			quan_sqrt = false;		
 
-		for (int i = 0; i < maxbins - 1; i++) {
+		int i = 0;
+		for (; i < maxbins - 1; i++) {
 			bins[i].fw = (i + 1);
 			bins[i + 1].bk = i;
+			
+			if (quan_sqrt)
+				bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
 		}
-		// !!! Already zeroed out by calloc()
-		//	bins[0].bk = bins[i].fw = 0;
+		if (quan_sqrt)
+			bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
 
 		int h, l, l2 ;
 		/* Initialize nearest neighbors and build heap of them */
-		for (int i = 0; i < maxbins; i++) {
+		for (i = 0; i < maxbins; i++) {
 			find_nn(bins, i);
 			/* Push slot on heap */
 			float err = bins[i].err;
@@ -214,7 +220,7 @@ public class PnnQuantizer {
 
 		/* Merge bins which increase error the least */
 		int extbins = maxbins - nMaxColors;
-		for (int i = 0; i < extbins; ) {
+		for (i = 0; i < extbins; ) {
 			Pnnbin tb = null;
 			/* Use heap to find which bins to merge */
 			for (;;) {
@@ -263,7 +269,7 @@ public class PnnQuantizer {
 		/* Fill palette */
 		Color[] palette = new Color[nMaxColors];
 		short k = 0;
-		for (int i = 0;; ++k) {
+		for (i = 0;; ++k) {
 			float alpha = bins[i].ac / 255f;
 			palette[k] = new Color(bins[i].rc / 255f, bins[i].gc / 255f, bins[i].bc / 255f, alpha);
 			if (m_transparentPixelIndex >= 0 && m_transparentColor.equals(palette[k])) {

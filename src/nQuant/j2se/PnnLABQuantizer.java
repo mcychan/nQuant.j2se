@@ -136,27 +136,34 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			bins[i].ac *= d;
 			bins[i].Lc *= d;
 			bins[i].Ac *= d;
-			bins[i].Bc *= d;
-			
-			if(quan_sqrt)
-				bins[i].cnt = (int) Math.pow(bins[i].cnt, 0.6);
+			bins[i].Bc *= d;			
+
 			bins[maxbins++] = bins[i];
 		}
-
-		for (int i = 0; i < maxbins - 1; i++) {
+		
+		if (sqr(nMaxColors) / maxbins < .022)
+			quan_sqrt = false;
+		
+		int i = 0;
+		for (; i < maxbins - 1; i++) {
 			bins[i].fw = (i + 1);
 			bins[i + 1].bk = i;
+			
+			if (quan_sqrt)
+				bins[i].cnt = (int) Math.pow(bins[i].cnt, 0.6);
 		}
-		// !!! Already zeroed out by calloc()
-		//	bins[0].bk = bins[i].fw = 0;
+		if (quan_sqrt)
+			bins[i].cnt = (int) Math.pow(bins[i].cnt, 0.6);
 
 		int h, l, l2;
-		if(nMaxColors < 64)
-			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.1) / maxbins);
+		if(quan_sqrt && nMaxColors < 64)
+			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.09) / maxbins);
+		else if(!quan_sqrt)
+			ratio = .55;
 		else
 			ratio = Math.min(1.0, Math.pow(nMaxColors, 1.05) / pixelMap.size());
 		/* Initialize nearest neighbors and build heap of them */
-		for (int i = 0; i < maxbins; i++) {
+		for (i = 0; i < maxbins; i++) {
 			find_nn(bins, i, nMaxColors);
 			/* Push slot on heap */
 			float err = bins[i].err;
@@ -171,7 +178,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		/* Merge bins which increase error the least */
 		int extbins = maxbins - nMaxColors;
-		for (int i = 0; i < extbins; ) {			
+		for (i = 0; i < extbins; ) {			
 			Pnnbin tb = null;
 			/* Use heap to find which bins to merge */
 			for (;;) {
@@ -220,7 +227,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		/* Fill palette */
 		Color[] palette = new Color[nMaxColors];
 		int k = 0;
-		for (int i = 0;; ++k) {
+		for (i = 0;; ++k) {
 			Lab lab1 = new Lab();
 			lab1.alpha = (int) bins[i].ac;
 			lab1.L = bins[i].Lc; lab1.A = bins[i].Ac; lab1.B = bins[i].Bc;
@@ -271,7 +278,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					if (curdist > mindist)
 						continue;
 
-					curdist += sqr(lab2.B - lab1.B) / 3.0;
+					curdist += sqr(lab2.B - lab1.B) / 2.0;
 				}
 			}
 			else {				
