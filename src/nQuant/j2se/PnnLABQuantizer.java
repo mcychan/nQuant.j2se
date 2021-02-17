@@ -271,8 +271,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					if (curdist > mindist)
 						continue;
 
-					double yDiff = Math.abs(lab2.B - lab1.B);
-					curdist += yDiff * sqr(yDiff) / 3.0;
+					curdist += sqr(lab2.B - lab1.B) / 3.0;
 				}
 			}
 			else {				
