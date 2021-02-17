@@ -256,7 +256,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if (curdist > mindist)
 				continue;
 
-			
+			Lab lab2 = getLab(c2.getRGB());
 			if (palette.length > 32) {
 				curdist += PR * sqr(c2.getRed() - c.getRed());
 				if (curdist > mindist)
@@ -271,13 +271,11 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					if (curdist > mindist)
 						continue;
 
-					double luma1 = c.getRed() * PR + c.getGreen() * PG + c.getBlue() * PB;
-					double luma2 = c2.getRed() * PR + c2.getGreen() * PG + c2.getBlue() * PB;
-                    curdist += sqr(luma1 - luma2) / 3.0;
+					double yDiff = Math.abs(lab2.B - lab1.B);
+					curdist += yDiff * sqr(yDiff) / 3.0;
 				}
 			}
-			else {		
-				Lab lab2 = getLab(c2.getRGB());
+			else {				
 				double deltaL_prime_div_k_L_S_L = CIELABConvertor.L_prime_div_k_L_S_L(lab1, lab2);
 				curdist += sqr(deltaL_prime_div_k_L_S_L);
 				if (curdist > mindist)
