@@ -141,7 +141,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			bins[maxbins++] = bins[i];
 		}
 		
-		if (sqr(nMaxColors) / maxbins < .022)
+		double proportional = sqr(nMaxColors) / maxbins;
+		if (proportional < .022 || proportional > .5)
 			quan_sqrt = false;
 		
 		int i = 0;
