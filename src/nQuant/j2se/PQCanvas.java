@@ -180,7 +180,7 @@ public class PQCanvas extends Canvas {
 				} catch(Exception ex) {
 					ex.printStackTrace();
 				} finally {
-					System.exit(0);
+					e.getWindow().dispose();;
 				}
 			}
 		});
