@@ -17,7 +17,6 @@ import java.awt.image.DataBufferShort;
 import java.awt.image.DirectColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
-import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 
@@ -99,10 +98,7 @@ public class PQCanvas extends Canvas {
 		protected void done() {
 			try {
 				image = get();
-				hasAlpha = pq.hasAlpha();
-				String tempFilePath = System.getProperty("java.io.tmpdir") + "result.png";
-				ImageIO.write((RenderedImage) image, "png", new java.io.File(tempFilePath));
-				System.out.println(tempFilePath);
+				hasAlpha = pq.hasAlpha();				
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {	    	
@@ -175,8 +171,16 @@ public class PQCanvas extends Canvas {
 		frame.setVisible(true);
 		frame.addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent e) { 
-				System.out.println("Closing program");		
-				System.exit(0); }
+				try {
+					String tempFilePath = System.getProperty("java.io.tmpdir") + "result.png";
+					ImageIO.write(canvas.image, "png", new java.io.File(tempFilePath));
+					System.out.println(tempFilePath);					
+				} catch(Exception ex) {
+					ex.printStackTrace();
+				} finally {
+					System.exit(0);
+				}
+			}
 		});
 	}
 }
