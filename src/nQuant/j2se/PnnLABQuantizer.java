@@ -1,7 +1,7 @@
 package nQuant.j2se;
 
 import java.awt.Color;
-import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.io.IOException;
 import java.util.HashMap;
@@ -16,11 +16,11 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	private double ratio = 1.0;
 	private Map<Integer, Lab> pixelMap = new HashMap<Integer, Lab>();	
 
-	public PnnLABQuantizer(Image im, int w, int h) throws IOException {
+	public PnnLABQuantizer(BufferedImage im, int w, int h) throws IOException {
 		super(im, w, h);
 	}
 
-	public PnnLABQuantizer(Image im, ImageObserver obs) throws IOException {
+	public PnnLABQuantizer(BufferedImage im, ImageObserver obs) throws IOException {
 		super(im, obs);
 	}
 
@@ -104,7 +104,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		bin1.nn = nn;
 	}
 
-	private Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
+	@Override
+	protected Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
 	{
 		Pnnbin[] bins = new Pnnbin[65536];
 		int[] heap = new int[65537];
@@ -326,8 +327,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				Color c2 = palette[k];
 				Lab lab2 = getLab(c2.getRGB());
 
-				closest[4] = (short) (sqr(lab2.alpha - lab1.alpha) + CIELABConvertor.CIEDE2000(lab2, lab1));
-				//closest[4] = Math.abs(lab2.alpha - lab1.alpha) + Math.abs(lab2.L - lab1.L) + Math.abs(lab2.A - lab1.A) + Math.abs(lab2.B - lab1.B);
+				//closest[4] = (short) (sqr(lab2.alpha - lab1.alpha) + CIELABConvertor.CIEDE2000(lab2, lab1));
+				closest[4] = (short) (Math.abs(lab2.alpha - lab1.alpha) + Math.abs(lab2.L - lab1.L) + Math.abs(lab2.A - lab1.A) + Math.abs(lab2.B - lab1.B));
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
 					closest[3] = closest[2];
@@ -358,54 +359,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 	@Override
 	public short[] convert(int nMaxColors, boolean dither) {
-		final Color[] cPixels = new Color[pixels.length];		
-		for (int i = 0; i<pixels.length; ++i) {
-			int pixel = pixels[i];
-			int alfa = (pixel >> 24) & 0xff;
-			int r   = (pixel >> 16) & 0xff;
-			int g = (pixel >>  8) & 0xff;
-			int b  = (pixel      ) & 0xff;
-			cPixels[i] = new Color(r, g, b, alfa);
-			if (alfa < BYTE_MAX) {
-				hasSemiTransparency = true;
-				if (alfa == 0) {
-					m_transparentPixelIndex = i;
-					m_transparentColor = cPixels[i];
-				}
-			}			
-		}
-
-		if (hasSemiTransparency)
-			PR = PG = PB = 1.0;
-		Color[] palette;
-		boolean quan_sqrt = true;
-		if (nMaxColors > 2)
-			palette = pnnquan(cPixels, nMaxColors, quan_sqrt);
-		else {
-			palette = new Color[nMaxColors];
-			if (hasSemiTransparency) {
-				palette[0] = new Color(0, 0, 0, 0);
-				palette[1] = Color.BLACK;
-			}
-			else {
-				palette[0] = Color.BLACK;
-				palette[1] = Color.WHITE;
-			}
-		}
-
-		if (nMaxColors > 256)
-			dither = true;
-		short[] qPixels = quantize_image(cPixels, palette, dither);
-		if (m_transparentPixelIndex >= 0) {
-			short k = qPixels[m_transparentPixelIndex];
-			if (nMaxColors > 2)
-				palette[k] = m_transparentColor;
-			else if (!palette[k].equals(m_transparentColor)) {
-				Color c1 = palette[0]; palette[0] = palette[1]; palette[1] = c1;
-			}
-		}
-		pixelMap.clear();
-		closestMap.clear();
+		short[] qPixels = super.convert(nMaxColors, dither);
 		nearestMap.clear();
 
 		return qPixels;

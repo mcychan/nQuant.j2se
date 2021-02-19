@@ -5,7 +5,6 @@ Copyright (c) 2018-2020 Miller Cy Chan
  * error measure; time used is proportional to number of bins squared - WJ */
 
 import java.awt.Color;
-import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
@@ -13,6 +12,7 @@ import java.awt.image.DirectColorModel;
 import java.awt.image.ImageObserver;
 import java.awt.image.IndexColorModel;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -30,29 +30,21 @@ public class PnnQuantizer {
 	protected Map<Integer, short[]> closestMap = new HashMap<>();
 	protected Map<Integer, Short> nearestMap = new HashMap<>();
 
-	public PnnQuantizer(Image im, int w, int h) throws IOException {
+	public PnnQuantizer(BufferedImage im, int w, int h) throws IOException {
 		width = w;
 		height = h;
 		setPixels(im);
 	}
 
-	public PnnQuantizer(Image im, ImageObserver obs) throws IOException {
-		width = im.getWidth(obs);
-		height = im.getHeight(obs);
-		setPixels(im, obs);
+	public PnnQuantizer(BufferedImage im, ImageObserver obs) throws IOException {
+		this(im, im.getWidth(obs), im.getHeight(obs));
 	}
 
-	private void setPixels(Image im, ImageObserver obs) throws IOException {
-		if (im == null)
-			throw new IOException ("Image is null");		
-		setPixels(im);
-	}
-
-	private void setPixels(Image im) throws IOException {
+	private void setPixels(BufferedImage im) throws IOException {
 		BufferedImage img2 = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
 
-		img2.getGraphics().drawImage(im, 0, 0, null);
-		pixels = ((java.awt.image.DataBufferInt) img2.getRaster().getDataBuffer()).getData();
+	    img2.getGraphics().drawImage(im, 0, 0, null);
+		pixels = ((java.awt.image.DataBufferInt) img2.getRaster().getDataBuffer()).getData();	
 	}
 
 	private static final class Pnnbin {
@@ -113,17 +105,18 @@ public class PnnQuantizer {
 		
 		if(nMaxColors <= 256) {
 			int[] palettes = new int[nMaxColors];
+			int j = 0;
 			for(int i=0; i<nMaxColors; ++i) {
 				Color c1 = palette[i];
 				if(c1 == null)
 					continue;
 
-				palettes[i] = c1.getRGB();
+				palettes[j++] = c1.getRGB();
 			}
 			
 			m_colorModel = new IndexColorModel(8,         // bits per pixel
-				nMaxColors,         // size of color component array
-				palettes,   // color map
+				j,         // size of color component array
+				Arrays.copyOfRange(palettes, 0, j),   // color map
                 0,         // offset in the map
                 m_transparentPixelIndex > -1,      // has alpha
                 m_transparentPixelIndex,         // the pixel value that should be transparent
@@ -151,9 +144,18 @@ public class PnnQuantizer {
 					DCM_1555_BLU_MASK,
 					DCM_1555_ALP_MASK);
 		}
+		else {
+			final int DCM_565_RED_MASK = 63488;
+			final int DCM_565_GRN_MASK = 2016;
+			final int DCM_565_BLU_MASK = 31;
+			m_colorModel = new DirectColorModel(16,
+					DCM_565_RED_MASK,
+					DCM_565_GRN_MASK,
+					DCM_565_BLU_MASK);
+		}
 	}
 
-	private Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
+	protected Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
 	{
 		Pnnbin[] bins = new Pnnbin[65536];
 		int[] heap = new int[65537];
@@ -488,10 +490,7 @@ public class PnnQuantizer {
 		for (int i = 0; i<pixels.length; ++i) {
 			int pixel = pixels[i];
 			int alfa = (pixel >> 24) & 0xff;
-			int r   = (pixel >> 16) & 0xff;
-			int g = (pixel >>  8) & 0xff;
-			int b  = (pixel      ) & 0xff;
-			cPixels[i] = new Color(r, g, b, alfa);
+			cPixels[i] = new Color(pixel, true);
 			if (alfa < BYTE_MAX) {
 				hasSemiTransparency = true;
 				if (alfa == 0) {
