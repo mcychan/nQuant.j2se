@@ -16,10 +16,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	private double ratio = 1.0;
 	private Map<Integer, Lab> pixelMap = new HashMap<Integer, Lab>();	
 
-	public PnnLABQuantizer(BufferedImage im, int w, int h) throws IOException {
-		super(im, w, h);
-	}
-
 	public PnnLABQuantizer(BufferedImage im, ImageObserver obs) throws IOException {
 		super(im, obs);
 	}
@@ -355,14 +351,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		closestMap.put(c.getRGB(), closest);
 		return k;
-	}
-
-	@Override
-	public short[] convert(int nMaxColors, boolean dither) {
-		short[] qPixels = super.convert(nMaxColors, dither);
-		nearestMap.clear();
-
-		return qPixels;
 	}
 
 }

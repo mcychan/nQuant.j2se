@@ -6,7 +6,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.TexturePaint;
@@ -18,6 +17,7 @@ import java.awt.image.DataBufferShort;
 import java.awt.image.DirectColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 
@@ -28,7 +28,7 @@ public class PQCanvas extends Canvas {
 
 	private static final long serialVersionUID = -5166271928949046848L;	
 	private boolean hasAlpha;
-	private Image image = null;
+	private BufferedImage image = null;
 	private final TexturePaint tp;
 	
 	public PQCanvas() {
@@ -37,12 +37,7 @@ public class PQCanvas extends Canvas {
 
 	public void set(final File file) {
 		try {
-			Image img = ImageIO.read(file);
-			java.awt.MediaTracker tracker = new java.awt.MediaTracker(this);
-			tracker.addImage(img, 0);
-			try {
-				tracker.waitForID(0);
-			} catch (InterruptedException e) { }
+			BufferedImage img = ImageIO.read(file);
 			System.out.println("w = " + img.getWidth(this));
 			System.out.println("h = " + img.getHeight(this));
 			set(img);
@@ -65,12 +60,12 @@ public class PQCanvas extends Canvas {
 		}); // end FileDrop.Listener
 	}
 
-	private Image toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {
-		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), new java.awt.Point());
+	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {
+		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), null);
 		return new BufferedImage(icm, raster, icm.isAlphaPremultiplied(), null);
 	}
 
-	private class PnnWorker extends SwingWorker<Image, String> { 
+	private class PnnWorker extends SwingWorker<BufferedImage, String> { 
 		private final PnnQuantizer pq;
 
 		PnnWorker(PnnQuantizer pq) {
@@ -78,7 +73,7 @@ public class PQCanvas extends Canvas {
 		}
 
 		@Override
-		protected Image doInBackground() throws Exception {
+		protected BufferedImage doInBackground() throws Exception {
 			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 			int w = pq.getWidth();
 			int h = pq.getHeight();
@@ -105,6 +100,9 @@ public class PQCanvas extends Canvas {
 			try {
 				image = get();
 				hasAlpha = pq.hasAlpha();
+				String tempFilePath = System.getProperty("java.io.tmpdir") + "result.png";
+				ImageIO.write((RenderedImage) image, "png", new java.io.File(tempFilePath));
+				System.out.println(tempFilePath);
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {	    	
@@ -115,7 +113,7 @@ public class PQCanvas extends Canvas {
 		}
 	};
 
-	public void set(Image img) throws Exception {
+	public void set(BufferedImage img) throws Exception {
 		PnnQuantizer pq = new PnnLABQuantizer(img, this);
 		new PnnWorker(pq).execute();		
 	}

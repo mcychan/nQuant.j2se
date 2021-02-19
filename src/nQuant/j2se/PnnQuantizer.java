@@ -30,7 +30,7 @@ public class PnnQuantizer {
 	protected Map<Integer, short[]> closestMap = new HashMap<>();
 	protected Map<Integer, Short> nearestMap = new HashMap<>();
 
-	public PnnQuantizer(BufferedImage im, int w, int h) throws IOException {
+	private PnnQuantizer(BufferedImage im, int w, int h) throws IOException {
 		width = w;
 		height = h;
 		setPixels(im);
