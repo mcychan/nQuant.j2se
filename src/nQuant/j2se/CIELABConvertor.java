@@ -77,11 +77,15 @@ public class CIELABConvertor {
 		lab.B = 200f * (y - z);
 		return lab;
 	}
+	
+	static int clamp(float val, int min, int max) {
+	    return (int) Math.max(min, Math.min(max, val));
+	}
 		
 	static Color LAB2RGB(final Lab lab){
-		float y = (lab.L + 16) / 116;
+		float y = (lab.L + 16) / 116f;
 		float x = lab.A / 500 + y;
-		float z = y - lab.B / 200;
+		float z = y - lab.B / 200f;
 		float r, g, b;
 
 		x = 0.95047f * ((x * x * x > 0.008856) ? x * x * x : (x - 16f / 116f) / 7.787f);
@@ -96,7 +100,11 @@ public class CIELABConvertor {
 		g = (g > 0.0031308) ? (float) (1.055f * Math.pow(g, 1.0 / 2.4) - 0.055) : 12.92f * g;
 		b = (b > 0.0031308) ? (float) (1.055f * Math.pow(b, 1.0 / 2.4) - 0.055) : 12.92f * b;
 
-		return new Color((float) Math.max(0, Math.min(1, r)), (float) Math.max(0, Math.min(1, g)), (float) Math.max(0, Math.min(1, b)), (float) Math.min(lab.alpha, BYTE_MAX) / 255.0f);
+		int a = clamp(lab.alpha, 0, 255);
+		r = clamp(r * 255, 0, 255);
+		g = clamp(g * 255, 0, 255);
+		b = clamp(b * 255, 0, 255);
+		return new Color((int) r, (int) g, (int) b, a);
 	}
 
 	/*******************************************************************************

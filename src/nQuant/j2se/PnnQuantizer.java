@@ -12,7 +12,6 @@ import java.awt.image.DirectColorModel;
 import java.awt.image.ImageObserver;
 import java.awt.image.IndexColorModel;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -105,18 +104,17 @@ public class PnnQuantizer {
 		
 		if(nMaxColors <= 256) {
 			int[] palettes = new int[nMaxColors];
-			int j = 0;
 			for(int i=0; i<nMaxColors; ++i) {
 				Color c1 = palette[i];
 				if(c1 == null)
 					continue;
 
-				palettes[j++] = c1.getRGB();
+				palettes[i] = c1.getRGB();
 			}
 			
 			m_colorModel = new IndexColorModel(8,         // bits per pixel
-				j,         // size of color component array
-				Arrays.copyOfRange(palettes, 0, j),   // color map
+				nMaxColors,         // size of color component array
+				palettes,   // color map
                 0,         // offset in the map
                 m_transparentPixelIndex > -1,      // has alpha
                 m_transparentPixelIndex,         // the pixel value that should be transparent
@@ -474,11 +472,11 @@ public class PnnQuantizer {
 		}
 
 		if(hasSemiTransparency || nMaxColors < 64) {
-			for (int i = 0; i < qPixels.length; i++)
+			for (int i = 0; i < qPixels.length; ++i)
 				qPixels[i] = nearestColorIndex(palette, pixels[i]);
 		}
 		else {
-			for (int i = 0; i < qPixels.length; i++)
+			for (int i = 0; i < qPixels.length; ++i)
 				qPixels[i] = closestColorIndex(palette, pixels[i]);
 		}
 

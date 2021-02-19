@@ -102,7 +102,8 @@ public class PQCanvas extends Canvas {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {	    	
-				getParent().setSize(pq.getWidth() + 16, pq.getHeight() + 38);
+				java.awt.Insets insets = getParent().getInsets();
+				getParent().setSize(pq.getWidth() + insets.right + insets.left, pq.getHeight() + insets.top + insets.bottom);
 				repaint();
 				setCursor(Cursor.getDefaultCursor());
 			}
@@ -143,7 +144,8 @@ public class PQCanvas extends Canvas {
 		    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 		    
 		    Dimension sz = getParent().getSize();
-		    sz.setSize(sz.getWidth() - 16, sz.getHeight() - 38);
+		    java.awt.Insets insets = getParent().getInsets();
+		    sz.setSize(sz.getWidth() - insets.right - insets.left, sz.getHeight() - insets.top - insets.bottom);
 		    
 		    if(hasAlpha) {       
 		    	g2d.setPaint(tp);
