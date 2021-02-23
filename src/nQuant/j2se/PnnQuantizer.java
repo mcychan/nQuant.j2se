@@ -40,10 +40,7 @@ public class PnnQuantizer {
 	}
 
 	private void setPixels(BufferedImage im) throws IOException {
-		BufferedImage img2 = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-
-	    img2.getGraphics().drawImage(im, 0, 0, null);
-		pixels = ((java.awt.image.DataBufferInt) img2.getRaster().getDataBuffer()).getData();	
+	    pixels = im.getRGB(0, 0, width, height, null, 0, width);
 	}
 
 	private static final class Pnnbin {
