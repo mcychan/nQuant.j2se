@@ -270,8 +270,8 @@ public class PnnQuantizer {
 		Color[] palette = new Color[nMaxColors];
 		short k = 0;
 		for (i = 0;; ++k) {
-			float alpha = bins[i].ac / 255f;
-			palette[k] = new Color(bins[i].rc / 255f, bins[i].gc / 255f, bins[i].bc / 255f, alpha);
+			int alpha = (int) bins[i].ac;
+			palette[k] = new Color((int) bins[i].rc, (int) bins[i].gc, (int) bins[i].bc, alpha);
 			if (m_transparentPixelIndex >= 0 && m_transparentColor.equals(palette[k])) {
 				Color temp = palette[0]; palette[0] = palette[k]; palette[k] = temp;
 			}
@@ -330,7 +330,7 @@ public class PnnQuantizer {
 		if (got == null) {
 			closest[2] = closest[3] = SHORT_MAX;
 
-			for (; k < palette.length; k++) {
+			for (; k < palette.length; ++k) {
 				Color c2 = palette[k];
 
 				closest[4] = (short) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
@@ -388,22 +388,23 @@ public class PnnQuantizer {
 		int pixelIndex = 0;
 		if (dither) {			
 			final int DJ = 4;
+			final int BLOCK_SIZE = 256;
 			final int DITHER_MAX = 20;
 			final int err_len = (width + 2) * DJ;
-			short[] clamp = new short[DJ * 256];
-			short[] limtb = new short[512];			
+			short[] clamp = new short[DJ * BLOCK_SIZE];
+			short[] limtb = new short[2 * BLOCK_SIZE];			
 
-			for (int i = 0; i < 256; i++) {
+			for (int i = 0; i < BLOCK_SIZE; ++i) {
 				clamp[i] = 0;
-				clamp[i + 256] = (short) i;
-				clamp[i + 512] = BYTE_MAX;
-				clamp[i + 768] = BYTE_MAX;
+				clamp[i + BLOCK_SIZE] = (short) i;
+				clamp[i + BLOCK_SIZE * 2] = BYTE_MAX;
+				clamp[i + BLOCK_SIZE * 3] = BYTE_MAX;
 
 				limtb[i] = -DITHER_MAX;
-				limtb[i + 256] = DITHER_MAX;
+				limtb[i + BLOCK_SIZE] = DITHER_MAX;
 			}
 			for (int i = -DITHER_MAX; i <= DITHER_MAX; i++)
-				limtb[i + 256] = (short) i;
+				limtb[i + BLOCK_SIZE] = (short) i;
 
 			int dir = 1;
 			short[] row0 = new short[err_len];
@@ -429,10 +430,10 @@ public class PnnQuantizer {
 					if(nMaxColors > 256)
 						qPixels[pixelIndex] = (short) getColorIndex(c2);
 
-					r_pix = limtb[r_pix - c2.getRed() + 256];
-					g_pix = limtb[g_pix - c2.getGreen() + 256];
-					b_pix = limtb[b_pix - c2.getBlue() + 256];
-					a_pix = limtb[a_pix - c2.getAlpha() + 256];
+					r_pix = limtb[r_pix - c2.getRed() + BLOCK_SIZE];
+					g_pix = limtb[g_pix - c2.getGreen() + BLOCK_SIZE];
+					b_pix = limtb[b_pix - c2.getBlue() + BLOCK_SIZE];
+					a_pix = limtb[a_pix - c2.getAlpha() + BLOCK_SIZE];
 
 					int k = r_pix * 2;
 					row1[cursor1 - DJ] = (short) r_pix;

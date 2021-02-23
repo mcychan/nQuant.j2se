@@ -319,7 +319,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			closest[2] = closest[3] = SHORT_MAX;
 			Lab lab1 = getLab(c.getRGB());
 
-			for (; k < palette.length; k++) {
+			for (; k < palette.length; ++k) {
 				Color c2 = palette[k];
 				Lab lab2 = getLab(c2.getRGB());
 
