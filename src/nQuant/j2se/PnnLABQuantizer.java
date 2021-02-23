@@ -39,7 +39,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	private void find_nn(Pnnbin[] bins, int idx, int nMaxColors)
 	{
 		int nn = 0;
-		double err = 1e100;
+		double err = SHORT_MAX;
 
 		Pnnbin bin1 = bins[idx];
 		int n1 = bin1.cnt;
@@ -196,7 +196,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				float err = bins[b1].err;
 				for (l = 1; (l2 = l + l) <= heap[0]; l = l2) {
 					if ((l2 < heap[0]) && (bins[heap[l2]].err > bins[heap[l2 + 1]].err))
-						l2++;
+						++l2;
 					if (err <= bins[h = heap[l2]].err)
 						break;
 					heap[l] = h;

@@ -73,7 +73,7 @@ public class PnnQuantizer {
 	private void find_nn(Pnnbin[] bins, int idx)
 	{
 		int nn = 0;
-		double err = 1e100;
+		double err = SHORT_MAX;
 
 		Pnnbin bin1 = bins[idx];
 		int n1 = bin1.cnt;
@@ -237,7 +237,7 @@ public class PnnQuantizer {
 				float err = bins[b1].err;
 				for (l = 1; (l2 = l + l) <= heap[0]; l = l2) {
 					if ((l2 < heap[0]) && (bins[heap[l2]].err > bins[heap[l2 + 1]].err))
-						l2++;
+						++l2;
 					if (err <= bins[h = heap[l2]].err)
 						break;
 					heap[l] = h;
@@ -289,7 +289,7 @@ public class PnnQuantizer {
 		
 		short k = 0;		
 		double curdist, mindist = SHORT_MAX;
-		for (int i=0; i<palette.length; ++i) {
+		for (int i = 0; i<palette.length; ++i) {
 			Color c2 = palette[i];
 
 			double adist = Math.abs(c2.getAlpha() - c.getAlpha());
@@ -359,7 +359,7 @@ public class PnnQuantizer {
 		return k;
 	}
 	
-	protected int[] calcDitherPixel(Color c, short[] clamp, short[] rowerr, int cursor, boolean hasSemiTransparency)
+	protected int[] calcDitherPixel(Color c, short[] clamp, int[] rowerr, int cursor, boolean hasSemiTransparency)
     {
         int[] ditherPixel = new int[4];
         if (hasSemiTransparency) {
@@ -386,26 +386,26 @@ public class PnnQuantizer {
 		if (dither) {			
 			final int DJ = 4;
 			final int BLOCK_SIZE = 256;
-			final int DITHER_MAX = 20;
+			final short DITHER_MAX = 20;
 			final int err_len = (width + 2) * DJ;
 			short[] clamp = new short[DJ * BLOCK_SIZE];
 			short[] limtb = new short[2 * BLOCK_SIZE];			
 
-			for (int i = 0; i < BLOCK_SIZE; ++i) {
+			for (short i = 0; i < BLOCK_SIZE; ++i) {
 				clamp[i] = 0;
-				clamp[i + BLOCK_SIZE] = (short) i;
+				clamp[i + BLOCK_SIZE] = i;
 				clamp[i + BLOCK_SIZE * 2] = BYTE_MAX;
 				clamp[i + BLOCK_SIZE * 3] = BYTE_MAX;
 
 				limtb[i] = -DITHER_MAX;
 				limtb[i + BLOCK_SIZE] = DITHER_MAX;
 			}
-			for (int i = -DITHER_MAX; i <= DITHER_MAX; i++)
-				limtb[i + BLOCK_SIZE] = (short) i;
+			for (short i = -DITHER_MAX; i <= DITHER_MAX; ++i)
+				limtb[i + BLOCK_SIZE] = i;
 
 			int dir = 1;
-			short[] row0 = new short[err_len];
-			short[] row1 = new short[err_len];
+			int[] row0 = new int[err_len];
+			int[] row1 = new int[err_len];
 			for (int i = 0; i < height; ++i) {
 				if (dir < 0)
 					pixelIndex += width - 1;					
@@ -433,25 +433,25 @@ public class PnnQuantizer {
 					a_pix = limtb[a_pix - c2.getAlpha() + BLOCK_SIZE];
 
 					int k = r_pix * 2;
-					row1[cursor1 - DJ] = (short) r_pix;
+					row1[cursor1 - DJ] = r_pix;
 					row1[cursor1 + DJ] += (r_pix += k);
 					row1[cursor1] += (r_pix += k);
 					row0[cursor0 + DJ] += (r_pix += k);
 
 					k = g_pix * 2;
-					row1[cursor1 + 1 - DJ] = (short) g_pix;
+					row1[cursor1 + 1 - DJ] = g_pix;
 					row1[cursor1 + 1 + DJ] += (g_pix += k);
 					row1[cursor1 + 1] += (g_pix += k);
 					row0[cursor0 + 1 + DJ] += (g_pix += k);
 
 					k = b_pix * 2;
-					row1[cursor1 + 2 - DJ] = (short) b_pix;
+					row1[cursor1 + 2 - DJ] = b_pix;
 					row1[cursor1 + 2 + DJ] += (b_pix += k);
 					row1[cursor1 + 2] += (b_pix += k);
 					row0[cursor0 + 2 + DJ] += (b_pix += k);
 
 					k = a_pix * 2;
-					row1[cursor1 + 3 - DJ] = (short) a_pix;
+					row1[cursor1 + 3 - DJ] = a_pix;
 					row1[cursor1 + 3 + DJ] += (a_pix += k);
 					row1[cursor1 + 3] += (a_pix += k);
 					row0[cursor0 + 3 + DJ] += (a_pix += k);
@@ -464,7 +464,7 @@ public class PnnQuantizer {
 					pixelIndex += width + 1;
 
 				dir *= -1;
-				short[] temp = row0; row0 = row1; row1 = temp;
+				int[] temp = row0; row0 = row1; row1 = temp;
 			}
 			return qPixels;
 		}
