@@ -403,6 +403,7 @@ public class PnnQuantizer {
 			for (short i = -DITHER_MAX; i <= DITHER_MAX; ++i)
 				limtb[i + BLOCK_SIZE] = i;
 
+			boolean noBias = hasSemiTransparency || nMaxColors < 64;
 			int dir = 1;
 			int[] row0 = new int[err_len];
 			int[] row1 = new int[err_len];
@@ -414,7 +415,7 @@ public class PnnQuantizer {
 				row1[cursor1] = row1[cursor1 + 1] = row1[cursor1 + 2] = row1[cursor1 + 3] = 0;
 				for (int j = 0; j < width; ++j) {
 					Color c = pixels[pixelIndex];
-					int[] ditherPixel = calcDitherPixel(c, clamp, row0, cursor0, hasSemiTransparency);
+					int[] ditherPixel = calcDitherPixel(c, clamp, row0, cursor0, noBias);
 					int r_pix = ditherPixel[0];
                     int g_pix = ditherPixel[1];
                     int b_pix = ditherPixel[2];
