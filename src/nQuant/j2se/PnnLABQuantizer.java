@@ -39,7 +39,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	private void find_nn(Pnnbin[] bins, int idx, int nMaxColors)
 	{
 		int nn = 0;
-		double err = SHORT_MAX;
+		double err = 1e100;
 
 		Pnnbin bin1 = bins[idx];
 		int n1 = bin1.cnt;
