@@ -152,7 +152,7 @@ public class PQCanvas extends Canvas {
 		        g2d.fill(new Rectangle(sz));
 		    }
 		    		    
-		    g2d.drawImage(image, 0, 0, (int) sz.getWidth(), (int) sz.getHeight(), this);
+		    g2d.drawRenderedImage(image, null);
 		}
 		else {
 			g2d.setFont(new Font("Arial", Font.BOLD, 20));
@@ -174,13 +174,15 @@ public class PQCanvas extends Canvas {
 		frame.addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent e) { 
 				try {
-					String tempFilePath = System.getProperty("java.io.tmpdir") + "result.png";
-					ImageIO.write(canvas.image, "png", new java.io.File(tempFilePath));
-					System.out.println(tempFilePath);					
+					if(canvas.image != null) {
+						String tempFilePath = System.getProperty("java.io.tmpdir") + "result.png";
+						ImageIO.write(canvas.image, "png", new java.io.File(tempFilePath));
+						System.out.println(tempFilePath);
+					}
 				} catch(Exception ex) {
 					ex.printStackTrace();
 				} finally {
-					e.getWindow().dispose();;
+					e.getWindow().dispose();
 				}
 			}
 		});
