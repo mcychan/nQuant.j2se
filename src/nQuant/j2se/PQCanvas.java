@@ -152,7 +152,7 @@ public class PQCanvas extends Canvas {
 		        g2d.fill(new Rectangle(sz));
 		    }
 		    		    
-		    g2d.drawRenderedImage(image, null);
+		    g2d.drawImage(image, 0, 0, (int) sz.getWidth(), (int) sz.getHeight(), this);
 		}
 		else {
 			g2d.setFont(new Font("Arial", Font.BOLD, 20));
