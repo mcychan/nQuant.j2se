@@ -103,8 +103,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	@Override
 	protected Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
 	{
-		Pnnbin[] bins = new Pnnbin[65536];
-		int[] heap = new int[65537];
+		Pnnbin[] bins = new Pnnbin[65536];		
 
 		/* Build histogram */
 		for (final Color c : pixels) {
@@ -142,16 +141,15 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if ((proportional < .022 || proportional > .5) && nMaxColors < 64)
 			quan_sqrt = false;
 		
-		int i = 0;
-		for (; i < maxbins - 1; i++) {
+		if (quan_sqrt)
+			bins[0].cnt = (int) Math.sqrt(bins[0].cnt);
+		for (int i = 0; i < maxbins - 1; ++i) {
 			bins[i].fw = (i + 1);
 			bins[i + 1].bk = i;
 			
 			if (quan_sqrt)
-				bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
-		}
-		if (quan_sqrt)
-			bins[i].cnt = (int) Math.sqrt(bins[i].cnt);
+				bins[i + 1].cnt = (int) Math.sqrt(bins[i + 1].cnt);
+		}		
 
 		int h, l, l2;
 		if(quan_sqrt && nMaxColors < 64)
@@ -159,10 +157,11 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		else if(quan_sqrt)
 			ratio = Math.min(1.0, Math.pow(nMaxColors, 1.05) / pixelMap.size());			
 		else
-			ratio = .55;
+			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.31) / maxbins);
 		
 		/* Initialize nearest neighbors and build heap of them */
-		for (i = 0; i < maxbins; i++) {
+		int[] heap = new int[65537];
+		for (int i = 0; i < maxbins; i++) {
 			find_nn(bins, i, nMaxColors);
 			/* Push slot on heap */
 			float err = bins[i].err;
@@ -177,7 +176,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		/* Merge bins which increase error the least */
 		int extbins = maxbins - nMaxColors;
-		for (i = 0; i < extbins; ) {			
+		for (int i = 0; i < extbins; ) {			
 			Pnnbin tb = null;
 			/* Use heap to find which bins to merge */
 			for (;;) {
@@ -226,7 +225,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		/* Fill palette */
 		Color[] palette = new Color[nMaxColors];
 		int k = 0;
-		for (i = 0;; ++k) {
+		for (int i = 0;; ++k) {
 			Lab lab1 = new Lab();
 			lab1.alpha = (int) bins[i].ac;
 			lab1.L = bins[i].Lc; lab1.A = bins[i].Ac; lab1.B = bins[i].Bc;
