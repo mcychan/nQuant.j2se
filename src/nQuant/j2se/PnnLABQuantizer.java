@@ -137,7 +137,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			bins[maxbins++] = bins[i];
 		}
 		
-		double proportional = sqr(nMaxColors) / maxbins;
+		double proportional = sqr(nMaxColors) / maxbins;		
 		if ((proportional < .022 || proportional > .5) && nMaxColors < 64)
 			quan_sqrt = false;
 		
@@ -149,16 +149,16 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			
 			if (quan_sqrt)
 				bins[i + 1].cnt = (int) Math.sqrt(bins[i + 1].cnt);
-		}		
-
-		int h, l, l2;
+		}
+		
 		if(quan_sqrt && nMaxColors < 64)
-			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.1) / maxbins);
+			ratio = Math.min(1.0, sqr(nMaxColors) / maxbins + Math.pow(nMaxColors, 2.39) / pixelMap.size());
 		else if(quan_sqrt)
 			ratio = Math.min(1.0, Math.pow(nMaxColors, 1.05) / pixelMap.size());			
 		else
-			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.31) / maxbins);
+			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.31) / maxbins);		
 		
+		int h, l, l2;
 		/* Initialize nearest neighbors and build heap of them */
 		int[] heap = new int[65537];
 		for (int i = 0; i < maxbins; i++) {
