@@ -256,7 +256,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if(c2 == null)
 				break;
 
-			double curdist = sqr(c2.getAlpha() - c.getAlpha());
+			double curdist = sqr(c2.getAlpha() - c.getAlpha()) / Math.exp(1.0);
 			if (curdist > mindist)
 				continue;
 
