@@ -256,12 +256,12 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if(c2 == null)
 				break;
 
-			double curdist = sqr(c2.getAlpha() - c.getAlpha()) / Math.exp(1.0);
+			double curdist = sqr(c2.getAlpha() - c.getAlpha());
 			if (curdist > mindist)
 				continue;
 
 			Lab lab2 = getLab(c2.getRGB());
-			if (palette.length > 32) {
+			if (palette.length > 32 || hasSemiTransparency) {
 				curdist += PR * sqr(c2.getRed() - c.getRed());
 				if (curdist > mindist)
 					continue;
