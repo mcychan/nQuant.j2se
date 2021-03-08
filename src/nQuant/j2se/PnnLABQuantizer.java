@@ -152,11 +152,11 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 		
 		if(quan_sqrt && nMaxColors < 64)
-			ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(3.593) / pixelMap.size());
+			ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(3.845) / pixelMap.size());
 		else if(quan_sqrt)
 			ratio = Math.min(1.0, Math.pow(nMaxColors, 1.05) / pixelMap.size());			
 		else
-			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.31) / maxbins);		
+			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.31) / maxbins);
 		
 		int h, l, l2;
 		/* Initialize nearest neighbors and build heap of them */
