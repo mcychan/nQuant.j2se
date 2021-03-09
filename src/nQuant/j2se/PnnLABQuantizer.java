@@ -102,6 +102,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	@Override
 	protected Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
 	{
+		if(hasSemiTransparency)
+			PR = PG = PB = 1.0;
+		
 		Pnnbin[] bins = new Pnnbin[65536];		
 
 		/* Build histogram */
@@ -256,7 +259,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if(c2 == null)
 				break;
 
-			double curdist = sqr(c2.getAlpha() - c.getAlpha()) / Math.exp(1.0);
+			double curdist = sqr(c2.getAlpha() - c.getAlpha());
 			if (curdist > mindist)
 				continue;
 
