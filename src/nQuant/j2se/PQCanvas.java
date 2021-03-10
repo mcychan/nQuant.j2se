@@ -40,9 +40,13 @@ public class PQCanvas extends Canvas {
 	public void set(final File file) {
 		try {
 			BufferedImage img = ImageIO.read(file);
-			System.out.println("w = " + img.getWidth(this));
-			System.out.println("h = " + img.getHeight(this));
-			set(img);
+			if(img != null) {
+				System.out.println("w = " + img.getWidth(this));
+				System.out.println("h = " + img.getHeight(this));
+				set(img);
+			}
+			else
+				javax.swing.JOptionPane.showMessageDialog(PQCanvas.this, "Cannot read image", "Unknown image format", javax.swing.JOptionPane.ERROR_MESSAGE);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
