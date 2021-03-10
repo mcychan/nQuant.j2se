@@ -199,8 +199,8 @@ public class PnnQuantizer {
 
 		int h, l, l2 ;
 		/* Initialize nearest neighbors and build heap of them */
-		int[] heap = new int[65537];
-		for (int i = 0; i < maxbins; i++) {
+		int[] heap = new int[bins.length + 1];
+		for (int i = 0; i < maxbins; ++i) {
 			find_nn(bins, i);
 			/* Push slot on heap */
 			float err = bins[i].err;
