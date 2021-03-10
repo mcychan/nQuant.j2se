@@ -10,6 +10,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.TexturePaint;
 import java.awt.Toolkit;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -21,6 +23,7 @@ import java.awt.image.WritableRaster;
 import java.io.File;
 
 import javax.imageio.ImageIO;
+import javax.swing.JFileChooser;
 import javax.swing.SwingWorker;
 
 public class PQCanvas extends Canvas {
@@ -43,6 +46,18 @@ public class PQCanvas extends Canvas {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
+	}
+	
+	private void addClick() {
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
+				if (fileChooser.showOpenDialog(PQCanvas.this) == JFileChooser.APPROVE_OPTION)
+					set(fileChooser.getSelectedFile());
+			}
+		});
 	}
 
 	private void addFileDrop() {
@@ -166,6 +181,7 @@ public class PQCanvas extends Canvas {
 		PQCanvas canvas = new PQCanvas();
 		java.awt.Frame frame = new java.awt.Frame("PnnQuant Test");
 		frame.setSize(500, 500);
+		canvas.addClick();
 		canvas.addFileDrop();
 		frame.add(canvas);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
