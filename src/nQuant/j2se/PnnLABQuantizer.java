@@ -101,7 +101,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	}
 
 	@Override
-	protected Color[] pnnquan(final Color[] pixels, int nMaxColors, boolean quan_sqrt)
+	protected Color[] pnnquan(final Color[] pixels, int nMaxColors, short quan_rt)
 	{
 		if(hasSemiTransparency)
 			PR = PG = PB = 1.0;
@@ -140,23 +140,29 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			bins[maxbins++] = bins[i];
 		}
 		
-		double proportional = sqr(nMaxColors) / maxbins;		
+		double proportional = sqr(nMaxColors) / maxbins;
+		if(nMaxColors < 16)
+			quan_rt = -1;
 		if ((proportional < .022 || proportional > .5) && nMaxColors < 64)
-			quan_sqrt = false;
+			quan_rt = 0;
 		
-		if (quan_sqrt)
+		if (quan_rt > 0)
 			bins[0].cnt = (int) Math.sqrt(bins[0].cnt);
+		else if (quan_rt < 0)
+			bins[0].cnt = (int) Math.cbrt(bins[0].cnt);
 		for (int i = 0; i < maxbins - 1; ++i) {
 			bins[i].fw = (i + 1);
 			bins[i + 1].bk = i;
 			
-			if (quan_sqrt)
+			if (quan_rt > 0)
 				bins[i + 1].cnt = (int) Math.sqrt(bins[i + 1].cnt);
+			else if (quan_rt < 0)
+				bins[i + 1].cnt = (int) Math.cbrt(bins[i + 1].cnt);
 		}
 		
-		if(quan_sqrt && nMaxColors < 64)
+		if(quan_rt != 0 && nMaxColors < 64)
 			ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(3.845) / pixelMap.size());
-		else if(quan_sqrt)
+		else if(quan_rt > 0)
 			ratio = Math.min(1.0, Math.pow(nMaxColors, 1.05) / pixelMap.size());			
 		else
 			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.31) / maxbins);
