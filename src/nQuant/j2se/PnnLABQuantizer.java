@@ -333,7 +333,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					break;
 				
 				Lab lab2 = getLab(c2.getRGB());
-				closest[4] = (short) (Math.abs(lab2.alpha - lab1.alpha) + Math.abs(lab2.L - lab1.L) + Math.abs(lab2.A - lab1.A) + Math.abs(lab2.B - lab1.B));
+				closest[4] = (short) (sqr(lab2.L - lab1.L) + sqr(lab2.A - lab1.A) + sqr(lab2.B - lab1.B));
+				
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
 					closest[3] = closest[2];
@@ -405,7 +406,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
                     int a_pix = ditherPixel[3];
 
 					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-					qPixels[pixelIndex] = closestColorIndex(palette, c1);
+					qPixels[pixelIndex] = (hasSemiTransparency || nMaxColors < 64) ? nearestColorIndex(palette, c1) : closestColorIndex(palette, c1);
 
 					Color c2 = palette[qPixels[pixelIndex]];
 					if(nMaxColors > 256)
