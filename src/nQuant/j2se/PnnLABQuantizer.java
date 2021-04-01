@@ -114,9 +114,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			// !!! nonuniformity then?
 			int a = c.getAlpha();
 			if(a <= this.alphaThreshold) {
-				if (bins[0] == null)
-					bins[0] = new Pnnbin();
-				bins[0].cnt++;
+				int index = getColorIndex(m_transparentColor, hasSemiTransparency);				
+				if (bins[index] == null)
+					bins[index] = new Pnnbin();
+				bins[index].cnt++;
 				continue;
 			}				
 			if(a < BYTE_MAX) {
