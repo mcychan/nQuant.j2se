@@ -19,6 +19,7 @@ import java.util.Random;
 public class PnnQuantizer {
 	protected final short SHORT_MAX = Short.MAX_VALUE;
 	protected final char BYTE_MAX = -Byte.MIN_VALUE + Byte.MAX_VALUE;
+	protected short alphaThreshold = 0;
 	protected boolean hasSemiTransparency = false;
 	protected int m_transparentPixelIndex = -1;
 	protected final int width, height;	
@@ -155,17 +156,30 @@ public class PnnQuantizer {
 		Pnnbin[] bins = new Pnnbin[65536];		
 
 		/* Build histogram */
-		for (final Color pixel : pixels) {
+		for (Color c : pixels) {
 			// !!! Can throw gamma correction in here, but what to do about perceptual
 			// !!! nonuniformity then?
-			int index = getColorIndex(pixel, hasSemiTransparency);
+			int a = c.getAlpha();
+			if(a <= this.alphaThreshold) {
+				if (bins[0] == null)
+					bins[0] = new Pnnbin();
+				bins[0].cnt++;
+				continue;
+			}				
+			if(a < BYTE_MAX) {
+				int alpha = a * 2;
+				a = alpha > BYTE_MAX ? BYTE_MAX : alpha;
+				c = new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+			}
+			
+			int index = getColorIndex(c, hasSemiTransparency);
 			if(bins[index] == null)
 				bins[index] = new Pnnbin();
 			Pnnbin tb = bins[index];
-			tb.ac += pixel.getAlpha();
-			tb.rc += pixel.getRed();
-			tb.gc += pixel.getGreen();
-			tb.bc += pixel.getBlue();
+			tb.ac += a;
+			tb.rc += c.getRed();
+			tb.gc += c.getGreen();
+			tb.bc += c.getBlue();
 			tb.cnt++;
 		}
 

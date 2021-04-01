@@ -109,9 +109,22 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		Pnnbin[] bins = new Pnnbin[65536];		
 
 		/* Build histogram */
-		for (final Color c : pixels) {
+		for (Color c : pixels) {
 			// !!! Can throw gamma correction in here, but what to do about perceptual
 			// !!! nonuniformity then?
+			int a = c.getAlpha();
+			if(a <= this.alphaThreshold) {
+				if (bins[0] == null)
+					bins[0] = new Pnnbin();
+				bins[0].cnt++;
+				continue;
+			}				
+			if(a < BYTE_MAX) {
+				int alpha = a * 2;
+				a = alpha > BYTE_MAX ? BYTE_MAX : alpha;
+				c = new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+			}
+			
 			int index = getColorIndex(c, hasSemiTransparency);
 			Lab lab1 = getLab(c.getRGB());
 			if(bins[index] == null)
