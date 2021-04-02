@@ -167,11 +167,6 @@ public class PnnQuantizer {
 				bins[index].cnt++;
 				continue;
 			}				
-			if(a < BYTE_MAX) {
-				int alpha = a * 2;
-				a = alpha > BYTE_MAX ? BYTE_MAX : alpha;
-				c = new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
-			}
 			
 			int index = getColorIndex(c, hasSemiTransparency);
 			if(bins[index] == null)

@@ -120,11 +120,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				bins[index].cnt++;
 				continue;
 			}				
-			if(a < BYTE_MAX) {
-				int alpha = a * 2;
-				a = alpha > BYTE_MAX ? BYTE_MAX : alpha;
-				c = new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
-			}
 			
 			int index = getColorIndex(c, hasSemiTransparency);
 			Lab lab1 = getLab(c.getRGB());
