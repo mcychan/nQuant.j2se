@@ -267,6 +267,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			return got;
 		
 		short k = 0;
+		if (c.getAlpha() <= alphaThreshold)
+            return k;
+		
 		double mindist = SHORT_MAX;
 		Lab lab1 = getLab(c.getRGB());
 		for (short i=0; i<palette.length; ++i) {

@@ -301,7 +301,10 @@ public class PnnQuantizer {
 		if (got != null)
 			return got;
 		
-		short k = 0;		
+		short k = 0;
+		if (c.getAlpha() <= alphaThreshold)
+            return k;
+		
 		double curdist, mindist = SHORT_MAX;
 		for (int i = 0; i<palette.length; ++i) {
 			Color c2 = palette[i];
