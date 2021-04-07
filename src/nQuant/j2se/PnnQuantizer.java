@@ -160,13 +160,8 @@ public class PnnQuantizer {
 			// !!! Can throw gamma correction in here, but what to do about perceptual
 			// !!! nonuniformity then?
 			int a = c.getAlpha();
-			if(a <= this.alphaThreshold) {
-				int index = getColorIndex(m_transparentColor, hasSemiTransparency);
-				if (bins[index] == null)
-					bins[index] = new Pnnbin();				
-				bins[index].cnt++;
-				continue;
-			}				
+			if(a <= this.alphaThreshold)
+				c = m_transparentColor;
 			
 			int index = getColorIndex(c, hasSemiTransparency);
 			if(bins[index] == null)

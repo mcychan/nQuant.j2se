@@ -113,13 +113,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			// !!! Can throw gamma correction in here, but what to do about perceptual
 			// !!! nonuniformity then?
 			int a = c.getAlpha();
-			if(a <= this.alphaThreshold) {
-				int index = getColorIndex(m_transparentColor, hasSemiTransparency);				
-				if (bins[index] == null)
-					bins[index] = new Pnnbin();
-				bins[index].cnt++;
-				continue;
-			}				
+			if(a <= this.alphaThreshold)
+				c = m_transparentColor;
 			
 			int index = getColorIndex(c, hasSemiTransparency);
 			Lab lab1 = getLab(c.getRGB());
@@ -172,8 +167,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		else
 			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.31) / maxbins);
 		
-		if (quan_rt < 0)
+		if (quan_rt < 0 || hasSemiTransparency)
 			ratio += 0.5;
+		
+		ratio = Math.min(1.0, ratio);
 		
 		int h, l, l2;
 		/* Initialize nearest neighbors and build heap of them */
