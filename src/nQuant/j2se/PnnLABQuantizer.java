@@ -112,9 +112,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		for (Color c : pixels) {
 			// !!! Can throw gamma correction in here, but what to do about perceptual
 			// !!! nonuniformity then?
-			int a = c.getAlpha();
-			if(a <= this.alphaThreshold)
-				c = m_transparentColor;
 			
 			int index = getColorIndex(c, hasSemiTransparency);
 			Lab lab1 = getLab(c.getRGB());
