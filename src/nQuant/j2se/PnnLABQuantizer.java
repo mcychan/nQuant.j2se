@@ -412,7 +412,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
                     int a_pix = ditherPixel[3];
 
 					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-					qPixels[pixelIndex] = noBias ? nearestColorIndex(palette, c1) : closestColorIndex(palette, c1);
+					if(c.getAlpha() == 0 && a_pix > 0)
+						qPixels[pixelIndex] = 0;
+					else
+						qPixels[pixelIndex] = noBias ? nearestColorIndex(palette, c1) : closestColorIndex(palette, c1);
 
 					Color c2 = palette[qPixels[pixelIndex]];
 					if(nMaxColors > 256)
