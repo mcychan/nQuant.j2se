@@ -113,7 +113,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			// !!! Can throw gamma correction in here, but what to do about perceptual
 			// !!! nonuniformity then?
 			
-			int index = getColorIndex(c, hasSemiTransparency);
+			int index = getColorIndex(c, hasSemiTransparency, m_transparentPixelIndex >= 0);
 			Lab lab1 = getLab(c.getRGB());
 			if(bins[index] == null)
 				bins[index] = new Pnnbin();
@@ -401,6 +401,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			int dir = 1;
 			int[] row0 = new int[err_len];
 			int[] row1 = new int[err_len];
+			int[] lookup = new int[65536];
 			for (int i = 0; i < height; ++i) {
 				if (dir < 0)
 					pixelIndex += width - 1;					
@@ -416,10 +417,18 @@ public class PnnLABQuantizer extends PnnQuantizer {
                     int a_pix = ditherPixel[3];
 
 					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-					if(c.getAlpha() == 0 && a_pix > 0)
-						qPixels[pixelIndex] = 0;
-					else
-						qPixels[pixelIndex] = noBias ? nearestColorIndex(palette, c1) : closestColorIndex(palette, c1);
+					if(noBias) {
+						int offset = getColorIndex(c1, hasSemiTransparency, m_transparentPixelIndex >= 0);
+						if (lookup[offset] == 0)
+							lookup[offset] = (c.getAlpha() == 0) ? 0 : (noBias ? nearestColorIndex(palette, c1) : closestColorIndex(palette, c1)) + 1;
+						qPixels[pixelIndex] = (short) (lookup[offset] - 1);
+					}
+					else {
+						if(c.getAlpha() == 0)
+							qPixels[pixelIndex] = 0;
+						else
+							qPixels[pixelIndex] = noBias ? nearestColorIndex(palette, c1) : closestColorIndex(palette, c1);
+					}
 
 					Color c2 = palette[qPixels[pixelIndex]];
 					if(nMaxColors > 256)
