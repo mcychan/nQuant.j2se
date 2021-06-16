@@ -437,7 +437,7 @@ public class PnnQuantizer {
 					if(noBias) {
 						int offset = getColorIndex(c1, hasSemiTransparency, m_transparentPixelIndex >= 0);
 						if (lookup[offset] == 0)
-							lookup[offset] = (c.getAlpha() == 0) ? 0 : nearestColorIndex(palette, c1) + 1;
+							lookup[offset] = (c.getAlpha() == 0) ? 1 : nearestColorIndex(palette, c1) + 1;
 						qPixels[pixelIndex] = (short) (lookup[offset] - 1);
 					}
 					else

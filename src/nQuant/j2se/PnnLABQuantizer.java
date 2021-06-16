@@ -420,15 +420,11 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					if(noBias) {
 						int offset = getColorIndex(c1, hasSemiTransparency, m_transparentPixelIndex >= 0);
 						if (lookup[offset] == 0)
-							lookup[offset] = (c.getAlpha() == 0) ? 0 : (noBias ? nearestColorIndex(palette, c1) : closestColorIndex(palette, c1)) + 1;
+							lookup[offset] = (c.getAlpha() == 0) ? 1 : nearestColorIndex(palette, c1) + 1;
 						qPixels[pixelIndex] = (short) (lookup[offset] - 1);
 					}
-					else {
-						if(c.getAlpha() == 0)
-							qPixels[pixelIndex] = 0;
-						else
-							qPixels[pixelIndex] = noBias ? nearestColorIndex(palette, c1) : closestColorIndex(palette, c1);
-					}
+					else
+						qPixels[pixelIndex] = (c.getAlpha() == 0) ? 0 : closestColorIndex(palette, c1);
 
 					Color c2 = palette[qPixels[pixelIndex]];
 					if(nMaxColors > 256)
