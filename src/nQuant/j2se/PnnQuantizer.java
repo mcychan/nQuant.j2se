@@ -12,6 +12,7 @@ import java.awt.image.DirectColorModel;
 import java.awt.image.ImageObserver;
 import java.awt.image.IndexColorModel;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -388,92 +389,6 @@ public class PnnQuantizer {
         return ditherPixel;
     }
 	
-	protected short[] dither_image(final Color[] pixels, final Color[] palette)
-	{
-		short[] qPixels = new short[pixels.length];
-		int nMaxColors = palette.length;
-		
-		Map<String, float[][]> dms = new HashMap<String, float[][]>() {{
-			put("FloydSteinberg", new float[][] {
- 				{7f / 16f, 1, 0},
- 				{3f / 16f, -1, 1},
- 				{5f / 16f, 0, 1},
- 				{1f / 16f, 1, 1}
-			});
-			put("FastFloydSteinberg", new float[][] {
-				{7f / 16f, 1, 0},
- 				{3f / 16f, -1, 1},
- 				{5f / 16f, 0, 1}
-			});			
-		}};
-		
-		float[][] ditherScheme = dms.get("FastFloydSteinberg");
-
-		boolean noBias = hasSemiTransparency || nMaxColors < 64;
-		int dir = -1;
-		int[] lookup = new int[65536];
-		for (int y = 0; y < height; ++y) {
-			dir *= -1;				
-
-			int lni = y * width;
-			for (int x = (dir == 1 ? 0 : width - 1), xend = (x == 0 ? width : 0); x != xend; x += dir) {
-				int idx = lni + x;
-				Color c = pixels[idx];
-				if(noBias) {
-					int offset = getColorIndex(c, hasSemiTransparency, m_transparentPixelIndex >= 0);
-					if (lookup[offset] == 0)
-						lookup[offset] = (c.getAlpha() == 0) ? 1 : nearestColorIndex(palette, c) + 1;
-					qPixels[idx] = (short) (lookup[offset] - 1);
-				}
-				else
-					qPixels[idx] = (c.getAlpha() == 0) ? 0 : nearestColorIndex(palette, c);
-
-				Color c2 = pixels[idx] = palette[qPixels[idx]];				
-				
-				int dr = c.getRed() - c2.getRed(),
-					dg = c.getGreen() - c2.getGreen(),
-					db = c.getBlue() - c2.getBlue(),
-					da = c.getAlpha() - c2.getAlpha();
-
-				for (int i = (dir == 1 ? 0 : ditherScheme.length - 1), end = (i == 0 ? ditherScheme.length : 0); i != end; i += dir) {
-					int x1 = (int) ditherScheme[i][1] * dir,
-						y1 = (int) ditherScheme[i][2];
-
-					int lni2 = y1 * width;
-
-					if (x1 + x >= 0 && x1 + x < width && y1 + y >= 0 && y1 + y < height) {
-						float d = ditherScheme[i][0];
-						int idx2 = idx + (lni2 + x1);
-
-						Color c3 = pixels[idx2];
-						Color c4 = pixels[idx2] = new Color(
-							Math.max(0, Math.min(255, (int) Math.rint(c3.getRed() + dr * d))),
-							Math.max(0, Math.min(255, (int) Math.rint(c3.getGreen() + dg * d))),
-							Math.max(0, Math.min(255, (int) Math.rint(c3.getBlue() + db * d))),
-							Math.max(0, Math.min(255, (int) Math.rint(c3.getAlpha() + da * d)))
-						);
-						
-						if(nMaxColors > 256) {
-							qPixels[idx2] = (short) getColorIndex(c4);
-							continue;
-						}
-						
-						if(noBias) {
-							int offset = getColorIndex(c4, hasSemiTransparency, m_transparentPixelIndex >= 0);
-							if (lookup[offset] == 0)
-								lookup[offset] = (c4.getAlpha() == 0) ? 1 : nearestColorIndex(palette, c4) + 1;
-							qPixels[idx2] = (short) (lookup[offset] - 1);
-						}
-						else
-							qPixels[idx2] = (c4.getAlpha() == 0) ? 0 : nearestColorIndex(palette, c4);
-					}
-				}								
-			}
-
-		}
-		return qPixels;
-	}
-
 	protected short[] quantize_image(final Color[] pixels, final Color[] palette, final boolean dither)
 	{
 		short[] qPixels = new short[pixels.length];
@@ -498,7 +413,7 @@ public class PnnQuantizer {
 				limtb[i + BLOCK_SIZE] = DITHER_MAX;
 			}
 			for (short i = -DITHER_MAX; i <= DITHER_MAX; ++i)
-				limtb[i + BLOCK_SIZE] = i;
+				limtb[i + BLOCK_SIZE] = i % 4 == 3 ? 0 : i;
 
 			boolean noBias = hasSemiTransparency || nMaxColors < 64;
 			int dir = 1;
@@ -620,7 +535,7 @@ public class PnnQuantizer {
 
 		if (nMaxColors > 256)
 			dither = true;
-		short[] qPixels = dither_image(cPixels, palette);
+		short[] qPixels = quantize_image(cPixels, palette, true);
 		if (m_transparentPixelIndex >= 0) {
 			short k = qPixels[m_transparentPixelIndex];
 			if (nMaxColors > 2)
