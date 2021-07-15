@@ -25,6 +25,8 @@ public class PnnQuantizer implements Ditherable {
 	protected final int width, height;	
 	protected int[] pixels;
 	protected Color m_transparentColor;
+	
+	private double PR = .299, PG = .587, PB = .114;
 	private Color[] m_palette;
 	protected ColorModel m_colorModel;
 	protected Map<Integer, short[]> closestMap = new HashMap<>();
@@ -308,17 +310,17 @@ public class PnnQuantizer implements Ditherable {
 			if (curdist > mindist)
 				continue;
 
-			double rdist = Math.abs(c2.getRed() - c.getRed());
+			double rdist = PR * Math.abs(c2.getRed() - c.getRed());
 			curdist += rdist;
 			if (curdist > mindist)
 				continue;
 
-			double gdist = Math.abs(c2.getGreen() - c.getGreen());
+			double gdist = PG * Math.abs(c2.getGreen() - c.getGreen());
 			curdist += gdist;
 			if (curdist > mindist)
 				continue;
 
-			double bdist = Math.abs(c2.getBlue() - c.getBlue());
+			double bdist = PB * Math.abs(c2.getBlue() - c.getBlue());
 			curdist += bdist;
 			if (curdist > mindist)
 				continue;
@@ -517,6 +519,9 @@ public class PnnQuantizer implements Ditherable {
 			}			
 		}
 
+		if (nMaxColors <= 32)
+            PR = PG = PB = 1;
+		
 		Color[] palette;
 		if (nMaxColors > 2)
 			palette = pnnquan(cPixels, nMaxColors, (short) 1);
