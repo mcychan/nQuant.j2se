@@ -4,12 +4,26 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
+import static nQuant.j2se.HilbertCurve.Direction.*;
+
 public class HilbertCurve {
-	private enum Direction { W,E,S,N };
+	public enum Direction { LEFT, RIGHT, DOWN, UP };
 	
 	private class ErrorBox
 	{
-		double p[] = new double[4];
+		private final float[] p;
+		private ErrorBox() {
+			p = new float[4];
+		}
+		
+		private ErrorBox(Color c) {
+			p = new float[] {
+				c.getRed(),
+				c.getGreen(),
+				c.getBlue(),
+				c.getAlpha()
+			};
+		}
 	}
 	
 	private int x, y;
@@ -20,10 +34,10 @@ public class HilbertCurve {
 	private final short[] qPixels;
 	private final Ditherable ditherable;
 	private final List<ErrorBox> errorq;
-	private final double[] weights;
+	private final float[] weights;
     
 	private static final byte DITHER_MAX = 16;
-	private static final double BLOCK_SIZE = 256.0;	    
+	private static final float BLOCK_SIZE = 256f;	    
     
     private HilbertCurve(final int width, final int height, final Color[] image, final Color[] palette, final short[] qPixels, final Ditherable ditherable)
     {
@@ -36,28 +50,22 @@ public class HilbertCurve {
         this.qPixels = qPixels;
         this.ditherable = ditherable;	        
         errorq = new ArrayList<>();
-        weights = new double[DITHER_MAX];
-    }	    
+        weights = new float[DITHER_MAX];
+    }
     
-    private void dither_thispix()
+    private void ditherCurrentPixel()
 	{
 	    if(x >= 0 && y >= 0 && x < width && y < height) {
-	    	ErrorBox error = new ErrorBox();
-	    	Color pixel = image[x + y * width];
-	    	error.p[0] = pixel.getRed();
-	    	error.p[1] = pixel.getGreen();
-	    	error.p[2] = pixel.getBlue();
-	    	error.p[3] = pixel.getAlpha();
-	    	
+	    	ErrorBox error = new ErrorBox(image[x + y * width]);	    	
 	        for(int c = 0; c < DITHER_MAX; ++c) {
 	        	for(int j = 0; j < 4; ++j)
 	        		error.p[j] += errorq.get(c).p[j] * weights[c];
 	        }
 
-	        int r = (int)Math.min(BLOCK_SIZE-1, Math.max(error.p[0], 0.0));
-	        int g = (int)Math.min(BLOCK_SIZE-1, Math.max(error.p[1], 0.0));
-	        int b = (int)Math.min(BLOCK_SIZE-1, Math.max(error.p[2], 0.0));
-	        int a = (int)Math.min(BLOCK_SIZE-1, Math.max(error.p[3], 0.0));
+	        int r = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[0], 0.0));
+	        int g = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[1], 0.0));
+	        int b = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[2], 0.0));
+	        int a = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[3], 0.0));
 	        Color c2 = new Color(r, g, b, a);		        
 	        qPixels[x + y * width] = ditherable.nearestColorIndex(palette, c2);
 
@@ -78,41 +86,42 @@ public class HilbertCurve {
          * a sequence of 16 pixels.
          */
         x = y = 0;
-        final double weightRatio = Math.pow(BLOCK_SIZE + 1,  1 / (DITHER_MAX - 1.0));
-        double weight = 1.0, sumweight = 0.0;
+        final float weightRatio = (float) Math.pow(BLOCK_SIZE + 1,  1 / (DITHER_MAX - 1.0f));
+        float weight = 1.0f, sumweight = 0.0f;
         for(int c = 0; c < DITHER_MAX; ++c)
         {
             errorq.add(new ErrorBox());
-            sumweight += (weights[DITHER_MAX - c - 1] = 1.0 / weight);
+            sumweight += (weights[DITHER_MAX - c - 1] = 1.0f / weight);
             weight *= weightRatio;
         }
+        
         weight = 0; /* Normalize */
         for(int c = 0; c < DITHER_MAX; ++c)
             weight += (weights[c] /= sumweight);
         weights[0] += 1.0 - weight;
         /* Walk the path. */
         int i = Math.max(width, height), depth = 0;
-        while(i != 0) {
+        while(i > 0) {
         	++depth;
-        	i /= 2;
+        	i >>= 1;
         }
         
-        iter(depth, Direction.N);
-        dither_thispix();
+        iter(depth, UP);
+        ditherCurrentPixel();
     }
     
     private void navTo(Direction dir)
 	{
-    	dither_thispix();
+    	ditherCurrentPixel();
 		switch(dir)
         {
-            case W: --x;
+            case LEFT: --x;
             	break;
-            case E: ++x;
+            case RIGHT: ++x;
             	break;
-            case N: --y;
+            case UP: --y;
             	break;
-            case S: ++y;
+            case DOWN: ++y;
             	break;
         }
 	}
@@ -134,13 +143,17 @@ public class HilbertCurve {
 
         switch(dir)
         {
-            case W: curve(level, Direction.N,Direction.W,Direction.W,Direction.S, Direction.E,Direction.S,Direction.W);
+            case LEFT:
+            	curve(level, UP,LEFT,LEFT,DOWN, RIGHT,DOWN,LEFT);
             	break;
-            case E: curve(level, Direction.S,Direction.E,Direction.E,Direction.N, Direction.W,Direction.N,Direction.E);
+            case RIGHT:
+            	curve(level, DOWN,RIGHT,RIGHT,UP, LEFT,UP,RIGHT);
             	break;
-            case N: curve(level, Direction.W,Direction.N,Direction.N,Direction.E, Direction.S,Direction.E,Direction.N);
+            case UP:
+            	curve(level, LEFT,UP,UP,RIGHT, DOWN,RIGHT,UP);
             	break;
-            case S: curve(level, Direction.E,Direction.S,Direction.S,Direction.W, Direction.N,Direction.W,Direction.S);
+            case DOWN:
+            	curve(level, RIGHT,DOWN,DOWN,LEFT, UP,LEFT,DOWN);
             	break;
         }
     }
