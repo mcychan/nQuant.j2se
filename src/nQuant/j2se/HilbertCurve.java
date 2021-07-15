@@ -9,7 +9,7 @@ import static nQuant.j2se.HilbertCurve.Direction.*;
 public class HilbertCurve {
 	public enum Direction { LEFT, RIGHT, DOWN, UP };
 	
-	private class ErrorBox
+	private final class ErrorBox
 	{
 		private final float[] p;
 		private ErrorBox() {
@@ -56,16 +56,19 @@ public class HilbertCurve {
     private void ditherCurrentPixel()
 	{
 	    if(x >= 0 && y >= 0 && x < width && y < height) {
-	    	ErrorBox error = new ErrorBox(image[x + y * width]);	    	
+	    	Color pixel = image[x + y * width];
+	    	ErrorBox error = new ErrorBox(pixel);	    	
 	        for(int c = 0; c < DITHER_MAX; ++c) {
-	        	for(int j = 0; j < 4; ++j)
-	        		error.p[j] += errorq.get(c).p[j] * weights[c];
+	        	ErrorBox eb = errorq.get(c);
+	        	for(int j = 0; j < eb.p.length; ++j)
+	        		error.p[j] += eb.p[j] * weights[c];
 	        }
 
 	        int r = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[0], 0.0));
 	        int g = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[1], 0.0));
 	        int b = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[2], 0.0));
 	        int a = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[3], 0.0));
+	        
 	        Color c2 = new Color(r, g, b, a);		        
 	        qPixels[x + y * width] = ditherable.nearestColorIndex(palette, c2);
 
@@ -86,8 +89,8 @@ public class HilbertCurve {
          * a sequence of 16 pixels.
          */
         x = y = 0;
-        final float weightRatio = (float) Math.pow(BLOCK_SIZE + 1,  1 / (DITHER_MAX - 1.0f));
-        float weight = 1.0f, sumweight = 0.0f;
+        final float weightRatio = (float) Math.pow(BLOCK_SIZE + 1f,  1f / (DITHER_MAX - 1f));
+        float weight = 1f, sumweight = 0f;
         for(int c = 0; c < DITHER_MAX; ++c)
         {
             errorq.add(new ErrorBox());
@@ -95,10 +98,10 @@ public class HilbertCurve {
             weight *= weightRatio;
         }
         
-        weight = 0; /* Normalize */
+        weight = 0f; /* Normalize */
         for(int c = 0; c < DITHER_MAX; ++c)
             weight += (weights[c] /= sumweight);
-        weights[0] += 1.0 - weight;
+        weights[0] += 1f - weight;
         /* Walk the path. */
         int i = Math.max(width, height), depth = 0;
         while(i > 0) {
@@ -115,13 +118,17 @@ public class HilbertCurve {
     	ditherCurrentPixel();
 		switch(dir)
         {
-            case LEFT: --x;
+            case LEFT:
+            	--x;
             	break;
-            case RIGHT: ++x;
+            case RIGHT:
+            	++x;
             	break;
-            case UP: --y;
+            case UP:
+            	--y;
             	break;
-            case DOWN: ++y;
+            case DOWN:
+            	++y;
             	break;
         }
 	}
@@ -161,8 +168,7 @@ public class HilbertCurve {
     public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable)
     {
     	short[] qPixels = new short[pixels.length];		
-    	HilbertCurve hc = new HilbertCurve(width, height, pixels, palette, qPixels, ditherable);
-    	hc.run();        
+    	new HilbertCurve(width, height, pixels, palette, qPixels, ditherable).run();        
         return qPixels;
     }
 }
