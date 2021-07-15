@@ -62,7 +62,6 @@ public class HilbertCurve {
 	        qPixels[x + y * width] = ditherable.nearestColorIndex(palette, c2);
 
 	        errorq.remove(0);
-	        error = new ErrorBox();
 	        c2 = palette[qPixels[x + y * width]];
 	        error.p[0] = r - c2.getRed();
 	        error.p[1] = g - c2.getGreen();
