@@ -12,12 +12,11 @@ import java.awt.image.DirectColorModel;
 import java.awt.image.ImageObserver;
 import java.awt.image.IndexColorModel;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-public class PnnQuantizer {
+public class PnnQuantizer implements Ditherable {
 	protected final short SHORT_MAX = Short.MAX_VALUE;
 	protected final char BYTE_MAX = -Byte.MIN_VALUE + Byte.MAX_VALUE;
 	protected short alphaThreshold = 0;
@@ -290,7 +289,7 @@ public class PnnQuantizer {
 		return palette;
 	}
 
-	protected short nearestColorIndex(final Color[] palette, final Color c)
+	public short nearestColorIndex(final Color[] palette, final Color c)
 	{
 		Short got = nearestMap.get(c.getRGB());
 		if (got != null)
@@ -502,7 +501,7 @@ public class PnnQuantizer {
 		return qPixels;
 	}
 
-	public short[] convert(int nMaxColors, boolean dither) {
+	public short[] convert(int nMaxColors, int dither) {
 		final Color[] cPixels = new Color[pixels.length];		
 		for (int i = 0; i<pixels.length; ++i) {
 			int pixel = pixels[i];
@@ -534,8 +533,9 @@ public class PnnQuantizer {
 		}
 
 		if (nMaxColors > 256)
-			dither = true;
-		short[] qPixels = quantize_image(cPixels, palette, true);
+			dither = 1;
+
+		short[] qPixels = dither < 0 ? HilbertCurve.dither(width, height, cPixels, palette, this) : quantize_image(cPixels, palette, dither > 0);
 		if (m_transparentPixelIndex >= 0) {
 			short k = qPixels[m_transparentPixelIndex];
 			if (nMaxColors > 2)

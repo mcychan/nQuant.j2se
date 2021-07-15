@@ -258,7 +258,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	}
 
 	@Override
-	protected short nearestColorIndex(final Color[] palette, final Color c)
+	public short nearestColorIndex(final Color[] palette, final Color c)
 	{
 		Short got = nearestMap.get(c.getRGB());
 		if (got != null)
