@@ -64,20 +64,28 @@ public class HilbertCurve {
 	        		error.p[j] += eb.p[j] * weights[c];
 	        }
 
-	        int r = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[0], 0.0));
-	        int g = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[1], 0.0));
-	        int b = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[2], 0.0));
-	        int a = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[3], 0.0));
+	        int r_pix = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[0], 0.0));
+	        int g_pix = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[1], 0.0));
+	        int b_pix = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[2], 0.0));
+	        int a_pix = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[3], 0.0));
 	        
-	        Color c2 = new Color(r, g, b, a);		        
+	        Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);		        
 	        qPixels[x + y * width] = ditherable.nearestColorIndex(palette, c2);
 
 	        errorq.remove(0);
 	        c2 = palette[qPixels[x + y * width]];
-	        error.p[0] = r - c2.getRed();
-	        error.p[1] = g - c2.getGreen();
-	        error.p[2] = b - c2.getBlue();
-	        error.p[3] = a - c2.getAlpha();
+	        error.p[0] = r_pix - c2.getRed();
+	        if(Math.abs(error.p[0]) > DITHER_MAX)
+	        	error.p[0] *= .8f;
+	        error.p[1] = g_pix - c2.getGreen();
+	        if(Math.abs(error.p[1]) > DITHER_MAX)
+	        	error.p[1] *= .8f;
+	        error.p[2] = b_pix - c2.getBlue();
+	        if(Math.abs(error.p[2]) > DITHER_MAX)
+	        	error.p[2] *= .8f;
+	        error.p[3] = a_pix - c2.getAlpha();
+	        if(Math.abs(error.p[3]) > DITHER_MAX)
+	        	error.p[3] *= .8f;
 	        errorq.add(error);
 	    }
 	}
