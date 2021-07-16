@@ -1,4 +1,7 @@
 package nQuant.j2se;
+/* The Hilbert curve is a space filling curve that visits every point in a square grid with a size of any other power of 2.
+Copyright (c) 2021 Miller Cy Chan
+* It was first described by David Hilbert in 1892. Applications of the Hilbert curve are in image processing: especially image compression and dithering. */
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -75,17 +78,14 @@ public class HilbertCurve {
 	        errorq.remove(0);
 	        c2 = palette[qPixels[x + y * width]];
 	        error.p[0] = r_pix - c2.getRed();
-	        if(Math.abs(error.p[0]) > DITHER_MAX)
-	        	error.p[0] *= .8f;
 	        error.p[1] = g_pix - c2.getGreen();
-	        if(Math.abs(error.p[1]) > DITHER_MAX)
-	        	error.p[1] *= .8f;
 	        error.p[2] = b_pix - c2.getBlue();
-	        if(Math.abs(error.p[2]) > DITHER_MAX)
-	        	error.p[2] *= .8f;
 	        error.p[3] = a_pix - c2.getAlpha();
-	        if(Math.abs(error.p[3]) > DITHER_MAX)
-	        	error.p[3] *= .8f;
+	        
+	        for(int j = 0; j < error.p.length; ++j) {
+	        	if(Math.abs(error.p[j]) > DITHER_MAX)
+	        		error.p[j] = error.p[j] < 0 ? DITHER_MAX : DITHER_MAX;
+	        }
 	        errorq.add(error);
 	    }
 	}
