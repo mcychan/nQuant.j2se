@@ -84,7 +84,7 @@ public class HilbertCurve {
 	        
 	        for(int j = 0; j < error.p.length; ++j) {
 	        	if(Math.abs(error.p[j]) > DITHER_MAX)
-	        		error.p[j] = error.p[j] < 0 ? DITHER_MAX : DITHER_MAX;
+	        		error.p[j] = error.p[j] < 0 ? -DITHER_MAX : DITHER_MAX;
 	        }
 	        errorq.add(error);
 	    }
