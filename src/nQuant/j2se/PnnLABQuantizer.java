@@ -483,5 +483,24 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		return qPixels;
 	}
+	
+	@Override
+	public Ditherable getDitherFn() {
+		return new Ditherable() {
+			@Override
+			public int getColorIndex(Color c) {
+				return PnnLABQuantizer.this.getColorIndex(c, hasSemiTransparency, m_transparentPixelIndex >= 0);
+			}
+			
+			@Override
+			public short nearestColorIndex(Color[] palette, Color c) {
+				boolean noBias = hasSemiTransparency || palette.length < 64;
+				if(noBias)
+					return PnnLABQuantizer.this.nearestColorIndex(palette, c);
+				return PnnLABQuantizer.this.closestColorIndex(palette, c);
+			}
+			
+		};
+	}
 
 }

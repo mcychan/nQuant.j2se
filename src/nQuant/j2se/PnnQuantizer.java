@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
-public class PnnQuantizer implements Ditherable {
+public class PnnQuantizer {
 	protected final short SHORT_MAX = Short.MAX_VALUE;
 	protected final char BYTE_MAX = -Byte.MIN_VALUE + Byte.MAX_VALUE;
 	protected short alphaThreshold = 0;
@@ -540,7 +540,7 @@ public class PnnQuantizer implements Ditherable {
 		if (nMaxColors > 256)
 			dither = 1;
 
-		short[] qPixels = dither < 0 ? HilbertCurve.dither(width, height, cPixels, palette, this) : quantize_image(cPixels, palette, dither > 0);
+		short[] qPixels = dither < 0 ? HilbertCurve.dither(width, height, cPixels, palette, getDitherFn()) : quantize_image(cPixels, palette, dither > 0);
 		if (m_transparentPixelIndex >= 0) {
 			short k = qPixels[m_transparentPixelIndex];
 			if (nMaxColors > 2)
@@ -573,6 +573,21 @@ public class PnnQuantizer implements Ditherable {
 	
 	public boolean hasAlpha() {
 		return m_transparentPixelIndex > -1;
+	}
+	
+	public Ditherable getDitherFn() {
+		return new Ditherable() {
+			@Override
+			public int getColorIndex(Color c) {
+				return PnnQuantizer.this.getColorIndex(c, hasSemiTransparency, m_transparentPixelIndex >= 0);
+			}
+			
+			@Override
+			public short nearestColorIndex(Color[] palette, Color c) {
+				return PnnQuantizer.this.nearestColorIndex(palette, c);
+			}
+			
+		};
 	}
 
 }

@@ -32,12 +32,13 @@ public class HilbertCurve {
 	private int x, y;
 	private final int width;
 	private final int height;
-	private final Color[] image;
+	private final Color[] pixels;
 	private final Color[] palette;
 	private final short[] qPixels;
 	private final Ditherable ditherable;
 	private final List<ErrorBox> errorq;
 	private final float[] weights;
+	private final int[] lookup;
     
 	private static final byte DITHER_MAX = 16;
 	private static final float BLOCK_SIZE = 256f;	    
@@ -48,18 +49,19 @@ public class HilbertCurve {
     	y = 0;
     	this.width = width;
     	this.height = height;
-        this.image = image;
+        this.pixels = image;
         this.palette = palette;
         this.qPixels = qPixels;
         this.ditherable = ditherable;	        
         errorq = new ArrayList<>();
         weights = new float[DITHER_MAX];
+        lookup = new int[65536];
     }
     
     private void ditherCurrentPixel()
 	{
 	    if(x >= 0 && y >= 0 && x < width && y < height) {
-	    	Color pixel = image[x + y * width];
+	    	Color pixel = pixels[x + y * width];
 	    	ErrorBox error = new ErrorBox(pixel);	    	
 	        for(int c = 0; c < DITHER_MAX; ++c) {
 	        	ErrorBox eb = errorq.get(c);
@@ -73,7 +75,10 @@ public class HilbertCurve {
 	        int a_pix = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[3], 0.0));
 	        
 	        Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);		        
-	        qPixels[x + y * width] = ditherable.nearestColorIndex(palette, c2);
+	        int offset = ditherable.getColorIndex(c2);
+	        if (lookup[offset] == 0)
+				lookup[offset] = (pixel.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, c2) + 1;
+			qPixels[x + y * width] = (short) (lookup[offset] - 1);
 
 	        errorq.remove(0);
 	        c2 = palette[qPixels[x + y * width]];
