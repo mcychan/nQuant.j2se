@@ -126,7 +126,7 @@ public class HilbertCurve {
         	i >>= 1;
         }
         
-        iter(depth, UP);
+        curve(depth, LEFT,UP,UP,RIGHT, DOWN,RIGHT,UP);
         ditherCurrentPixel();
     }
     
