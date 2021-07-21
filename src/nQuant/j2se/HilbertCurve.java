@@ -74,9 +74,9 @@ public class HilbertCurve {
 	        int b_pix = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[2], 0.0));
 	        int a_pix = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[3], 0.0));
 	        
-	        Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);		        
-	        int offset = ditherable.getColorIndex(c2);
+	        Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);	        
 	        if (palette.length < 64) {
+	        	int offset = ditherable.getColorIndex(c2);
 				if(lookup[offset] == 0)
 					lookup[offset] = (pixel.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, c2) + 1;
 				qPixels[x + y * width] = (short) (lookup[offset] - 1);
