@@ -69,10 +69,10 @@ public class HilbertCurve {
 	        		error.p[j] += eb.p[j] * weights[c];
 	        }
 
-	        int r_pix = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[0], 0.0));
-	        int g_pix = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[1], 0.0));
-	        int b_pix = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[2], 0.0));
-	        int a_pix = (int) Math.min(BLOCK_SIZE-1, Math.max(error.p[3], 0.0));
+	        int r_pix = (int) Math.min(0xFF, Math.max(error.p[0], 0.0));
+	        int g_pix = (int) Math.min(0xFF, Math.max(error.p[1], 0.0));
+	        int b_pix = (int) Math.min(0xFF, Math.max(error.p[2], 0.0));
+	        int a_pix = (int) Math.min(0xFF, Math.max(error.p[3], 0.0));
 	        
 	        Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);	        
 	        if (palette.length < 64) {
