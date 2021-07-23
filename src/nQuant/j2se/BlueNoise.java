@@ -194,7 +194,7 @@ public class BlueNoise {
      * with a fine-grained checker board pattern
      * and a roughly-white-noise pattern obtained by distorting the blue noise, but only applies these noisy pattern
      * when there's error matching a color from the image to a color in the palette. */
-	protected void blue()
+	protected void run()
     {		
 		final float strength = (float) Math.sqrt(2.89);
         for (int y = 0; y < height; ++y) {
@@ -205,8 +205,16 @@ public class BlueNoise {
                 int b_pix = pixel.getBlue();
                 int a_pix = pixel.getAlpha();
                     
-                Color c1 = palette[ditherable.nearestColorIndex(palette, pixel)];                    
-                    
+                if (palette.length < 64) {
+    	        	int offset = ditherable.getColorIndex(pixel);
+    				if(lookup[offset] == 0)
+    					lookup[offset] = (pixel.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, pixel) + 1;
+    				qPixels[x + y * width] = (short) (lookup[offset] - 1);
+    	        }
+    	        else
+    	        	qPixels[x + y * width] = ditherable.nearestColorIndex(palette, pixel);
+                
+                Color c1 = palette[qPixels[x + y * width]];
                 float adj = (RAW_BLUE_NOISE[(x & 63) | (y & 63) << 6] + 0.5f) / 127.5f;
                 adj += ((x + y & 1) - 0.5f) * strength * (0.5f + RAW_BLUE_NOISE[(x * 19 & 63) | (y * 23 & 63) << 6])
                     * -0x1.6p-10f;
@@ -215,57 +223,15 @@ public class BlueNoise {
                 b_pix = (int) Math.min(0xFF, Math.max(b_pix + (adj * (b_pix - c1.getBlue())), 0.0));
                 a_pix = (int) Math.min(0xFF, Math.max(a_pix + (adj * (a_pix - c1.getAlpha())), 0.0));
                 
-                Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
+                c1 = new Color(r_pix, g_pix, b_pix, a_pix);
                 if (palette.length < 64) {
-    	        	int offset = ditherable.getColorIndex(c2);
+    	        	int offset = ditherable.getColorIndex(c1);
     				if(lookup[offset] == 0)
-    					lookup[offset] = (pixel.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, c2) + 1;
+    					lookup[offset] = (pixel.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, c1) + 1;
     				qPixels[x + y * width] = (short) (lookup[offset] - 1);
     	        }
     	        else
-    	        	qPixels[x + y * width] = ditherable.nearestColorIndex(palette, c2);
-            }
-        }
-    }
-	
-	/**
-     * A white-noise-based dither uses the colors encountered so far during dithering as a sort of state for basic
-     * pseudo-random number generation, while also using some blue noise from a tiling texture to offset clumping.
-     * This tends to be less "flat" than the blue-noise-based dither, permitting more pixels to be different from
-     * what would produce, but this generally looks good, especially with larger palettes. */
-	protected void white()
-    {		
-		final float strength = (float) Math.sqrt(2.89);
-		long s = 0xC13FA9A902A6328FL;
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
-            	Color pixel = pixels[x + y * width];            	
-                int r_pix = pixel.getRed();
-                int g_pix = pixel.getGreen();
-                int b_pix = pixel.getBlue();
-                int a_pix = pixel.getAlpha();
-                    
-                Color c1 = palette[ditherable.nearestColorIndex(palette, pixel)];                    
-                    
-                float adj = (RAW_BLUE_NOISE[(x & 63) | (y & 63) << 6] + 0.5f) / 127.5f;
-                adj += ((x + y & 1) - 0.5f) * 0x1.8p-49 * strength *
-                    (((s ^ 0x9E3779B97F4A7C15L) * 0xC6BC279692B5CC83L >> 15) +
-                    ((~s ^ 0xDB4F0B9175AE2165L) * 0xD1B54A32D192ED03L >> 15) +
-                    ((s = (s ^ pixel.getRGB()) * 0xD1342543DE82EF95L + 0x91E10DA5C79E7B1DL) >> 15));
-                r_pix = (int) Math.min(0xFF, Math.max(r_pix + (adj * (r_pix - c1.getRed())), 0.0));
-                g_pix = (int) Math.min(0xFF, Math.max(g_pix + (adj * (g_pix - c1.getGreen())), 0.0));
-                b_pix = (int) Math.min(0xFF, Math.max(b_pix + (adj * (b_pix - c1.getBlue())), 0.0));
-                a_pix = (int) Math.min(0xFF, Math.max(a_pix + (adj * (a_pix - c1.getAlpha())), 0.0));
-                
-                Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
-                if (palette.length < 64) {
-    	        	int offset = ditherable.getColorIndex(c2);
-    				if(lookup[offset] == 0)
-    					lookup[offset] = (pixel.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, c2) + 1;
-    				qPixels[x + y * width] = (short) (lookup[offset] - 1);
-    	        }
-    	        else
-    	        	qPixels[x + y * width] = ditherable.nearestColorIndex(palette, c2);
+    	        	qPixels[x + y * width] = ditherable.nearestColorIndex(palette, c1);
             }
         }
     }
@@ -273,7 +239,7 @@ public class BlueNoise {
 	public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable)
     {
     	short[] qPixels = new short[pixels.length];
-    	new BlueNoise(width, height, pixels, palette, qPixels, ditherable).blue();
+    	new BlueNoise(width, height, pixels, palette, qPixels, ditherable).run();
         return qPixels;
     }
 }
