@@ -204,15 +204,6 @@ public class BlueNoise {
                 int g_pix = pixel.getGreen();
                 int b_pix = pixel.getBlue();
                 int a_pix = pixel.getAlpha();
-                    
-                if (palette.length < 64) {
-    	        	int offset = ditherable.getColorIndex(pixel);
-    				if(lookup[offset] == 0)
-    					lookup[offset] = (pixel.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, pixel) + 1;
-    				qPixels[x + y * width] = (short) (lookup[offset] - 1);
-    	        }
-    	        else
-    	        	qPixels[x + y * width] = ditherable.nearestColorIndex(palette, pixel);
                 
                 Color c1 = palette[qPixels[x + y * width]];
                 float adj = (RAW_BLUE_NOISE[(x & 63) | (y & 63) << 6] + 0.5f) / 127.5f;
@@ -236,9 +227,8 @@ public class BlueNoise {
         }
     }
 
-	public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable)
+	public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable, final short[] qPixels)
     {
-    	short[] qPixels = new short[pixels.length];
     	new BlueNoise(width, height, pixels, palette, qPixels, ditherable).run();
         return qPixels;
     }

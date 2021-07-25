@@ -540,7 +540,17 @@ public class PnnQuantizer {
 		if (nMaxColors > 256)
 			dither = 1;
 
-		short[] qPixels = dither < 0 ? HilbertCurve.dither(width, height, cPixels, palette, getDitherFn()) : quantize_image(cPixels, palette, dither > 0);
+		short[] qPixels;
+		if (dither < 0) {
+			if (nMaxColors < 64)
+				qPixels = quantize_image(cPixels, palette, dither > 0);				
+			else
+				qPixels = HilbertCurve.dither(width, height, cPixels, palette, getDitherFn());
+			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels);
+		}
+		else
+			qPixels = quantize_image(cPixels, palette, dither > 0);
+
 		if (m_transparentPixelIndex >= 0) {
 			short k = qPixels[m_transparentPixelIndex];
 			if (nMaxColors > 2)
