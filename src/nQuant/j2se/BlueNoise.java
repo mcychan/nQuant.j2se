@@ -170,32 +170,14 @@ public class BlueNoise {
 		14, -9, -91, -55, 99, -111, -20, 31, 88, -3, 105, 53, -29, -90, -10, -70, 9, -57, 123, -99, 5			
 	};
 	
-	private final int width;
-	private final int height;
-	private final Color[] pixels;
-	private final Color[] palette;
-	private final short[] qPixels;
-	private final Ditherable ditherable;
-	private final int[] lookup;
-	
-	private BlueNoise(final int width, final int height, final Color[] image, final Color[] palette, final short[] qPixels, final Ditherable ditherable)
-    {		
-		this.width = width;
-    	this.height = height;
-        this.pixels = image;
-        this.palette = palette;
-        this.qPixels = qPixels;
-        this.ditherable = ditherable;
-        lookup = new int[65536];
-    }
-	
 	/**
      * A blue-noise-based dither does not diffuse error, and uses a tiling blue noise pattern, 
      * with a fine-grained checker board pattern
      * and a roughly-white-noise pattern obtained by distorting the blue noise, but only applies these noisy pattern
      * when there's error matching a color from the image to a color in the palette. */
-	protected void run()
-    {		
+	public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable, final short[] qPixels)
+    {
+		final int[] lookup = new int[65536];
 		final float strength = (float) Math.sqrt(2.89);
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
@@ -225,11 +207,7 @@ public class BlueNoise {
     	        	qPixels[x + y * width] = ditherable.nearestColorIndex(palette, c1);
             }
         }
-    }
-
-	public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable, final short[] qPixels)
-    {
-    	new BlueNoise(width, height, pixels, palette, qPixels, ditherable).run();
+        
         return qPixels;
     }
 }
