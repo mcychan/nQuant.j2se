@@ -242,7 +242,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		int k = 0;
 		for (int i = 0;; ++k) {
 			Lab lab1 = new Lab();
-			lab1.alpha = (int) bins[i].ac;
+			lab1.alpha = (int) Math.rint(bins[i].ac);
 			lab1.L = bins[i].Lc; lab1.A = bins[i].Ac; lab1.B = bins[i].Bc;
 			palette[k] = CIELABConvertor.LAB2RGB(lab1);
 			if (m_transparentPixelIndex >= 0 && m_transparentColor.equals(palette[k])) {
