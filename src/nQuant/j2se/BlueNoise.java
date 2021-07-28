@@ -176,9 +176,9 @@ public class BlueNoise {
      * and a roughly-white-noise pattern obtained by distorting the blue noise, but only applies these noisy pattern
      * when there's error matching a color from the image to a color in the palette. */
 	public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable, final short[] qPixels)
-    {
+    {	
 		final int[] lookup = new int[65536];
-		final float strength = (float) Math.sqrt(2.89);
+		final float strength = 1.7f;
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
             	Color pixel = pixels[x + y * width];            	
@@ -189,16 +189,18 @@ public class BlueNoise {
                 
                 Color c1 = palette[qPixels[x + y * width]];
                 float adj = (RAW_BLUE_NOISE[(x & 63) | (y & 63) << 6] + 0.5f) / 127.5f;
-                adj += ((x + y & 1) - 0.5f) * strength * (0.5f + RAW_BLUE_NOISE[(x * 19 & 63) | (y * 23 & 63) << 6])
-                    * -0x1.6p-10f;
+                adj -= ((x + y & 1) - 0.5) * strength * (0.5 + RAW_BLUE_NOISE[(x * 19 & 63) | (y * 23 & 63) << 6])
+                    * 0x1.6p-10f;
+
                 r_pix = (int) Math.min(0xFF, Math.max(r_pix + (adj * (r_pix - c1.getRed())), 0.0));
                 g_pix = (int) Math.min(0xFF, Math.max(g_pix + (adj * (g_pix - c1.getGreen())), 0.0));
                 b_pix = (int) Math.min(0xFF, Math.max(b_pix + (adj * (b_pix - c1.getBlue())), 0.0));
-                a_pix = (int) Math.min(0xFF, Math.max(a_pix + (adj * (a_pix - c1.getAlpha())), 0.0));
+                a_pix = (int) Math.min(0xFF, Math.max(a_pix + (adj * (a_pix - c1.getAlpha())), 0.0));                
                 
                 c1 = new Color(r_pix, g_pix, b_pix, a_pix);
                 if (palette.length < 64) {
     	        	int offset = ditherable.getColorIndex(c1);
+    	        	
     				if(lookup[offset] == 0)
     					lookup[offset] = (pixel.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, c1) + 1;
     				qPixels[x + y * width] = (short) (lookup[offset] - 1);
