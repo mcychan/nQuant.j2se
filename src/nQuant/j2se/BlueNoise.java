@@ -178,7 +178,7 @@ public class BlueNoise {
 	public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable, final short[] qPixels)
     {	
 		final int[] lookup = new int[65536];
-		final float strength = 1.7f;
+		final float strength = 1 / 3f;
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
             	Color pixel = pixels[x + y * width];            	
@@ -190,7 +190,7 @@ public class BlueNoise {
                 Color c1 = palette[qPixels[x + y * width]];
                 float adj = (RAW_BLUE_NOISE[(x & 63) | (y & 63) << 6] + 0.5f) / 127.5f;
                 adj -= ((x + y & 1) - 0.5) * strength * (0.5 + RAW_BLUE_NOISE[(x * 19 & 63) | (y * 23 & 63) << 6])
-                    * 0x1.6p-10f;
+                    * 11 / 8192f;
 
                 r_pix = (int) Math.min(0xFF, Math.max(r_pix + (adj * (r_pix - c1.getRed())), 0.0));
                 g_pix = (int) Math.min(0xFF, Math.max(g_pix + (adj * (g_pix - c1.getGreen())), 0.0));
