@@ -546,7 +546,7 @@ public class PnnQuantizer {
 				qPixels = quantize_image(cPixels, palette, dither > 0);				
 			else
 				qPixels = HilbertCurve.dither(width, height, cPixels, palette, getDitherFn());
-			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels);
+			// BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels);
 		}
 		else
 			qPixels = quantize_image(cPixels, palette, dither > 0);
