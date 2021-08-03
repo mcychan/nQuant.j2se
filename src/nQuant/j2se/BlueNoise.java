@@ -189,8 +189,7 @@ public class BlueNoise {
                 
                 Color c1 = palette[qPixels[x + y * width]];
                 float adj = (RAW_BLUE_NOISE[(x & 63) | (y & 63) << 6] + 0.5f) / 127.5f;
-                adj -= ((x + y & 1) - 0.5) * strength * (0.5 + RAW_BLUE_NOISE[(x * 19 & 63) | (y * 23 & 63) << 6])
-                    * 11 / 8192f;
+                adj += ((x + y & 1) - 0.5) * strength / 8f;
 
                 r_pix = (int) Math.min(0xFF, Math.max(r_pix + (adj * (r_pix - c1.getRed())), 0.0));
                 g_pix = (int) Math.min(0xFF, Math.max(g_pix + (adj * (g_pix - c1.getGreen())), 0.0));
