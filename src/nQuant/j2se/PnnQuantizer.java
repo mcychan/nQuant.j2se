@@ -157,6 +157,8 @@ public class PnnQuantizer {
 
 	protected Color[] pnnquan(final Color[] pixels, int nMaxColors, short quan_rt)
 	{
+		closestMap.clear();
+		nearestMap.clear();
 		Pnnbin[] bins = new Pnnbin[65536];		
 
 		/* Build histogram */
@@ -505,7 +507,10 @@ public class PnnQuantizer {
 	
 	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, int dither)
     {
-        return quantize_image(cPixels, palette, dither > 0);
+		short[] qPixels = quantize_image(cPixels, palette, dither > 0);
+		closestMap.clear();
+		nearestMap.clear();
+		return qPixels;
     }
 
 	public short[] convert(int nMaxColors, int dither) {
@@ -554,9 +559,7 @@ public class PnnQuantizer {
 			else if (!palette[k].equals(m_transparentColor)) {
 				Color c1 = palette[0]; palette[0] = palette[1]; palette[1] = c1;
 			}
-		}
-		closestMap.clear();
-		nearestMap.clear();
+		}		
 
 		return qPixels;
 	}
