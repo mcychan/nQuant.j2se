@@ -502,6 +502,11 @@ public class PnnQuantizer {
 
 		return qPixels;
 	}
+	
+	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, int dither)
+    {
+        return quantize_image(cPixels, palette, dither > 0);
+    }
 
 	public short[] convert(int nMaxColors, int dither) {
 		final Color[] cPixels = new Color[pixels.length];		
@@ -540,16 +545,7 @@ public class PnnQuantizer {
 		if (nMaxColors > 256)
 			dither = 1;
 
-		short[] qPixels;
-		if (dither < 0) {
-			if (nMaxColors < 64)
-				qPixels = quantize_image(cPixels, palette, false);				
-			else
-				qPixels = HilbertCurve.dither(width, height, cPixels, palette, getDitherFn());
-			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels);
-		}
-		else
-			qPixels = quantize_image(cPixels, palette, dither > 0);
+		short[] qPixels = dither(cPixels, palette, nMaxColors, width, height, dither);
 
 		if (m_transparentPixelIndex >= 0) {
 			short k = qPixels[m_transparentPixelIndex];
@@ -583,21 +579,6 @@ public class PnnQuantizer {
 	
 	public boolean hasAlpha() {
 		return m_transparentPixelIndex > -1;
-	}
-	
-	public Ditherable getDitherFn() {
-		return new Ditherable() {
-			@Override
-			public int getColorIndex(Color c) {
-				return PnnQuantizer.this.getColorIndex(c, hasSemiTransparency, m_transparentPixelIndex >= 0);
-			}
-			
-			@Override
-			public short nearestColorIndex(Color[] palette, Color c) {
-				return PnnQuantizer.this.nearestColorIndex(palette, c);
-			}
-			
-		};
 	}
 
 }

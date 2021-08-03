@@ -482,10 +482,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 
 		return qPixels;
-	}
+	}	
 	
-	@Override
-	public Ditherable getDitherFn() {
+	protected Ditherable getDitherFn() {
 		return new Ditherable() {
 			@Override
 			public int getColorIndex(Color c) {
@@ -502,5 +501,19 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			
 		};
 	}
+	
+	@Override
+	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, int dither)
+    {		
+		if (dither < 0) {
+			short[] qPixels;
+			if (nMaxColors < 64)
+				qPixels = quantize_image(cPixels, palette, false);				
+			else
+				qPixels = HilbertCurve.dither(width, height, cPixels, palette, getDitherFn());
+			return BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels);
+		}
+		return quantize_image(cPixels, palette, dither > 0);
+    }
 
 }
