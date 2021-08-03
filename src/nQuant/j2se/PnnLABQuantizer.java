@@ -343,7 +343,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					break;
 				
 				Lab lab2 = getLab(c2.getRGB());
-				closest[4] = (short) (Math.abs(lab2.alpha - lab1.alpha) +Math.abs(lab2.L - lab1.L) + Math.abs(lab2.A - lab1.A) + Math.abs(lab2.B - lab1.B));
+				closest[4] = (short) (hasSemiTransparency ? Math.abs(lab2.alpha - lab1.alpha) : 0 + Math.abs(lab2.L - lab1.L) + Math.abs(lab2.A - lab1.A) + Math.abs(lab2.B - lab1.B));
 				
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
