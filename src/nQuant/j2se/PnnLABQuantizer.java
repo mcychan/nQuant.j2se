@@ -142,7 +142,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 		
 		double proportional = sqr(nMaxColors) / maxbins;
-		if(nMaxColors < 16 || (hasSemiTransparency && nMaxColors < 32))
+		if ((m_transparentPixelIndex >= 0 || hasSemiTransparency) && nMaxColors < 32)
 			quan_rt = -1;
 		else if ((proportional < .018 || proportional > .5) && nMaxColors < 64)
 			quan_rt = 0;
@@ -166,7 +166,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		else if(quan_rt > 0)
 			ratio = Math.min(1.0, Math.pow(nMaxColors, 1.05) / pixelMap.size());			
 		else
-			ratio = Math.min(1.0, Math.pow(nMaxColors, 2.31) / maxbins);
+			ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(4.732) / pixelMap.size());
 		
 		if (quan_rt < 0) {
 			ratio += 0.5;		
