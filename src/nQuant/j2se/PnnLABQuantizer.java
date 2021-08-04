@@ -275,7 +275,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if(c2 == null)
 				break;
 
-			double curdist = sqr(c2.getAlpha() - c.getAlpha());
+			double curdist = sqr(c2.getAlpha() - c.getAlpha()) / Math.exp(1.5);
 			if (curdist > mindist)
 				continue;
 
@@ -343,7 +343,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					break;
 				
 				Lab lab2 = getLab(c2.getRGB());
-				closest[4] = (short) (hasSemiTransparency ? Math.abs(lab2.alpha - lab1.alpha) : 0 + Math.abs(lab2.L - lab1.L) + Math.abs(lab2.A - lab1.A) + Math.abs(lab2.B - lab1.B));
+				closest[4] = (short) (Math.abs(lab2.L - lab1.L) + Math.abs(lab2.A - lab1.A) + Math.abs(lab2.B - lab1.B));
 				
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
@@ -511,7 +511,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				qPixels = quantize_image(cPixels, palette, false);				
 			else
 				qPixels = HilbertCurve.dither(width, height, cPixels, palette, getDitherFn());
-			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels);
+			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels, 1.0f);
 		}
 		else
 			qPixels = quantize_image(cPixels, palette, dither > 0);

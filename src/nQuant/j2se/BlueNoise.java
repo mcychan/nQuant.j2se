@@ -175,7 +175,7 @@ public class BlueNoise {
      * with a fine-grained checker board pattern
      * and a roughly-white-noise pattern obtained by distorting the blue noise, but only applies these noisy pattern
      * when there's error matching a color from the image to a color in the palette. */
-	public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable, final short[] qPixels)
+	public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable, final short[] qPixels, final float weight)
     {	
 		final int[] lookup = new int[65536];
 		final float strength = 1 / 3f;
@@ -190,6 +190,7 @@ public class BlueNoise {
                 Color c1 = palette[qPixels[x + y * width]];
                 float adj = (RAW_BLUE_NOISE[(x & 63) | (y & 63) << 6] + 0.5f) / 127.5f;
                 adj += ((x + y & 1) - 0.5) * strength / 8f;
+                adj *= weight;
 
                 r_pix = (int) Math.min(0xFF, Math.max(r_pix + (adj * (r_pix - c1.getRed())), 0.0));
                 g_pix = (int) Math.min(0xFF, Math.max(g_pix + (adj * (g_pix - c1.getGreen())), 0.0));
