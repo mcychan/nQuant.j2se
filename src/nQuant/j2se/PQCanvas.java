@@ -1,6 +1,7 @@
 package nQuant.j2se;
 
 import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -78,8 +79,16 @@ public class PQCanvas extends Canvas {
 		}); // end FileDrop.Listener
 	}
 
-	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {
+	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, Color[] palette, int width, int height) {		
 		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), null);
+		if(icm.getPixelSize() == 1) {
+			int[] data = new int[qPixels.length];
+		    for(int i=0; i<data.length; ++i)
+		        data[i] = qPixels[i] < 1 ? palette[0].getRGB() : palette[1].getRGB();
+
+		    // create image from color model and data
+		    raster.setPixels(0, 0, width, height, data);
+		}
 		return new BufferedImage(icm, raster, icm.isAlphaPremultiplied(), null);
 	}
 
@@ -98,7 +107,7 @@ public class PQCanvas extends Canvas {
 
 			short[] qPixels = pq.convert(256, -1);
 			if(pq.getColorModel() instanceof IndexColorModel)
-				return toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), w, h);
+				return toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), pq.getPalette(), w, h);
 
 			BufferedImage highColorImage = null;
 			if(pq.getColorModel() instanceof DirectColorModel) {

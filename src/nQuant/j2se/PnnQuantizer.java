@@ -98,7 +98,7 @@ public class PnnQuantizer {
 		bin1.err = (float) err;
 		bin1.nn = nn;
 	}
-
+	
 	protected final void setColorModel(final Color[] palette)
 	{
 		m_palette = palette;
@@ -114,13 +114,18 @@ public class PnnQuantizer {
 				palettes[i] = c1.getRGB();
 			}
 			
-			m_colorModel = new IndexColorModel(8,         // bits per pixel
-				nMaxColors,         // size of color component array
-				palettes,   // color map
-                0,         // offset in the map
-                m_transparentPixelIndex > -1,      // has alpha
-                m_transparentPixelIndex,         // the pixel value that should be transparent
-                DataBuffer.TYPE_BYTE);
+			if(nMaxColors > 2)
+				m_colorModel = new IndexColorModel(8,         // bits per pixel
+					nMaxColors,         // size of color component array
+					palettes,   // color map
+	                0,         // offset in the map
+	                m_transparentPixelIndex > -1,      // has alpha
+	                m_transparentPixelIndex,         // the pixel value that should be transparent
+	                DataBuffer.TYPE_BYTE);
+			else {
+			    byte[] map = {(byte) 0, (byte) 0xff};
+			    m_colorModel = new IndexColorModel(1, map.length, map, map, map);
+			}
 		}
 		else if (hasSemiTransparency) {
 			final int DCM_4444_RED_MASK = 0x0f00;
@@ -365,7 +370,7 @@ public class PnnQuantizer {
 			closest = got;
 
 		Random rand = new Random();
-		if (closest[2] == 0 || (rand.nextInt(SHORT_MAX) % (closest[3] + closest[2])) <= closest[3])
+		if (closest[2] == 0 || (rand.nextInt(32769) % (closest[3] + closest[2])) <= closest[3])
 			k = closest[0];
 		else
 			k = closest[1];
@@ -505,9 +510,32 @@ public class PnnQuantizer {
 		return qPixels;
 	}
 	
+	protected Ditherable getDitherFn() {
+		return new Ditherable() {
+			@Override
+			public int getColorIndex(Color c) {
+				return PnnQuantizer.this.getColorIndex(c, hasSemiTransparency, m_transparentPixelIndex >= 0);
+			}
+			
+			@Override
+			public short nearestColorIndex(Color[] palette, Color c) {
+				if(hasSemiTransparency || palette.length < 256)
+					return PnnQuantizer.this.nearestColorIndex(palette, c);
+				return PnnQuantizer.this.closestColorIndex(palette, c);
+			}
+			
+		};
+	}
+	
 	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, int dither)
     {
-		short[] qPixels = quantize_image(cPixels, palette, dither > 0);
+		short[] qPixels;
+		if (dither < 0) {			
+			qPixels = quantize_image(cPixels, palette, false);				
+			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels, 1.0f);
+		}
+		else
+			qPixels = quantize_image(cPixels, palette, dither > 0);
 		closestMap.clear();
 		nearestMap.clear();
 		return qPixels;
@@ -545,6 +573,7 @@ public class PnnQuantizer {
 				palette[0] = Color.BLACK;
 				palette[1] = Color.WHITE;
 			}
+			setColorModel(palette);	
 		}
 
 		if (nMaxColors > 256)
