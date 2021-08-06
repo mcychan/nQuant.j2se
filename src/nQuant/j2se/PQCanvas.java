@@ -79,13 +79,15 @@ public class PQCanvas extends Canvas {
 		}); // end FileDrop.Listener
 	}
 
-	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, Color[] palette, int width, int height) {		
+	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {		
 		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), null);
-		if(icm.getPixelSize() == 1) {
+		if(icm.getPixelSize() < 8) {
 			int[] data = new int[qPixels.length];
-		    for(int i=0; i<data.length; ++i)
-		        data[i] = qPixels[i] < 1 ? palette[0].getRGB() : palette[1].getRGB();
-
+		    for(int i = 0; i<data.length; ++i) {
+		    	short qIndex = qPixels[i];
+		    	data[i] = new Color(icm.getRed(qIndex), icm.getGreen(qIndex), icm.getBlue(qIndex), icm.getAlpha(qIndex)).getRGB();
+		    }
+		    
 		    // create image from color model and data
 		    raster.setPixels(0, 0, width, height, data);
 		}
@@ -107,7 +109,7 @@ public class PQCanvas extends Canvas {
 
 			short[] qPixels = pq.convert(256, -1);
 			if(pq.getColorModel() instanceof IndexColorModel)
-				return toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), pq.getPalette(), w, h);
+				return toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), w, h);
 
 			BufferedImage highColorImage = null;
 			if(pq.getColorModel() instanceof DirectColorModel) {

@@ -125,8 +125,7 @@ public class PnnQuantizer {
                 0,         // offset in the map
                 m_transparentPixelIndex > -1,      // has alpha
                 m_transparentPixelIndex,         // the pixel value that should be transparent
-                DataBuffer.TYPE_BYTE);
-			
+                DataBuffer.TYPE_BYTE);			
 		}
 		else if (hasSemiTransparency) {
 			final int DCM_4444_RED_MASK = 0x0f00;
