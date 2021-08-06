@@ -123,7 +123,7 @@ public class PnnQuantizer {
 	                m_transparentPixelIndex,         // the pixel value that should be transparent
 	                DataBuffer.TYPE_BYTE);
 			else {
-			    byte[] map = {(byte) 0, (byte) 0xff};
+			    byte[] map = {(byte) palette[0].getRGB(), (byte) palette[1].getRed()};
 			    m_colorModel = new IndexColorModel(1, map.length, map, map, map);
 			}
 		}
