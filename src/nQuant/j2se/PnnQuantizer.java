@@ -99,6 +99,11 @@ public class PnnQuantizer {
 		bin1.nn = nn;
 	}
 	
+	private static int getBitsPerPixel(int nMaxColors)
+	{
+		return nMaxColors > 2 ? 8 : 1;
+	}
+	
 	protected final void setColorModel(final Color[] palette)
 	{
 		m_palette = palette;
@@ -114,18 +119,14 @@ public class PnnQuantizer {
 				palettes[i] = c1.getRGB();
 			}
 			
-			if(nMaxColors > 2)
-				m_colorModel = new IndexColorModel(8,         // bits per pixel
-					nMaxColors,         // size of color component array
-					palettes,   // color map
-	                0,         // offset in the map
-	                m_transparentPixelIndex > -1,      // has alpha
-	                m_transparentPixelIndex,         // the pixel value that should be transparent
-	                DataBuffer.TYPE_BYTE);
-			else {
-			    byte[] map = {(byte) palette[0].getRGB(), (byte) palette[1].getRed()};
-			    m_colorModel = new IndexColorModel(1, map.length, map, map, map);
-			}
+			m_colorModel = new IndexColorModel(getBitsPerPixel(nMaxColors),         // bits per pixel
+				nMaxColors,         // size of color component array
+				palettes,   // color map
+                0,         // offset in the map
+                m_transparentPixelIndex > -1,      // has alpha
+                m_transparentPixelIndex,         // the pixel value that should be transparent
+                DataBuffer.TYPE_BYTE);
+			
 		}
 		else if (hasSemiTransparency) {
 			final int DCM_4444_RED_MASK = 0x0f00;
