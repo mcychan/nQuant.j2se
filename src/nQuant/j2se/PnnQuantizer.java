@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Random;
 
 public class PnnQuantizer {
-	protected final short SHORT_MAX = Short.MAX_VALUE;
 	protected final char BYTE_MAX = -Byte.MIN_VALUE + Byte.MAX_VALUE;
 	protected short alphaThreshold = 0;
 	protected boolean hasSemiTransparency = false;
@@ -29,7 +28,7 @@ public class PnnQuantizer {
 	private double PR = .299, PG = .587, PB = .114;
 	private Color[] m_palette;
 	protected ColorModel m_colorModel;
-	protected Map<Integer, short[]> closestMap = new HashMap<>();
+	protected Map<Integer, int[]> closestMap = new HashMap<>();
 	protected Map<Integer, Short> nearestMap = new HashMap<>();
 
 	private PnnQuantizer(BufferedImage im, int w, int h) throws IOException {
@@ -308,7 +307,7 @@ public class PnnQuantizer {
 		if (c.getAlpha() <= alphaThreshold)
             return k;
 		
-		double curdist, mindist = SHORT_MAX;
+		double curdist, mindist = 1e100;
 		for (int i = 0; i<palette.length; ++i) {
 			Color c2 = palette[i];
 
@@ -342,15 +341,15 @@ public class PnnQuantizer {
 	protected short closestColorIndex(final Color[] palette, final Color c)
 	{
 		short k = 0;
-		short[] closest = new short[5];
-		short[] got = closestMap.get(c.getRGB());
+		int[] closest = new int[5];
+		int[] got = closestMap.get(c.getRGB());
 		if (got == null) {
-			closest[2] = closest[3] = SHORT_MAX;
+			closest[2] = closest[3] = Integer.MAX_VALUE;
 
 			for (; k < palette.length; ++k) {
 				Color c2 = palette[k];
 
-				closest[4] = (short) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
+				closest[4] = (int) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
 					closest[3] = closest[2];
@@ -363,7 +362,7 @@ public class PnnQuantizer {
 				}
 			}
 
-			if (closest[3] == SHORT_MAX)
+			if (closest[3] == Integer.MAX_VALUE)
 				closest[2] = 0;
 		}
 		else
@@ -371,9 +370,9 @@ public class PnnQuantizer {
 
 		Random rand = new Random();
 		if (closest[2] == 0 || (rand.nextInt(32769) % (closest[3] + closest[2])) <= closest[3])
-			k = closest[0];
+			k = (short) closest[0];
 		else
-			k = closest[1];
+			k = (short) closest[1];
 
 		closestMap.put(c.getRGB(), closest);
 		return k;

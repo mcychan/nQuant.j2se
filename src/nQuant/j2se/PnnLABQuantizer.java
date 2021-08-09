@@ -268,7 +268,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if (c.getAlpha() <= alphaThreshold)
             return k;
 		
-		double mindist = SHORT_MAX;
+		double mindist = 1e100;
 		Lab lab1 = getLab(c.getRGB());
 		for (short i=0; i<palette.length; ++i) {
 			Color c2 = palette[i];
@@ -331,10 +331,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	protected short closestColorIndex(final Color[] palette, final Color c)
 	{
 		short k = 0;
-		short[] closest = closestMap.get(c.getRGB());
+		int[] closest = closestMap.get(c.getRGB());
 		if (closest == null) {
-			closest = new short[5];
-			closest[2] = closest[3] = SHORT_MAX;
+			closest = new int[5];
+			closest[2] = closest[3] = Integer.MAX_VALUE;
 			Lab lab1 = getLab(c.getRGB());
 
 			for (; k < palette.length; ++k) {
@@ -343,7 +343,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					break;
 				
 				Lab lab2 = getLab(c2.getRGB());
-				closest[4] = (short) (Math.abs(lab2.L - lab1.L) + Math.abs(lab2.A - lab1.A) + Math.abs(lab2.B - lab1.B));
+				closest[4] = (int) (Math.abs(lab2.alpha - lab1.alpha) + Math.abs(lab2.L - lab1.L) + Math.abs(lab2.A - lab1.A) + Math.abs(lab2.B - lab1.B));
 				
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
@@ -357,15 +357,15 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				}
 			}
 
-			if (closest[3] == SHORT_MAX)
+			if (closest[3] == Integer.MAX_VALUE)
 				closest[2] = 0;
 		}
 
 		Random rand = new Random();
-		if (closest[2] == 0 || (rand.nextInt(SHORT_MAX) % (closest[3] + closest[2])) <= closest[3])
-			k = closest[0];
+		if (closest[2] == 0 || (rand.nextInt(32769) % (closest[3] + closest[2])) <= closest[3])
+			k = (short) closest[0];
 		else
-			k = closest[1];
+			k = (short) closest[1];
 
 		closestMap.put(c.getRGB(), closest);
 		return k;
@@ -439,25 +439,25 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					row1[cursor1 - DJ] = r_pix;
 					row1[cursor1 + DJ] += (r_pix += k);
 					row1[cursor1] += (r_pix += k);
-					row0[cursor0 + DJ] += (r_pix += k);
+					row0[cursor0 + DJ] += (r_pix + k);
 
 					k = g_pix * 2;
 					row1[cursor1 + 1 - DJ] = g_pix;
 					row1[cursor1 + 1 + DJ] += (g_pix += k);
 					row1[cursor1 + 1] += (g_pix += k);
-					row0[cursor0 + 1 + DJ] += (g_pix += k);
+					row0[cursor0 + 1 + DJ] += (g_pix + k);
 
 					k = b_pix * 2;
 					row1[cursor1 + 2 - DJ] = b_pix;
 					row1[cursor1 + 2 + DJ] += (b_pix += k);
 					row1[cursor1 + 2] += (b_pix += k);
-					row0[cursor0 + 2 + DJ] += (b_pix += k);
+					row0[cursor0 + 2 + DJ] += (b_pix + k);
 
 					k = a_pix * 2;
 					row1[cursor1 + 3 - DJ] = a_pix;
 					row1[cursor1 + 3 + DJ] += (a_pix += k);
 					row1[cursor1 + 3] += (a_pix += k);
-					row0[cursor0 + 3 + DJ] += (a_pix += k);
+					row0[cursor0 + 3 + DJ] += (a_pix + k);
 
 					cursor0 += DJ;
 					cursor1 -= DJ;
