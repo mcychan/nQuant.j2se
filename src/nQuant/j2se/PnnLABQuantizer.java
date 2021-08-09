@@ -508,10 +508,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		short[] qPixels;
 		if (nMaxColors < 64)
 			qPixels = quantize_image(cPixels, palette, dither);
-		else {			
-			qPixels = quantize_image(cPixels, palette, false);				
+		else			
 			qPixels = HilbertCurve.dither(width, height, cPixels, palette, getDitherFn());			
-		}
 		
 		if(!dither)
 			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels, 1.0f);
