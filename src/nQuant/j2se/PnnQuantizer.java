@@ -529,12 +529,10 @@ public class PnnQuantizer {
 	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, boolean dither)
     {
 		short[] qPixels;
-		if (dither)
-			qPixels = quantize_image(cPixels, palette, true);
-		else {
-			qPixels = quantize_image(cPixels, palette, false);				
+		qPixels = quantize_image(cPixels, palette, dither);
+		
+		if (!dither)
 			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels, 1.0f);
-		}
 			
 		closestMap.clear();
 		nearestMap.clear();

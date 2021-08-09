@@ -506,15 +506,15 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, boolean dither)
     {		
 		short[] qPixels;
-		if(dither)
-			qPixels = quantize_image(cPixels, palette, true);
+		if (nMaxColors < 64)
+			qPixels = quantize_image(cPixels, palette, dither);
 		else {			
-			if (nMaxColors < 64)
-				qPixels = quantize_image(cPixels, palette, false);				
-			else
-				qPixels = HilbertCurve.dither(width, height, cPixels, palette, getDitherFn());
+			qPixels = quantize_image(cPixels, palette, false);				
+			qPixels = HilbertCurve.dither(width, height, cPixels, palette, getDitherFn());			
+		}
+		
+		if(!dither)
 			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels, 1.0f);
-		}	
 		
 		closestMap.clear();
 		nearestMap.clear();
