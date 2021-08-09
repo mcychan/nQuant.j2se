@@ -101,7 +101,7 @@ public class PnnQuantizer {
 	
 	private static int getBitsPerPixel(int nMaxColors)
 	{
-		return nMaxColors > 2 ? 8 : 1;
+		return (int) Math.min(8, Math.log(nMaxColors) / Math.log(2));
 	}
 	
 	protected final void setColorModel(final Color[] palette)
@@ -527,21 +527,22 @@ public class PnnQuantizer {
 		};
 	}
 	
-	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, int dither)
+	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, boolean dither)
     {
 		short[] qPixels;
-		if (dither < 0) {			
+		if (dither)
+			qPixels = quantize_image(cPixels, palette, true);
+		else {
 			qPixels = quantize_image(cPixels, palette, false);				
 			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels, 1.0f);
 		}
-		else
-			qPixels = quantize_image(cPixels, palette, dither > 0);
+			
 		closestMap.clear();
 		nearestMap.clear();
 		return qPixels;
     }
 
-	public short[] convert(int nMaxColors, int dither) {
+	public short[] convert(int nMaxColors, boolean dither) {
 		final Color[] cPixels = new Color[pixels.length];		
 		for (int i = 0; i<pixels.length; ++i) {
 			int pixel = pixels[i];
@@ -577,7 +578,7 @@ public class PnnQuantizer {
 		}
 
 		if (nMaxColors > 256)
-			dither = 1;
+			dither = true;
 
 		short[] qPixels = dither(cPixels, palette, nMaxColors, width, height, dither);
 
