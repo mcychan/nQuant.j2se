@@ -511,8 +511,11 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		else			
 			qPixels = HilbertCurve.dither(width, height, cPixels, palette, getDitherFn());			
 		
-		if(!dither)
-			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels, 1.0f);
+		if(!dither) {
+			double delta = sqr(nMaxColors) / pixelMap.size();
+			float weight = delta > 0.2 ? 1.0f : (float) (37.013 * delta + 0.906);
+			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels, weight);
+		}
 		
 		closestMap.clear();
 		nearestMap.clear();
