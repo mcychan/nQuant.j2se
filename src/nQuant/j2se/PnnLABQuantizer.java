@@ -164,7 +164,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(3.845) / pixelMap.size());
 		}
 		else if(quan_rt > 0)
-			ratio = Math.min(1.0, Math.pow(nMaxColors, 1.05) / pixelMap.size());			
+			ratio = 0.85;			
 		else
 			ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(4.732) / pixelMap.size());
 		
@@ -513,7 +513,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		
 		if(!dither) {
 			double delta = sqr(nMaxColors) / pixelMap.size();
-			float weight = delta > 0.2 ? 1.0f : (float) (37.013 * delta + 0.906);
+			float weight = delta > 0.023 ? 1.0f : (float) (37.013 * delta + 0.906);
 			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels, weight);
 		}
 		
