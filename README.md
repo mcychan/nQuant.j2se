@@ -10,4 +10,4 @@ The Java version of the code, together with a test driver, using simple drag and
 The main method is located at PQCanvas.java. It will open a JFrame dialog.
 
 Original photo:<br><img src="https://i.stack.imgur.com/SE5x9.png" /><br>
-Reduced to 256 colors by Pairwise Nearest Neighbor Quantization Algorithm:<br><img src="https://i.stack.imgur.com/A4mg7.gif" />
+Reduced to 256 colors by Pairwise Nearest Neighbor Quantization Algorithm:<br><img src="https://user-images.githubusercontent.com/26831069/129530423-0767e45a-001f-4024-aeed-49e897b5da62.png" />
