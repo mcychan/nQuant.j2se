@@ -506,7 +506,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, boolean dither)
     {		
 		short[] qPixels;
-		if (nMaxColors < 64 || nMaxColors > 256)
+		if (nMaxColors < 64)
 			qPixels = quantize_image(cPixels, palette, dither);
 		else			
 			qPixels = HilbertCurve.dither(width, height, cPixels, palette, getDitherFn());			
