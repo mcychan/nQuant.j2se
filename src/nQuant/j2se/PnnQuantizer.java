@@ -310,6 +310,8 @@ public class PnnQuantizer {
 		double curdist, mindist = 1e100;
 		for (int i = 0; i<palette.length; ++i) {
 			Color c2 = palette[i];
+			if(c2 == null)
+				break;
 
 			double adist = Math.abs(c2.getAlpha() - c.getAlpha());
 			curdist = adist;
@@ -348,6 +350,8 @@ public class PnnQuantizer {
 
 			for (; k < palette.length; ++k) {
 				Color c2 = palette[k];
+				if(c2 == null)
+					break;
 
 				closest[4] = (int) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
 				if (closest[4] < closest[2]) {
