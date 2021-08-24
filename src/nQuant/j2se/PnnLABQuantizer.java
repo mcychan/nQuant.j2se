@@ -343,7 +343,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					break;
 				
 				Lab lab2 = getLab(c2.getRGB());
-				closest[4] = (int) (sqr(lab2.L - lab1.L) + sqr(lab2.A - lab1.A) + sqr(lab2.B - lab1.B));
+				closest[4] = (int) (PR * sqr(c2.getRed() - c.getRed()) + PG * sqr(c2.getGreen() - c.getGreen()) + PB * sqr(c2.getBlue() - c.getBlue()) + sqr(lab2.B - lab1.B) / 2.0);
 				
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
