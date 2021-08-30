@@ -12,7 +12,7 @@ import nQuant.j2se.CIELABConvertor.Lab;
 import nQuant.j2se.CIELABConvertor.MutableDouble;
 
 public class PnnLABQuantizer extends PnnQuantizer {
-	private double PR = .299, PG = .587, PB = .114;
+	private double PR = .2126, PG = .7152, PB = .0722;
 	private double ratio = 1.0;
 	private Map<Integer, Lab> pixelMap = new HashMap<Integer, Lab>();	
 
