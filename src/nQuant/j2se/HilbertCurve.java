@@ -89,10 +89,10 @@ public class HilbertCurve {
 	        if (palette.length > 256)
 	        	qPixels[x + y * width] = (short) ditherable.getColorIndex(c2);
 	        
-	        error.p[0] = r_pix - c2.getRed();
-	        error.p[1] = g_pix - c2.getGreen();
-	        error.p[2] = b_pix - c2.getBlue();
-	        error.p[3] = a_pix - c2.getAlpha();
+	        error.p[0] = r_pix > 255 ? 255 : r_pix - c2.getRed();
+	        error.p[1] = g_pix > 255 ? 255 : g_pix - c2.getGreen();
+	        error.p[2] = b_pix > 255 ? 255 : b_pix - c2.getBlue();
+	        error.p[3] = a_pix > 255 ? 255 : a_pix - c2.getAlpha();
 	        
 	        for(int j = 0; j < error.p.length; ++j) {
 	        	if(Math.abs(error.p[j]) < DITHER_MAX)

@@ -362,7 +362,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 
 		Random rand = new Random();
-		if (closest[2] == 0 || (rand.nextInt(32769) % (closest[3] + closest[2])) <= closest[3])
+		if (closest[2] == 0 || (rand.nextInt(32767) % (closest[3] + closest[2])) <= closest[3])
 			k = (short) closest[0];
 		else
 			k = (short) closest[1];
