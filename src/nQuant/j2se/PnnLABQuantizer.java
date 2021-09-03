@@ -509,7 +509,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if (nMaxColors < 64 || hasSemiTransparency)
 			qPixels = quantize_image(cPixels, palette, dither);
 		else			
-			qPixels = HilbertCurve.dither(width, height, cPixels, palette, getDitherFn());			
+			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn());			
 		
 		if(!dither) {
 			double delta = sqr(nMaxColors) / pixelMap.size();
