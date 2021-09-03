@@ -86,7 +86,7 @@ public class GilbertCurve {
         errorq.remove(0);
         c2 = palette[qPixels[bidx]];
         if (palette.length > 256)
-        	qPixels[x + y * width] = (short) ditherable.getColorIndex(c2);
+        	qPixels[bidx] = (short) ditherable.getColorIndex(c2);
         
         error.p[0] = r_pix - c2.getRed();
         error.p[1] = g_pix - c2.getGreen();
