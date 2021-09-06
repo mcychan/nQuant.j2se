@@ -97,7 +97,7 @@ public class GilbertCurve {
         	if(Math.abs(error.p[j]) < DITHER_MAX)
         		continue;
         	
-        	error.p[j] = 0;
+        	error.p[j] /= 3.0f;
         }
         errorq.add(error);
     }
@@ -111,7 +111,7 @@ public class GilbertCurve {
     	int dby = sign(by);
 
     	if (h == 1) {
-    		for (int i = 0; i < w; i++){
+    		for (int i = 0; i < w; ++i){
     			ditherPixel(x, y);
     			x += dax;
     			y += day;
@@ -120,7 +120,7 @@ public class GilbertCurve {
     	}
 
     	if (w == 1) {
-    		for (int i = 0; i < h; i++){
+    		for (int i = 0; i < h; ++i){
     			ditherPixel(x, y);
     			x += dbx;
     			y += dby;
@@ -153,7 +153,7 @@ public class GilbertCurve {
 		
 		generate2d(x, y, bx2, by2, ax2, ay2);
 		generate2d(x + bx2, y + by2, ax, ay, bx - bx2, by - by2);
-		generate2d(x + (ax-dax) + (bx2 - dbx), y + (ay - day) + (by2 - dby), -bx2, -by2, -(ax - ax2), -(ay - ay2));    		
+		generate2d(x + (ax - dax) + (bx2 - dbx), y + (ay - day) + (by2 - dby), -bx2, -by2, -(ax - ax2), -(ay - ay2));    		
     }
 
     private void run() {
