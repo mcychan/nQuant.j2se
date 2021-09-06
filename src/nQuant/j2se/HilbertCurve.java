@@ -12,7 +12,7 @@ import static nQuant.j2se.HilbertCurve.Direction.*;
 public class HilbertCurve {
 	public enum Direction { LEFT, RIGHT, DOWN, UP };
 	
-	private final class ErrorBox
+	private static final class ErrorBox
 	{
 		private final float[] p;
 		private ErrorBox() {

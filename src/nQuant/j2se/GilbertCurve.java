@@ -9,7 +9,7 @@ import java.util.List;
 
 public class GilbertCurve {
 
-	private final class ErrorBox
+	private static final class ErrorBox
 	{
 		private final float[] p;
 		private ErrorBox() {
@@ -52,7 +52,7 @@ public class GilbertCurve {
         lookup = new int[65536];
     }
     
-    private int sign(int x) {
+    private static int sign(int x) {
     	if(x < 0)
     		return -1;
     	return (x > 0) ? 1 : 0;
