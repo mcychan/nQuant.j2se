@@ -506,8 +506,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, boolean dither)
     {		
 		short[] qPixels;
-		if (nMaxColors < 64 || hasSemiTransparency)
+		if ((nMaxColors < 64 || hasSemiTransparency) && nMaxColors > 2)
 			qPixels = quantize_image(cPixels, palette, dither);
+		else if (nMaxColors == 2)
+            qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(), 1.5f);
 		else			
 			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn());			
 		

@@ -26,6 +26,7 @@ public class GilbertCurve {
 		}
 	}
 	
+	private final float divisor;
 	private final int width;
 	private final int height;
 	private final Color[] pixels;
@@ -39,8 +40,9 @@ public class GilbertCurve {
 	private static final byte DITHER_MAX = 9;
 	private static final float BLOCK_SIZE = 343f;	    
     
-    private GilbertCurve(final int width, final int height, final Color[] image, final Color[] palette, final short[] qPixels, final Ditherable ditherable)
+    private GilbertCurve(final int width, final int height, final Color[] image, final Color[] palette, final short[] qPixels, final Ditherable ditherable, final float divisor)
     {
+    	this.divisor = divisor;
     	this.width = width;
     	this.height = height;
         this.pixels = image;
@@ -93,11 +95,13 @@ public class GilbertCurve {
         error.p[2] = b_pix - c2.getBlue();
         error.p[3] = a_pix - c2.getAlpha();
         
-        for(int j = 0; j < error.p.length; ++j) {
-        	if(Math.abs(error.p[j]) < DITHER_MAX)
-        		continue;
-        	
-        	error.p[j] /= 3.0f;
+        if (divisor < 3 || palette.length > 16) {
+	        for(int j = 0; j < error.p.length; ++j) {
+	        	if(Math.abs(error.p[j]) < DITHER_MAX)
+	        		continue;
+	        	
+	        	error.p[j] /= divisor;
+	        }
         }
         errorq.add(error);
     }
@@ -180,10 +184,15 @@ public class GilbertCurve {
     		generate2d(0, 0, 0, height, width, 0);
     }
     
-    public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable)
+    public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable, final float divisor)
     {
     	short[] qPixels = new short[pixels.length];		
-    	new GilbertCurve(width, height, pixels, palette, qPixels, ditherable).run();        
+    	new GilbertCurve(width, height, pixels, palette, qPixels, ditherable, divisor).run();        
         return qPixels;
+    }
+    
+    public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable)
+    {      
+        return dither(width, height, pixels, palette, ditherable, 3.0f);
     }
 }
