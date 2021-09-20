@@ -278,9 +278,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			double curdist = sqr(c2.getAlpha() - c.getAlpha()) / Math.exp(1.5);
 			if (curdist > mindist)
 				continue;
-
-			Lab lab2 = getLab(c2.getRGB());
-			if (palette.length > 32 || hasSemiTransparency) {
+			
+			if (palette.length > 32 || palette.length <= 4 || hasSemiTransparency) {
 				curdist += PR * sqr(c2.getRed() - c.getRed());
 				if (curdist > mindist)
 					continue;
@@ -294,10 +293,12 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					if (curdist > mindist)
 						continue;
 
+					Lab lab2 = getLab(c2.getRGB());
 					curdist += sqr(lab2.B - lab1.B) / 2.0;
 				}
 			}
 			else {				
+				Lab lab2 = getLab(c2.getRGB());
 				double deltaL_prime_div_k_L_S_L = CIELABConvertor.L_prime_div_k_L_S_L(lab1, lab2);
 				curdist += sqr(deltaL_prime_div_k_L_S_L);
 				if (curdist > mindist)
@@ -380,7 +381,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if (dither) {			
 			final int DJ = 4;
 			final int BLOCK_SIZE = 256;
-			final short DITHER_MAX = 16;
+			final short DITHER_MAX = 20;
 			final int err_len = (width + 2) * DJ;
 			short[] clamp = new short[DJ * BLOCK_SIZE];
 			short[] limtb = new short[2 * BLOCK_SIZE];			
@@ -394,8 +395,11 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				limtb[i] = -DITHER_MAX;
 				limtb[i + BLOCK_SIZE] = DITHER_MAX;
 			}
-			for (short i = -DITHER_MAX; i <= DITHER_MAX; ++i)
+			for (short i = -DITHER_MAX; i <= DITHER_MAX; ++i) {
 				limtb[i + BLOCK_SIZE] = i;
+				if(nMaxColors > 16 && i % 4 == 3)
+					limtb[i + BLOCK_SIZE] = 0;
+			}
 
 			boolean noBias = hasSemiTransparency || nMaxColors < 64;
 			int dir = 1;
@@ -506,10 +510,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, boolean dither)
     {		
 		short[] qPixels;
-		if ((nMaxColors < 64 || hasSemiTransparency) && nMaxColors > 2)
+		if (nMaxColors < 64 || hasSemiTransparency)
 			qPixels = quantize_image(cPixels, palette, dither);
-		else if (nMaxColors == 2)
-            qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(), 1.5f);
 		else			
 			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn());			
 		
