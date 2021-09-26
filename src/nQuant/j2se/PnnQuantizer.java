@@ -86,7 +86,10 @@ public class PnnQuantizer {
 		double wg = bin1.gc;
 		double wb = bin1.bc;
 		for (int i = bin1.fw; i != 0; i = bins[i].fw) {
-			double nerr = sqr(bins[i].ac - wa) + sqr(bins[i].rc - wr) + sqr(bins[i].gc - wg) + sqr(bins[i].bc - wb);
+			double nerr = PG * sqr(bins[i].rc - wr) + PG * sqr(bins[i].gc - wg) + PB * sqr(bins[i].bc - wb);
+			if(hasSemiTransparency)
+				nerr += sqr(bins[i].ac - wa);
+			
 			double n2 = bins[i].cnt;
 			nerr *= (n1 * n2) / (n1 + n2);
 			if (nerr >= err)
@@ -559,7 +562,7 @@ public class PnnQuantizer {
 			}			
 		}
 
-		if (nMaxColors <= 32)
+		if (hasSemiTransparency || nMaxColors <= 32)
             PR = PG = PB = 1;
 		
 		Color[] palette;
