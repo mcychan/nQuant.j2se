@@ -86,7 +86,7 @@ public class PnnQuantizer {
 		double wg = bin1.gc;
 		double wb = bin1.bc;
 		for (int i = bin1.fw; i != 0; i = bins[i].fw) {
-			double nerr = PG * sqr(bins[i].rc - wr) + PG * sqr(bins[i].gc - wg) + PB * sqr(bins[i].bc - wb);
+			double nerr = PR * sqr(bins[i].rc - wr) + PG * sqr(bins[i].gc - wg) + PB * sqr(bins[i].bc - wb);
 			if(hasSemiTransparency)
 				nerr += sqr(bins[i].ac - wa);
 			
