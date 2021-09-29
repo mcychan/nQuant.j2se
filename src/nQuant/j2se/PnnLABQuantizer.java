@@ -163,8 +163,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			else
 				ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(3.845) / pixelMap.size());
 		}
-		else if(quan_rt > 0)
-			ratio = 1.0;			
 		else
 			ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(4.732) / pixelMap.size());
 		
