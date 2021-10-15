@@ -22,7 +22,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 	private static final class Pnnbin {
 		float ac = 0, Lc = 0, Ac = 0, Bc = 0, err = 0;
-		int cnt = 0;
+		float cnt = 0;
 		int nn, fw, bk, tm, mtm;
 	}
 
@@ -42,7 +42,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		double err = 1e100;
 
 		Pnnbin bin1 = bins[idx];
-		int n1 = bin1.cnt;
+		float n1 = bin1.cnt;
 		
 		Lab lab1 = new Lab();
 		lab1.alpha = bin1.ac; lab1.L = bin1.Lc; lab1.A = bin1.Ac; lab1.B = bin1.Bc;
@@ -122,7 +122,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			tb.Lc += lab1.L;
 			tb.Ac += lab1.A;
 			tb.Bc += lab1.B;
-			tb.cnt++;
+			tb.cnt += 1.0f;
 		}
 
 		/* Cluster nonempty bins at one end of array */
@@ -147,14 +147,21 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		else if ((proportional < .018 || proportional > .5) && nMaxColors < 64)
 			quan_rt = 0;
 		
-		if (quan_rt > 0)
-			bins[0].cnt = (int) Math.sqrt(bins[0].cnt);
-		for (int i = 0; i < maxbins - 1; ++i) {
+		int i = 0;
+		for (; i < maxbins - 1; ++i) {
 			bins[i].fw = (i + 1);
 			bins[i + 1].bk = i;
 			
-			if (quan_rt > 0)
-				bins[i + 1].cnt = (int) Math.sqrt(bins[i + 1].cnt);
+			if (quan_rt > 0) {
+				bins[i].cnt = (float) Math.sqrt(bins[i].cnt);
+				if (nMaxColors < 64)
+					bins[i].cnt = (int)bins[i].cnt;
+			}
+		}
+		if (quan_rt > 0) {
+			bins[i].cnt = (float) Math.sqrt(bins[i].cnt);
+			if (nMaxColors < 64)
+				bins[i].cnt = (int)bins[i].cnt;
 		}
 		
 		if(quan_rt != 0 && nMaxColors < 64) {
@@ -174,7 +181,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		int h, l, l2;
 		/* Initialize nearest neighbors and build heap of them */
 		int[] heap = new int[bins.length + 1];
-		for (int i = 0; i < maxbins; ++i) {
+		i = 0;
+		for (; i < maxbins; ++i) {
 			find_nn(bins, i, nMaxColors);
 			/* Push slot on heap */
 			float err = bins[i].err;
@@ -189,7 +197,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		/* Merge bins which increase error the least */
 		int extbins = maxbins - nMaxColors;
-		for (int i = 0; i < extbins; ) {			
+		i = 0;
+		for (; i < extbins; ) {			
 			Pnnbin tb = null;
 			/* Use heap to find which bins to merge */
 			for (;;) {
@@ -238,7 +247,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		/* Fill palette */
 		Color[] palette = new Color[nMaxColors];
 		int k = 0;
-		for (int i = 0;; ++k) {
+		i = 0;
+		for (;; ++k) {
 			Lab lab1 = new Lab();
 			lab1.alpha = (int) Math.rint(bins[i].ac);
 			lab1.L = bins[i].Lc; lab1.A = bins[i].Ac; lab1.B = bins[i].Bc;
