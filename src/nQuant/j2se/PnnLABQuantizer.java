@@ -147,21 +147,21 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		else if ((proportional < .018 || proportional > .5) && nMaxColors < 64)
 			quan_rt = 0;
 		
-		int i = 0;
-		for (; i < maxbins - 1; ++i) {
-			bins[i].fw = (i + 1);
-			bins[i + 1].bk = i;
+		int j = 0;
+		for (; j < maxbins - 1; ++j) {
+			bins[j].fw = (j + 1);
+			bins[j + 1].bk = j;
 			
 			if (quan_rt > 0) {
-				bins[i].cnt = (float) Math.sqrt(bins[i].cnt);
+				bins[j].cnt = (float) Math.sqrt(bins[j].cnt);
 				if (nMaxColors < 64)
-					bins[i].cnt = (int)bins[i].cnt;
+					bins[j].cnt = (int)bins[j].cnt;
 			}
 		}
 		if (quan_rt > 0) {
-			bins[i].cnt = (float) Math.sqrt(bins[i].cnt);
+			bins[j].cnt = (float) Math.sqrt(bins[j].cnt);
 			if (nMaxColors < 64)
-				bins[i].cnt = (int)bins[i].cnt;
+				bins[j].cnt = (int)bins[j].cnt;
 		}
 		
 		if(quan_rt != 0 && nMaxColors < 64) {
@@ -181,8 +181,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		int h, l, l2;
 		/* Initialize nearest neighbors and build heap of them */
 		int[] heap = new int[bins.length + 1];
-		i = 0;
-		for (; i < maxbins; ++i) {
+		for (int i = 0; i < maxbins; ++i) {
 			find_nn(bins, i, nMaxColors);
 			/* Push slot on heap */
 			float err = bins[i].err;
@@ -197,8 +196,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 		/* Merge bins which increase error the least */
 		int extbins = maxbins - nMaxColors;
-		i = 0;
-		for (; i < extbins; ) {			
+		for (int i = 0; i < extbins; ) {			
 			Pnnbin tb = null;
 			/* Use heap to find which bins to merge */
 			for (;;) {
@@ -247,8 +245,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		/* Fill palette */
 		Color[] palette = new Color[nMaxColors];
 		int k = 0;
-		i = 0;
-		for (;; ++k) {
+		for (int i = 0; ; ++k) {
 			Lab lab1 = new Lab();
 			lab1.alpha = (int) Math.rint(bins[i].ac);
 			lab1.L = bins[i].Lc; lab1.A = bins[i].Ac; lab1.B = bins[i].Bc;
@@ -352,7 +349,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					break;
 				
 				Lab lab2 = getLab(c2.getRGB());
-				closest[4] = (int) (PR * sqr(c2.getRed() - c.getRed()) + PG * sqr(c2.getGreen() - c.getGreen()) + PB * sqr(c2.getBlue() - c.getBlue()) + sqr(lab2.B - lab1.B) / 2.0);
+				double err = PR * sqr(c2.getRed() - c.getRed()) + PG * sqr(c2.getGreen() - c.getGreen()) + PB * sqr(c2.getBlue() - c.getBlue()) + sqr(lab2.B - lab1.B) / 2.0;
+				closest[4] = err > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) err;
 				
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];

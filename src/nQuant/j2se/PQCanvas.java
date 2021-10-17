@@ -102,7 +102,7 @@ public class PQCanvas extends Canvas {
 			int w = pq.getWidth();
 			int h = pq.getHeight();
 
-			short[] qPixels = pq.convert(256, false);
+			short[] qPixels = pq.convert(256, true);
 			if(pq.getColorModel() instanceof IndexColorModel)
 				return toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), w, h);
 
