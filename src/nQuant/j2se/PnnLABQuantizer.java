@@ -105,6 +105,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	{
 		if(hasSemiTransparency)
 			PR = PG = PB = 1.0;
+		else if(width < 512 || height < 512)
+			PR = 0.299; PG = 0.587; PB = 0.114;
 		
 		Pnnbin[] bins = new Pnnbin[65536];		
 
@@ -340,17 +342,15 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		int[] closest = closestMap.get(c.getRGB());
 		if (closest == null) {
 			closest = new int[5];
-			closest[2] = closest[3] = Integer.MAX_VALUE;
-			Lab lab1 = getLab(c.getRGB());
+			closest[2] = closest[3] = Short.MAX_VALUE;
 
 			for (; k < palette.length; ++k) {
 				Color c2 = palette[k];
 				if(c2 == null)
 					break;
 				
-				Lab lab2 = getLab(c2.getRGB());
-				double err = PR * sqr(c2.getRed() - c.getRed()) + PG * sqr(c2.getGreen() - c.getGreen()) + PB * sqr(c2.getBlue() - c.getBlue()) + sqr(lab2.B - lab1.B) / 2.0;
-				closest[4] = err > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) err;
+				double err = PR * sqr(c2.getRed() - c.getRed()) + PG * sqr(c2.getGreen() - c.getGreen()) + PB * sqr(c2.getBlue() - c.getBlue());
+				closest[4] = err > Short.MAX_VALUE ? Short.MAX_VALUE : (int) err;
 				
 				if (closest[4] < closest[2]) {
 					closest[1] = closest[0];
@@ -364,7 +364,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				}
 			}
 
-			if (closest[3] == Integer.MAX_VALUE)
+			if (closest[3] == Short.MAX_VALUE)
 				closest[2] = 0;
 		}
 
