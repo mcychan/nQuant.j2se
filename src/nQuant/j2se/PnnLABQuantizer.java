@@ -105,8 +105,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	{
 		if(hasSemiTransparency)
 			PR = PG = PB = 1.0;
-		else if(width < 512 || height < 512)
+		else if(width < 512 || height < 512) {
 			PR = 0.299; PG = 0.587; PB = 0.114;
+		}
 		
 		Pnnbin[] bins = new Pnnbin[65536];		
 
