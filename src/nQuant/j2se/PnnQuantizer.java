@@ -525,9 +525,7 @@ public class PnnQuantizer {
 			
 			@Override
 			public short nearestColorIndex(Color[] palette, Color c) {
-				if(hasSemiTransparency || palette.length < 256)
-					return PnnQuantizer.this.nearestColorIndex(palette, c);
-				return PnnQuantizer.this.closestColorIndex(palette, c);
+				return PnnQuantizer.this.nearestColorIndex(palette, c);
 			}
 			
 		};
@@ -536,7 +534,12 @@ public class PnnQuantizer {
 	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, boolean dither)
     {
 		short[] qPixels;
-		qPixels = quantize_image(cPixels, palette, dither);
+		if ((nMaxColors < 64 && nMaxColors > 32) || hasSemiTransparency)
+			qPixels = quantize_image(cPixels, palette, dither);
+		else if(nMaxColors <= 32)
+			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(), nMaxColors > 2 ? 1.8f : 1.5f);
+		else			
+			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn());	
 		
 		if (!dither)
 			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels, 1.0f);
