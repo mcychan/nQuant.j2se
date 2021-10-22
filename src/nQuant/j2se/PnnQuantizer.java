@@ -25,7 +25,7 @@ public class PnnQuantizer {
 	protected int[] pixels;
 	protected Color m_transparentColor;
 	
-	private double PR = .299, PG = .587, PB = .114;
+	private double PR = .2126, PG = .7152, PB = .0722;
 	private Color[] m_palette;
 	protected ColorModel m_colorModel;
 	protected Map<Integer, int[]> closestMap = new HashMap<>();
@@ -567,6 +567,9 @@ public class PnnQuantizer {
 
 		if (hasSemiTransparency || nMaxColors <= 32)
             PR = PG = PB = 1;
+		else if(width < 512 || height < 512) {
+			PR = 0.299; PG = 0.587; PB = 0.114;
+		}
 		
 		Color[] palette;
 		if (nMaxColors > 2)
