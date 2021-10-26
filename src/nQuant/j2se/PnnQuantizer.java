@@ -47,7 +47,7 @@ public class PnnQuantizer {
 
 	private static final class Pnnbin {
 		float ac = 0, rc = 0, gc = 0, bc = 0, err = 0;
-		int cnt = 0;
+		float cnt = 0;
 		int nn, fw, bk, tm, mtm;
 	}
 
@@ -80,7 +80,7 @@ public class PnnQuantizer {
 		double err = 1e100;
 
 		Pnnbin bin1 = bins[idx];
-		int n1 = bin1.cnt;
+		float n1 = bin1.cnt;
 		double wa = bin1.ac;
 		double wr = bin1.rc;
 		double wg = bin1.gc;
@@ -204,19 +204,20 @@ public class PnnQuantizer {
 		if (sqr(nMaxColors) / maxbins < .03)
 			quan_rt = 0;		
 
-		if (quan_rt > 0)
-			bins[0].cnt = (int) Math.sqrt(bins[0].cnt);
-		else if (quan_rt < 0)
-			bins[0].cnt = (int) Math.cbrt(bins[0].cnt);
-		for (int i = 0; i < maxbins - 1; ++i) {
-			bins[i].fw = i + 1;
-			bins[i + 1].bk = i;
+		int j = 0;
+		for (; j < maxbins - 1; ++j) {
+			bins[j].fw = j + 1;
+			bins[j + 1].bk = j;
 			
 			if (quan_rt > 0)
-				bins[i + 1].cnt = (int) Math.sqrt(bins[i + 1].cnt);
+				bins[j].cnt = (float) Math.sqrt(bins[j].cnt);
 			else if (quan_rt < 0)
-				bins[i + 1].cnt = (int) Math.cbrt(bins[i + 1].cnt);
-		}		
+				bins[j].cnt = (int) Math.cbrt(bins[j].cnt);
+		}
+		if (quan_rt > 0)
+			bins[j].cnt = (float) Math.sqrt(bins[j].cnt);
+		else if (quan_rt < 0)
+			bins[j].cnt = (int) Math.cbrt(bins[j].cnt);
 
 		int h, l, l2 ;
 		/* Initialize nearest neighbors and build heap of them */
