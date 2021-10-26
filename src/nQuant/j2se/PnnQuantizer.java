@@ -47,7 +47,7 @@ public class PnnQuantizer {
 
 	private static final class Pnnbin {
 		float ac = 0, rc = 0, gc = 0, bc = 0, err = 0;
-		int cnt = 0;
+		float cnt = 0;
 		int nn, fw, bk, tm, mtm;
 	}
 
@@ -181,7 +181,7 @@ public class PnnQuantizer {
 			tb.rc += c.getRed();
 			tb.gc += c.getGreen();
 			tb.bc += c.getBlue();
-			tb.cnt++;
+			tb.cnt += 1.0f;
 		}
 
 		/* Cluster nonempty bins at one end of array */
@@ -267,8 +267,8 @@ public class PnnQuantizer {
 
 			/* Do a merge */
 			Pnnbin nb = bins[tb.nn];
-			int n1 = tb.cnt;
-			int n2 = nb.cnt;
+			float n1 = tb.cnt;
+			float n2 = nb.cnt;
 			float d = 1f / (n1 + n2);
 			tb.ac = d * Math.round(n1 * tb.ac + n2 * nb.ac);
 			tb.rc = d * Math.round(n1 * tb.rc + n2 * nb.rc);
