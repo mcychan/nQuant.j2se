@@ -47,7 +47,7 @@ public class PnnQuantizer {
 
 	private static final class Pnnbin {
 		float ac = 0, rc = 0, gc = 0, bc = 0, err = 0;
-		float cnt = 0;
+		int cnt = 0;
 		int nn, fw, bk, tm, mtm;
 	}
 
@@ -210,12 +210,12 @@ public class PnnQuantizer {
 			bins[j + 1].bk = j;
 			
 			if (quan_rt > 0)
-				bins[j].cnt = (float) Math.sqrt(bins[j].cnt);
+				bins[j].cnt = (int) Math.sqrt(bins[j].cnt);
 			else if (quan_rt < 0)
 				bins[j].cnt = (int) Math.cbrt(bins[j].cnt);
 		}
 		if (quan_rt > 0)
-			bins[j].cnt = (float) Math.sqrt(bins[j].cnt);
+			bins[j].cnt = (int) Math.sqrt(bins[j].cnt);
 		else if (quan_rt < 0)
 			bins[j].cnt = (int) Math.cbrt(bins[j].cnt);
 
@@ -267,13 +267,13 @@ public class PnnQuantizer {
 
 			/* Do a merge */
 			Pnnbin nb = bins[tb.nn];
-			float n1 = tb.cnt;
-			float n2 = nb.cnt;
+			int n1 = tb.cnt;
+			int n2 = nb.cnt;
 			float d = 1f / (n1 + n2);
-			tb.ac = d * (n1 * tb.ac + n2 * nb.ac);
-			tb.rc = d * (n1 * tb.rc + n2 * nb.rc);
-			tb.gc = d * (n1 * tb.gc + n2 * nb.gc);
-			tb.bc = d * (n1 * tb.bc + n2 * nb.bc);
+			tb.ac = d * Math.round(n1 * tb.ac + n2 * nb.ac);
+			tb.rc = d * Math.round(n1 * tb.rc + n2 * nb.rc);
+			tb.gc = d * Math.round(n1 * tb.gc + n2 * nb.gc);
+			tb.bc = d * Math.round(n1 * tb.bc + n2 * nb.bc);
 			tb.cnt += nb.cnt;
 			tb.mtm = ++i;
 
