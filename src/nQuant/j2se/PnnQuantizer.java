@@ -270,10 +270,10 @@ public class PnnQuantizer {
 			float n1 = tb.cnt;
 			float n2 = nb.cnt;
 			float d = 1f / (n1 + n2);
-			tb.ac = d * (float) Math.round(n1 * tb.ac + n2 * nb.ac);
-			tb.rc = d * (float) Math.round(n1 * tb.rc + n2 * nb.rc);
-			tb.gc = d * (float) Math.round(n1 * tb.gc + n2 * nb.gc);
-			tb.bc = d * (float) Math.round(n1 * tb.bc + n2 * nb.bc);
+			tb.ac = d * (float) Math.floor(n1 * tb.ac + n2 * nb.ac);
+			tb.rc = d * (float) Math.floor(n1 * tb.rc + n2 * nb.rc);
+			tb.gc = d * (float) Math.floor(n1 * tb.gc + n2 * nb.gc);
+			tb.bc = d * (float) Math.floor(n1 * tb.bc + n2 * nb.bc);
 			tb.cnt += nb.cnt;
 			tb.mtm = ++i;
 
