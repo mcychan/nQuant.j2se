@@ -90,7 +90,7 @@ public class PnnQuantizer {
 			if(hasSemiTransparency)
 				nerr += sqr(bins[i].ac - wa);
 			
-			double n2 = bins[i].cnt;
+			float n2 = bins[i].cnt;
 			nerr *= (n1 * n2) / (n1 + n2);
 			if (nerr >= err)
 				continue;
@@ -190,7 +190,7 @@ public class PnnQuantizer {
 			if (bins[i] == null)
 				continue;
 
-			float d = 1f / (float)bins[i].cnt;
+			float d = 1f / bins[i].cnt;
 			bins[i].ac *= d;
 			bins[i].rc *= d;
 			bins[i].gc *= d;
@@ -210,12 +210,12 @@ public class PnnQuantizer {
 			bins[j + 1].bk = j;
 			
 			if (quan_rt > 0)
-				bins[j].cnt = (int) Math.sqrt(bins[j].cnt);
+				bins[j].cnt = (int) Math.sqrt(bins[j].cnt);				
 			else if (quan_rt < 0)
 				bins[j].cnt = (int) Math.cbrt(bins[j].cnt);
 		}
 		if (quan_rt > 0)
-			bins[j].cnt = (int) Math.sqrt(bins[j].cnt);
+			bins[j].cnt = (int) Math.sqrt(bins[j].cnt);			
 		else if (quan_rt < 0)
 			bins[j].cnt = (int) Math.cbrt(bins[j].cnt);
 
@@ -270,10 +270,10 @@ public class PnnQuantizer {
 			float n1 = tb.cnt;
 			float n2 = nb.cnt;
 			float d = 1f / (n1 + n2);
-			tb.ac = d * Math.round(n1 * tb.ac + n2 * nb.ac);
-			tb.rc = d * Math.round(n1 * tb.rc + n2 * nb.rc);
-			tb.gc = d * Math.round(n1 * tb.gc + n2 * nb.gc);
-			tb.bc = d * Math.round(n1 * tb.bc + n2 * nb.bc);
+			tb.ac = d * (float) Math.round(n1 * tb.ac + n2 * nb.ac);
+			tb.rc = d * (float) Math.round(n1 * tb.rc + n2 * nb.rc);
+			tb.gc = d * (float) Math.round(n1 * tb.gc + n2 * nb.gc);
+			tb.bc = d * (float) Math.round(n1 * tb.bc + n2 * nb.bc);
 			tb.cnt += nb.cnt;
 			tb.mtm = ++i;
 
@@ -311,29 +311,25 @@ public class PnnQuantizer {
 		if (c.getAlpha() <= alphaThreshold)
             return k;
 		
-		double curdist, mindist = 1e100;
+		double mindist = 1e100;
 		for (int i = 0; i<palette.length; ++i) {
 			Color c2 = palette[i];
 			if(c2 == null)
 				break;
 
-			double adist = Math.abs(c2.getAlpha() - c.getAlpha());
-			curdist = adist;
+			double curdist = Math.abs(c2.getAlpha() - c.getAlpha());
 			if (curdist > mindist)
 				continue;
 
-			double rdist = PR * Math.abs(c2.getRed() - c.getRed());
-			curdist += rdist;
+			curdist += PR * Math.abs(c2.getRed() - c.getRed());
 			if (curdist > mindist)
 				continue;
 
-			double gdist = PG * Math.abs(c2.getGreen() - c.getGreen());
-			curdist += gdist;
+			curdist += PG * Math.abs(c2.getGreen() - c.getGreen());
 			if (curdist > mindist)
 				continue;
 
-			double bdist = PB * Math.abs(c2.getBlue() - c.getBlue());
-			curdist += bdist;
+			curdist += PB * Math.abs(c2.getBlue() - c.getBlue());
 			if (curdist > mindist)
 				continue;
 
@@ -517,7 +513,7 @@ public class PnnQuantizer {
 		return qPixels;
 	}
 	
-	protected Ditherable getDitherFn() {
+	protected Ditherable getDitherFn(final boolean dither) {
 		return new Ditherable() {
 			@Override
 			public int getColorIndex(Color c) {
@@ -526,7 +522,9 @@ public class PnnQuantizer {
 			
 			@Override
 			public short nearestColorIndex(Color[] palette, Color c) {
-				return PnnQuantizer.this.nearestColorIndex(palette, c);
+				if(dither)
+					return PnnQuantizer.this.nearestColorIndex(palette, c);
+				return PnnQuantizer.this.closestColorIndex(palette, c);
 			}
 			
 		};
@@ -538,12 +536,12 @@ public class PnnQuantizer {
 		if ((nMaxColors < 64 && nMaxColors > 32) || hasSemiTransparency)
 			qPixels = quantize_image(cPixels, palette, dither);
 		else if(nMaxColors <= 32)
-			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(), nMaxColors > 2 ? 1.8f : 1.5f);
+			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(dither), nMaxColors > 2 ? 1.8f : 1.5f);
 		else			
-			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn());	
+			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(dither));	
 		
 		if (!dither)
-			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(), qPixels, 1.0f);
+			BlueNoise.dither(width, height, cPixels, palette, getDitherFn(dither), qPixels, 1.0f);
 			
 		closestMap.clear();
 		nearestMap.clear();
