@@ -46,8 +46,8 @@ public class PnnQuantizer {
 	}
 
 	private static final class Pnnbin {
-		float ac = 0, rc = 0, gc = 0, bc = 0, err = 0;
-		float cnt = 0;
+		double ac = 0, rc = 0, gc = 0, bc = 0;
+		float cnt = 0, err = 0;
 		int nn, fw, bk, tm, mtm;
 	}
 
@@ -209,13 +209,21 @@ public class PnnQuantizer {
 			bins[j].fw = j + 1;
 			bins[j + 1].bk = j;
 			
-			if (quan_rt > 0)
-				bins[j].cnt = (int) Math.sqrt(bins[j].cnt);				
+			if (quan_rt > 0) {
+				if(nMaxColors < 64)
+					bins[j].cnt = (float) Math.sqrt(bins[j].cnt);
+				else
+					bins[j].cnt = (int) Math.sqrt(bins[j].cnt);
+			}
 			else if (quan_rt < 0)
 				bins[j].cnt = (int) Math.cbrt(bins[j].cnt);
 		}
-		if (quan_rt > 0)
-			bins[j].cnt = (int) Math.sqrt(bins[j].cnt);			
+		if (quan_rt > 0) {
+			if(nMaxColors < 64)
+				bins[j].cnt = (float) Math.sqrt(bins[j].cnt);
+			else
+				bins[j].cnt = (int) Math.sqrt(bins[j].cnt);
+		}		
 		else if (quan_rt < 0)
 			bins[j].cnt = (int) Math.cbrt(bins[j].cnt);
 
@@ -270,10 +278,10 @@ public class PnnQuantizer {
 			float n1 = tb.cnt;
 			float n2 = nb.cnt;
 			float d = 1f / (n1 + n2);
-			tb.ac = d * (float) Math.floor(n1 * tb.ac + n2 * nb.ac);
-			tb.rc = d * (float) Math.floor(n1 * tb.rc + n2 * nb.rc);
-			tb.gc = d * (float) Math.floor(n1 * tb.gc + n2 * nb.gc);
-			tb.bc = d * (float) Math.floor(n1 * tb.bc + n2 * nb.bc);
+			tb.ac = d * Math.round(n1 * tb.ac + n2 * nb.ac);
+			tb.rc = d * Math.round(n1 * tb.rc + n2 * nb.rc);
+			tb.gc = d * Math.round(n1 * tb.gc + n2 * nb.gc);
+			tb.bc = d * Math.round(n1 * tb.bc + n2 * nb.bc);
 			tb.cnt += nb.cnt;
 			tb.mtm = ++i;
 
@@ -287,7 +295,7 @@ public class PnnQuantizer {
 		Color[] palette = new Color[nMaxColors];
 		short k = 0;
 		for (int i = 0;; ++k) {
-			int alpha = (int) bins[i].ac;
+			int alpha = (int) Math.round(bins[i].ac);
 			palette[k] = new Color((int) bins[i].rc, (int) bins[i].gc, (int) bins[i].bc, alpha);
 			if (m_transparentPixelIndex >= 0 && m_transparentColor.equals(palette[k])) {
 				Color temp = palette[0]; palette[0] = palette[k]; palette[k] = temp;
