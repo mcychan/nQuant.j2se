@@ -21,8 +21,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	}
 
 	private static final class Pnnbin {
-		float ac = 0, Lc = 0, Ac = 0, Bc = 0, err = 0;
-		float cnt = 0;
+		float ac = 0, Lc = 0, Ac = 0, Bc = 0;
+		float cnt = 0, err = 0;
 		int nn, fw, bk, tm, mtm;
 	}
 
@@ -135,7 +135,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if (bins[i] == null)
 				continue;
 
-			float d = 1f / (float)bins[i].cnt;
+			float d = 1f / bins[i].cnt;
 			bins[i].ac *= d;
 			bins[i].Lc *= d;
 			bins[i].Ac *= d;
@@ -156,13 +156,13 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			bins[j + 1].bk = j;
 			
 			if (quan_rt > 0) {
-				bins[j].cnt = (float) Math.sqrt(bins[j].cnt);
+				bins[j].cnt = (int) Math.sqrt(bins[j].cnt);
 				if (nMaxColors < 64)
 					bins[j].cnt = (int)bins[j].cnt;
 			}
 		}
 		if (quan_rt > 0) {
-			bins[j].cnt = (float) Math.sqrt(bins[j].cnt);
+			bins[j].cnt = (int) Math.sqrt(bins[j].cnt);
 			if (nMaxColors < 64)
 				bins[j].cnt = (int)bins[j].cnt;
 		}
@@ -232,10 +232,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			float n1 = tb.cnt;
 			float n2 = nb.cnt;
 			float d = 1.0f / (n1 + n2);
-			tb.ac = d * (n1 * tb.ac + n2 * nb.ac);
-			tb.Lc = d * (n1 * tb.Lc + n2 * nb.Lc);
-			tb.Ac = d * (n1 * tb.Ac + n2 * nb.Ac);
-			tb.Bc = d * (n1 * tb.Bc + n2 * nb.Bc);
+			tb.ac = d * Math.round(n1 * tb.ac + n2 * nb.ac);
+			tb.Lc = d * Math.round(n1 * tb.Lc + n2 * nb.Lc);
+			tb.Ac = d * Math.round(n1 * tb.Ac + n2 * nb.Ac);
+			tb.Bc = d * Math.round(n1 * tb.Bc + n2 * nb.Bc);
 			tb.cnt += nb.cnt;
 			tb.mtm = ++i;
 
@@ -283,7 +283,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if(c2 == null)
 				break;
 
-			double curdist = sqr(c2.getAlpha() - c.getAlpha()) / Math.exp(1.5);
+			double curdist = sqr(c2.getAlpha() - c.getAlpha()) * 0.75;
 			if (curdist > mindist)
 				continue;
 			
