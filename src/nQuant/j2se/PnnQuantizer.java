@@ -295,7 +295,7 @@ public class PnnQuantizer {
 		Color[] palette = new Color[nMaxColors];
 		short k = 0;
 		for (int i = 0;; ++k) {
-			int alpha = (int) Math.round(bins[i].ac);
+			int alpha = (int) bins[i].ac;
 			palette[k] = new Color((int) bins[i].rc, (int) bins[i].gc, (int) bins[i].bc, alpha);
 			if (m_transparentPixelIndex >= 0 && m_transparentColor.equals(palette[k])) {
 				Color temp = palette[0]; palette[0] = palette[k]; palette[k] = temp;
@@ -541,10 +541,12 @@ public class PnnQuantizer {
 	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, boolean dither)
     {
 		short[] qPixels;
-		if ((nMaxColors < 64 && nMaxColors > 32) || hasSemiTransparency)
+		if (nMaxColors < 64 && nMaxColors > 32)
 			qPixels = quantize_image(cPixels, palette, dither);
 		else if(nMaxColors <= 32)
 			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(dither), nMaxColors > 2 ? 1.8f : 1.5f);
+		else if(hasSemiTransparency)
+			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(dither), 1.0f);
 		else			
 			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(dither));	
 		
@@ -565,7 +567,7 @@ public class PnnQuantizer {
 			if (alfa < BYTE_MAX) {				
 				if (alfa == 0) {
 					m_transparentPixelIndex = i;
-					m_transparentColor = cPixels[i];
+					m_transparentColor = cPixels[i] = new Color(51, 102, 102, alfa);
 				}
 				else
 					hasSemiTransparency = true;
