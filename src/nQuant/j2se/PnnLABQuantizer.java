@@ -283,7 +283,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if(c2 == null)
 				break;
 
-			double curdist = sqr(c2.getAlpha() - c.getAlpha()) * 0.75;
+			double curdist = sqr(c2.getAlpha() - c.getAlpha());
 			if (curdist > mindist)
 				continue;
 			
@@ -522,7 +522,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		else if(nMaxColors <= 32)
 			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(), nMaxColors > 2 ? 1.8f : 1.5f);
 		else if(hasSemiTransparency)
-			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(dither), 1.0f);
+			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(dither), 1.25f);
 		else			
 			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn());			
 		
