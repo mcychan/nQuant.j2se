@@ -297,8 +297,8 @@ public class PnnQuantizer {
 		for (int i = 0;; ++k) {
 			int alpha = (int) bins[i].ac;
 			palette[k] = new Color((int) bins[i].rc, (int) bins[i].gc, (int) bins[i].bc, alpha);
-			if (m_transparentPixelIndex >= 0 && m_transparentColor.equals(palette[k])) {
-				Color temp = palette[0]; palette[0] = palette[k]; palette[k] = temp;
+			if (m_transparentPixelIndex >= 0 && alpha == 0) {
+				Color temp = palette[0]; palette[0] = m_transparentColor; palette[k] = temp;
 			}
 
 			if ((i = bins[i].fw) == 0)
