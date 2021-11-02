@@ -560,14 +560,14 @@ public class PnnQuantizer {
 
 	public short[] convert(int nMaxColors, boolean dither) {
 		final Color[] cPixels = new Color[pixels.length];		
-		for (int i = 0; i<pixels.length; ++i) {
+		for (int i = pixels.length - 1; i >= 0; --i) {
 			int pixel = pixels[i];
 			int alfa = (pixel >> 24) & 0xff;
 			cPixels[i] = new Color(pixel, true);
 			if (alfa < BYTE_MAX) {				
 				if (alfa == 0) {
 					m_transparentPixelIndex = i;
-					m_transparentColor = cPixels[i] = new Color(51, 102, 102, alfa);
+					m_transparentColor = cPixels[i];
 				}
 				else
 					hasSemiTransparency = true;
