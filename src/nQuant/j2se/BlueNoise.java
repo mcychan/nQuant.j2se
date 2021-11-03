@@ -177,7 +177,6 @@ public class BlueNoise {
      * when there's error matching a color from the image to a color in the palette. */
 	public static short[] dither(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable, final short[] qPixels, final float weight)
     {	
-		final int[] lookup = new int[65536];
 		final float strength = 1 / 3f;
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
@@ -198,15 +197,7 @@ public class BlueNoise {
                 a_pix = (int) Math.min(0xFF, Math.max(a_pix + (adj * (a_pix - c1.getAlpha())), 0.0));                
                 
                 c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-                if (palette.length < 64) {
-    	        	int offset = ditherable.getColorIndex(c1);
-    	        	
-    				if(lookup[offset] == 0)
-    					lookup[offset] = (pixel.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, c1) + 1;
-    				qPixels[x + y * width] = (short) (lookup[offset] - 1);
-    	        }
-    	        else
-    	        	qPixels[x + y * width] = ditherable.nearestColorIndex(palette, c1);
+                qPixels[x + y * width] = ditherable.nearestColorIndex(palette, c1);
             }
         }
         

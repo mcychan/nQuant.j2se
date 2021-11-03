@@ -4,8 +4,8 @@ Copyright (c) 2021 Miller Cy Chan
 * A general rectangle with a known orientation is split into three regions ("up", "right", "down"), for which the function calls itself recursively, until a trivial path can be produced. */
 
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 public class GilbertCurve {
 
@@ -33,9 +33,8 @@ public class GilbertCurve {
 	private final Color[] palette;
 	private final short[] qPixels;
 	private final Ditherable ditherable;
-	private final List<ErrorBox> errorq;
+	private final Queue<ErrorBox> errorq;
 	private final float[] weights;
-	private final int[] lookup;
     
 	private static final byte DITHER_MAX = 9;
 	private static final float BLOCK_SIZE = 343f;	    
@@ -49,9 +48,8 @@ public class GilbertCurve {
         this.palette = palette;
         this.qPixels = qPixels;
         this.ditherable = ditherable;	        
-        errorq = new ArrayList<>();
+        errorq = new ArrayDeque<>();
         weights = new float[DITHER_MAX];
-        lookup = new int[65536];
     }
     
     private static int sign(int x) {
@@ -63,11 +61,12 @@ public class GilbertCurve {
     private void ditherPixel(int x, int y){
     	final int bidx = x + y * width;
     	Color pixel = pixels[bidx];
-    	ErrorBox error = new ErrorBox(pixel);	    	
-        for(int c = 0; c < DITHER_MAX; ++c) {
-        	ErrorBox eb = errorq.get(c);
+    	ErrorBox error = new ErrorBox(pixel);
+    	int i = 0;
+        for(ErrorBox eb : errorq) { 
         	for(int j = 0; j < eb.p.length; ++j)
-        		error.p[j] += eb.p[j] * weights[c];
+        		error.p[j] += eb.p[j] * weights[i];
+        	++i;
         }
 
         int r_pix = (int) Math.min(0xFF, Math.max(error.p[0], 0.0));
@@ -76,16 +75,9 @@ public class GilbertCurve {
         int a_pix = (int) Math.min(0xFF, Math.max(error.p[3], 0.0));
         
         Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);	        
-        if (palette.length < 64) {
-        	int offset = ditherable.getColorIndex(c2);
-			if(lookup[offset] == 0)
-				lookup[offset] = (pixel.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, c2) + 1;
-			qPixels[bidx] = (short) (lookup[offset] - 1);
-        }
-        else
-        	qPixels[bidx] = ditherable.nearestColorIndex(palette, c2);
+        qPixels[bidx] = ditherable.nearestColorIndex(palette, c2);
 
-        errorq.remove(0);
+        errorq.poll();
         c2 = palette[qPixels[bidx]];
         if (palette.length > 256)
         	qPixels[bidx] = (short) ditherable.getColorIndex(c2);

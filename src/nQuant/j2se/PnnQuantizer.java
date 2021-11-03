@@ -568,6 +568,8 @@ public class PnnQuantizer {
 				if (alfa == 0) {
 					m_transparentPixelIndex = i;
 					m_transparentColor = cPixels[i];
+					if(m_transparentColor.getRGB() == 0)
+						cPixels[i] = m_transparentColor = new Color(51, 102, 102, alfa);
 				}
 				else
 					hasSemiTransparency = true;
