@@ -232,10 +232,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			float n1 = tb.cnt;
 			float n2 = nb.cnt;
 			float d = 1.0f / (n1 + n2);
-			tb.ac = d * Math.round(n1 * tb.ac + n2 * nb.ac);
-			tb.Lc = d * Math.round(n1 * tb.Lc + n2 * nb.Lc);
-			tb.Ac = d * Math.round(n1 * tb.Ac + n2 * nb.Ac);
-			tb.Bc = d * Math.round(n1 * tb.Bc + n2 * nb.Bc);
+			tb.ac = d * (n1 * tb.ac + n2 * nb.ac);
+			tb.Lc = d * (n1 * tb.Lc + n2 * nb.Lc);
+			tb.Ac = d * (n1 * tb.Ac + n2 * nb.Ac);
+			tb.Bc = d * (n1 * tb.Bc + n2 * nb.Bc);
 			tb.cnt += nb.cnt;
 			tb.mtm = ++i;
 
@@ -517,12 +517,12 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	protected short[] dither(final Color[] cPixels, Color[] palette, int nMaxColors, int width, int height, boolean dither)
     {		
 		short[] qPixels;
-		if (nMaxColors < 64 && nMaxColors > 32)
+		if(hasSemiTransparency)
+			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(dither), 1.25f);
+		else if (nMaxColors < 64 && nMaxColors > 32)
 			qPixels = quantize_image(cPixels, palette, dither);
 		else if(nMaxColors <= 32)
-			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(), nMaxColors > 2 ? 1.8f : 1.5f);
-		else if(hasSemiTransparency)
-			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(dither), 1.25f);
+			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(), 1.5f); 
 		else			
 			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn());			
 		
