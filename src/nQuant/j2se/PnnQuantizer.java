@@ -351,7 +351,7 @@ public class PnnQuantizer {
 	protected short closestColorIndex(final Color[] palette, final Color c)
 	{
 		short k = 0;
-		int[] closest = new int[5];
+		int[] closest = new int[4];
 		int[] got = closestMap.get(c.getRGB());
 		if (got == null) {
 			closest[2] = closest[3] = Integer.MAX_VALUE;
@@ -361,33 +361,33 @@ public class PnnQuantizer {
 				if(c2 == null)
 					break;
 
-				closest[4] = (int) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
-				if (closest[4] < closest[2]) {
+				final int ERR = (int) (Math.abs(c.getAlpha() - c2.getAlpha()) + Math.abs(c.getRed() - c2.getRed()) + Math.abs(c.getGreen() - c2.getGreen()) + Math.abs(c.getBlue() - c2.getBlue()));
+				if (ERR < closest[2]) {
 					closest[1] = closest[0];
 					closest[3] = closest[2];
 					closest[0] = k;
-					closest[2] = closest[4];
+					if(ERR > palette.length)
+						closest[0] = nearestColorIndex(palette, c);
+					closest[2] = ERR;
 				}
-				else if (closest[4] < closest[3]) {
+				else if (ERR < closest[3]) {
 					closest[1] = k;
-					closest[3] = closest[4];
+					closest[3] = ERR;
 				}
 			}
 
 			if (closest[3] == Integer.MAX_VALUE)
 				closest[2] = 0;
+			
+			closestMap.put(c.getRGB(), closest);
 		}
 		else
 			closest = got;
 
 		Random rand = new Random();
 		if (closest[2] == 0 || (rand.nextInt(32767) % (closest[3] + closest[2])) <= closest[3])
-			k = (short) closest[0];
-		else
-			k = (short) closest[1];
-
-		closestMap.put(c.getRGB(), closest);
-		return k;
+			return (short) closest[0];
+		return (short) closest[1];
 	}
 	
 	protected int[] calcDitherPixel(Color c, short[] clamp, int[] rowerr, int cursor, boolean noBias)
