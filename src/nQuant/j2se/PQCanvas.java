@@ -43,7 +43,7 @@ public class PQCanvas extends Canvas {
 			if(img != null) {
 				System.out.println("w = " + img.getWidth(this));
 				System.out.println("h = " + img.getHeight(this));
-				set(img);
+				new PnnWorker(img).execute();
 			}
 			else
 				javax.swing.JOptionPane.showMessageDialog(PQCanvas.this, "Cannot read image", "Unknown image format", javax.swing.JOptionPane.ERROR_MESSAGE);
@@ -90,19 +90,20 @@ public class PQCanvas extends Canvas {
 	}
 
 	private class PnnWorker extends SwingWorker<BufferedImage, String> { 
-		private final PnnQuantizer pq;
+		private final BufferedImage img;
 
-		PnnWorker(PnnQuantizer pq) {
-			this.pq = pq;
+		PnnWorker(BufferedImage img) throws Exception {
+			this.img = img;
 		}
 
 		@Override
 		protected BufferedImage doInBackground() throws Exception {
 			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-			int w = pq.getWidth();
-			int h = pq.getHeight();
-
+			final PnnQuantizer pq = new PnnLABQuantizer(img, PQCanvas.this);
 			short[] qPixels = pq.convert(256, true);
+			
+			int w = pq.getWidth(), h = pq.getHeight();
+			hasAlpha = pq.hasAlpha();
 			if(pq.getColorModel() instanceof IndexColorModel)
 				return toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), w, h);
 
@@ -122,23 +123,17 @@ public class PQCanvas extends Canvas {
 		@Override
 		protected void done() {
 			try {
-				image = get();
-				hasAlpha = pq.hasAlpha();				
+				image = get();								
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {	    	
 				java.awt.Insets insets = getParent().getInsets();
-				getParent().setSize(pq.getWidth() + insets.right + insets.left, pq.getHeight() + insets.top + insets.bottom);
+				getParent().setSize(image.getWidth() + insets.right + insets.left, image.getHeight() + insets.top + insets.bottom);
 				repaint();
 				setCursor(Cursor.getDefaultCursor());
 			}
 		}
 	};
-
-	public void set(BufferedImage img) throws Exception {
-		PnnQuantizer pq = new PnnLABQuantizer(img, this);
-		new PnnWorker(pq).execute();		
-	}
 	
 	private TexturePaint makeTexturePaint(int size) {
 		BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
