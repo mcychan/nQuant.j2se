@@ -356,8 +356,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					closest[1] = closest[0];
 					closest[3] = closest[2];
 					closest[0] = k;
-					if(err > palette.length)
-						closest[0] = nearestColorIndex(palette, c);
 					closest[2] = ERR;
 				}
 				else if (ERR < closest[3]) {
@@ -367,14 +365,20 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			}
 
 			if (closest[3] == Short.MAX_VALUE)
-				closest[2] = 0;
+				closest[1] = closest[0];
 			
 			closestMap.put(c.getRGB(), closest);
 		}
 
 		Random rand = new Random();
-		if (closest[2] == 0 || (rand.nextInt(32767) % (closest[3] + closest[2])) <= closest[3])
+		if (closest[2] == 0 || (rand.nextInt(32767) % (closest[3] + closest[2])) <= closest[3]) {
+			if(closest[2] > palette.length)
+				return nearestColorIndex(palette, c);
 			return (short) closest[0];
+		}
+		
+		if(closest[3] > palette.length)
+			return nearestColorIndex(palette, c);
 		return (short) closest[1];
 	}
 	
@@ -517,7 +521,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
     {		
 		short[] qPixels;
 		if(hasSemiTransparency)
-			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(dither), 1.25f);
+			qPixels = GilbertCurve.dither(width, height, cPixels, palette, getDitherFn(dither), 1.75f);
 		else if (nMaxColors < 64 && nMaxColors > 32)
 			qPixels = quantize_image(cPixels, palette, dither);
 		else if(nMaxColors <= 32)

@@ -366,8 +366,6 @@ public class PnnQuantizer {
 					closest[1] = closest[0];
 					closest[3] = closest[2];
 					closest[0] = k;
-					if(ERR > palette.length)
-						closest[0] = nearestColorIndex(palette, c);
 					closest[2] = ERR;
 				}
 				else if (ERR < closest[3]) {
@@ -377,7 +375,7 @@ public class PnnQuantizer {
 			}
 
 			if (closest[3] == Integer.MAX_VALUE)
-				closest[2] = 0;
+				closest[1] = closest[0];
 			
 			closestMap.put(c.getRGB(), closest);
 		}
@@ -385,8 +383,14 @@ public class PnnQuantizer {
 			closest = got;
 
 		Random rand = new Random();
-		if (closest[2] == 0 || (rand.nextInt(32767) % (closest[3] + closest[2])) <= closest[3])
+		if (closest[2] == 0 || (rand.nextInt(32767) % (closest[3] + closest[2])) <= closest[3]) {
+			if(closest[2] > palette.length)
+				return nearestColorIndex(palette, c);
 			return (short) closest[0];
+		}
+		
+		if(closest[3] > palette.length)
+			return nearestColorIndex(palette, c);
 		return (short) closest[1];
 	}
 	
