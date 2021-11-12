@@ -373,14 +373,17 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			closestMap.put(c.getRGB(), closest);
 		}
 
+		int MAX_ERR = palette.length;
+		if(MAX_ERR < 32)
+			MAX_ERR = Byte.MAX_VALUE * 4;
 		Random rand = new Random();
 		if (closest[2] == 0 || (rand.nextInt(32767) % (closest[3] + closest[2])) <= closest[3]) {
-			if(closest[2] > palette.length)
+			if(closest[2] > MAX_ERR)
 				return nearestColorIndex(palette, c);
 			return (short) closest[0];
 		}
 		
-		if(closest[3] > palette.length)
+		if(closest[3] > MAX_ERR)
 			return nearestColorIndex(palette, c);
 		return (short) closest[1];
 	}
@@ -510,8 +513,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			
 			@Override
 			public short nearestColorIndex(Color[] palette, Color c) {
-				boolean noBias = hasSemiTransparency || palette.length < 64;
-				if(noBias)
+				if(hasSemiTransparency)
 					return PnnLABQuantizer.this.nearestColorIndex(palette, c);
 				return PnnLABQuantizer.this.closestColorIndex(palette, c);
 			}
