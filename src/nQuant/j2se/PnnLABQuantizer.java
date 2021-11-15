@@ -169,12 +169,12 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		
 		if(quan_rt != 0 && nMaxColors < 64) {
 			if (proportional > .018 && proportional < .022)
-				ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(4.732) / pixelMap.size());
+				ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(3.13) / maxbins);
 			else
-				ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(3.845) / pixelMap.size());
+				ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(1.632) / maxbins);
 		}
 		else
-			ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(4.732) / pixelMap.size());
+			ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(3.13) / maxbins);
 		
 		if (quan_rt < 0) {
 			ratio += 0.5;		
@@ -197,8 +197,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			heap[l] = i;
 		}
 		
-		if (quan_rt > 0 && nMaxColors < 64 && proportional > .035)
-			ratio = Math.min(1.0, proportional - nMaxColors * Math.exp(3.85) / pixelMap.size());
+		if (quan_rt > 0 && nMaxColors < 64 && proportional > .035) {
+			int dir = proportional > .04 ? 1 : -1;
+			ratio = Math.min(1.0, proportional + dir * nMaxColors * Math.exp(1.632) / maxbins);
+		}
 
 		/* Merge bins which increase error the least */
 		int extbins = maxbins - nMaxColors;
@@ -374,8 +376,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 
 		int MAX_ERR = palette.length;
-		if(MAX_ERR < 32)
-			MAX_ERR = Byte.MAX_VALUE * 4;
 		Random rand = new Random();
 		if (closest[2] == 0 || (rand.nextInt(32767) % (closest[3] + closest[2])) <= closest[3]) {
 			if(closest[2] > MAX_ERR)
