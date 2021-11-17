@@ -152,7 +152,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		
 		int j = 0;
 		for (; j < maxbins - 1; ++j) {
-			bins[j].fw = (j + 1);
+			bins[j].fw = j + 1;
 			bins[j + 1].bk = j;
 			
 			if (quan_rt > 0) {
@@ -288,7 +288,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if(c2 == null)
 				break;
 
-			double curdist = sqr(c2.getAlpha() - c.getAlpha());
+			double curdist = hasSemiTransparency ? sqr(c2.getAlpha() - c.getAlpha()) : 0;
 			if (curdist > mindist)
 				continue;
 			
@@ -354,18 +354,16 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				if(c2 == null)
 					break;
 				
-				double err = PR * sqr(c2.getRed() - c.getRed()) + PG * sqr(c2.getGreen() - c.getGreen()) + PB * sqr(c2.getBlue() - c.getBlue());
-				final int ERR = err > Short.MAX_VALUE ? Short.MAX_VALUE : (int) err;
-				
-				if (ERR < closest[2]) {
+				double err = PR * sqr(c2.getRed() - c.getRed()) + PG * sqr(c2.getGreen() - c.getGreen()) + PB * sqr(c2.getBlue() - c.getBlue());				
+				if (err < closest[2]) {
 					closest[1] = closest[0];
 					closest[3] = closest[2];
 					closest[0] = k;
-					closest[2] = ERR;
+					closest[2] = (short) err;
 				}
-				else if (ERR < closest[3]) {
+				else if (err < closest[3]) {
 					closest[1] = k;
-					closest[3] = ERR;
+					closest[3] = (short) err;
 				}
 			}
 
