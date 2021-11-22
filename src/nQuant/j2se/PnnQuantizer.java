@@ -577,20 +577,19 @@ public class PnnQuantizer {
 	}
 	
 	private BufferedImage processImagePixels(short[] qPixels) {
-		int w = getWidth(), h = getHeight();
 		if(m_colorModel instanceof IndexColorModel)
-			return toIndexedBufferedImage(qPixels, (IndexColorModel) m_colorModel, w, h);
+			return toIndexedBufferedImage(qPixels, (IndexColorModel) m_colorModel, width, height);
 
 		BufferedImage highColorImage = null;
 		if(m_colorModel instanceof DirectColorModel) {
 			ColorModel cmSw = m_colorModel;
-			WritableRaster wr = cmSw.createCompatibleWritableRaster(w, h);
+			WritableRaster wr = cmSw.createCompatibleWritableRaster(width, height);
 			highColorImage = new BufferedImage(cmSw, wr, cmSw.isAlphaPremultiplied(), null);
 		}
 		else
-			highColorImage = new BufferedImage(w, h, BufferedImage.TYPE_USHORT_565_RGB);
+			highColorImage = new BufferedImage(width, height, BufferedImage.TYPE_USHORT_565_RGB);
 
-		highColorImage.getRaster().setDataElements(0, 0, w, h, qPixels);
+		highColorImage.getRaster().setDataElements(0, 0, width, height, qPixels);
 		return highColorImage;
 	}
 
@@ -653,14 +652,6 @@ public class PnnQuantizer {
 
 	public Color[] getPalette() {
 		return m_palette;
-	}
-
-	public int getWidth() {
-		return width;
-	}
-
-	public int getHeight() {
-		return height;
 	}
 	
 	public boolean hasAlpha() {

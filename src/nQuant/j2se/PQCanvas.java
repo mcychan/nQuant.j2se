@@ -86,6 +86,11 @@ public class PQCanvas extends Canvas {
 			BufferedImage highColorImage = pq.convert(256, true);
 			hasAlpha = pq.hasAlpha();			
 			return highColorImage;
+			
+			/* final Otsu otsu = new Otsu();
+			BufferedImage bwImage = otsu.convertGrayScaleToBinary(img);
+			hasAlpha = otsu.hasAlpha();			
+			return bwImage; */
 		}
 
 		@Override
