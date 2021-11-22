@@ -8,9 +8,12 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferShort;
 import java.awt.image.DirectColorModel;
 import java.awt.image.ImageObserver;
 import java.awt.image.IndexColorModel;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -27,7 +30,7 @@ public class PnnQuantizer {
 	
 	private double PR = .2126, PG = .7152, PB = .0722;
 	private Color[] m_palette;
-	protected ColorModel m_colorModel;
+	private ColorModel m_colorModel;
 	protected Map<Integer, int[]> closestMap = new HashMap<>();
 	protected Map<Integer, Short> nearestMap = new HashMap<>();
 
@@ -561,8 +564,37 @@ public class PnnQuantizer {
 		nearestMap.clear();
 		return qPixels;
     }
+	
+	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {		
+		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), null);
+		if(icm.getPixelSize() < 8) {
+			for(int y = 0; y < height; ++y) {
+		    	for(int x = 0; x < width; ++x)
+		    		raster.setSample(x, y, 0, qPixels[x + y * width]);
+			}
+		}
+		return new BufferedImage(icm, raster, icm.isAlphaPremultiplied(), null);
+	}
+	
+	private BufferedImage processImagePixels(short[] qPixels) {
+		int w = getWidth(), h = getHeight();
+		if(m_colorModel instanceof IndexColorModel)
+			return toIndexedBufferedImage(qPixels, (IndexColorModel) m_colorModel, w, h);
 
-	public short[] convert(int nMaxColors, boolean dither) {
+		BufferedImage highColorImage = null;
+		if(m_colorModel instanceof DirectColorModel) {
+			ColorModel cmSw = m_colorModel;
+			WritableRaster wr = cmSw.createCompatibleWritableRaster(w, h);
+			highColorImage = new BufferedImage(cmSw, wr, cmSw.isAlphaPremultiplied(), null);
+		}
+		else
+			highColorImage = new BufferedImage(w, h, BufferedImage.TYPE_USHORT_565_RGB);
+
+		highColorImage.getRaster().setDataElements(0, 0, w, h, qPixels);
+		return highColorImage;
+	}
+
+	public BufferedImage convert(int nMaxColors, boolean dither) {
 		final Color[] cPixels = new Color[pixels.length];		
 		for (int i = pixels.length - 1; i >= 0; --i) {
 			int pixel = pixels[i];
@@ -616,12 +648,8 @@ public class PnnQuantizer {
 			}
 		}		
 
-		return qPixels;
+		return processImagePixels(qPixels);
 	}
-
-	public ColorModel getColorModel() {
-		return m_colorModel;
-	}	
 
 	public Color[] getPalette() {
 		return m_palette;

@@ -14,12 +14,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.DataBufferShort;
-import java.awt.image.DirectColorModel;
-import java.awt.image.IndexColorModel;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.File;
 
 import javax.imageio.ImageIO;
@@ -78,17 +72,6 @@ public class PQCanvas extends Canvas {
 		}); // end FileDrop.Listener
 	}
 
-	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {		
-		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), null);
-		if(icm.getPixelSize() < 8) {
-			for(int y = 0; y < height; ++y) {
-		    	for(int x = 0; x < width; ++x)
-		    		raster.setSample(x, y, 0, qPixels[x + y * width]);
-			}
-		}
-		return new BufferedImage(icm, raster, icm.isAlphaPremultiplied(), null);
-	}
-
 	private class PnnWorker extends SwingWorker<BufferedImage, String> { 
 		private final BufferedImage img;
 
@@ -100,23 +83,8 @@ public class PQCanvas extends Canvas {
 		protected BufferedImage doInBackground() throws Exception {
 			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 			final PnnQuantizer pq = new PnnLABQuantizer(img, PQCanvas.this);
-			short[] qPixels = pq.convert(256, true);
-			
-			int w = pq.getWidth(), h = pq.getHeight();
-			hasAlpha = pq.hasAlpha();
-			if(pq.getColorModel() instanceof IndexColorModel)
-				return toIndexedBufferedImage(qPixels, (IndexColorModel) pq.getColorModel(), w, h);
-
-			BufferedImage highColorImage = null;
-			if(pq.getColorModel() instanceof DirectColorModel) {
-				ColorModel cmSw = pq.getColorModel();
-				WritableRaster wr = cmSw.createCompatibleWritableRaster(w, h);
-				highColorImage = new BufferedImage(cmSw, wr, cmSw.isAlphaPremultiplied(), null);
-			}
-			else
-				highColorImage = new BufferedImage(w, h, BufferedImage.TYPE_USHORT_565_RGB);
-
-			highColorImage.getRaster().setDataElements(0, 0, w, h, qPixels);
+			BufferedImage highColorImage = pq.convert(256, true);
+			hasAlpha = pq.hasAlpha();			
 			return highColorImage;
 		}
 
