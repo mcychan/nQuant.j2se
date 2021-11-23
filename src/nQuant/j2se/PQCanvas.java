@@ -1,5 +1,6 @@
 package nQuant.j2se;
 
+import java.awt.BorderLayout;
 import java.awt.Canvas;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -10,14 +11,25 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.TexturePaint;
 import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.net.URL;
+import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 public class PQCanvas extends Canvas {
@@ -30,17 +42,28 @@ public class PQCanvas extends Canvas {
 	public PQCanvas() {
 		tp = makeTexturePaint(16);
 	}
+	
+	public void set(final BufferedImage img) throws Exception {
+		if(img != null) {
+			System.out.println("w = " + img.getWidth(this));
+			System.out.println("h = " + img.getHeight(this));
+			new PnnWorker(img).execute();
+		}
+		else
+			javax.swing.JOptionPane.showMessageDialog(PQCanvas.this, "Cannot read image file", "Unknown image format", javax.swing.JOptionPane.ERROR_MESSAGE);
+	}
 
 	public void set(final File file) {
 		try {
-			BufferedImage img = ImageIO.read(file);
-			if(img != null) {
-				System.out.println("w = " + img.getWidth(this));
-				System.out.println("h = " + img.getHeight(this));
-				new PnnWorker(img).execute();
-			}
-			else
-				javax.swing.JOptionPane.showMessageDialog(PQCanvas.this, "Cannot read image", "Unknown image format", javax.swing.JOptionPane.ERROR_MESSAGE);
+			set(ImageIO.read(file));			
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+	}
+	
+	public void set(final URL url) {
+		try {
+			set(ImageIO.read(url));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -100,8 +123,9 @@ public class PQCanvas extends Canvas {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {	    	
-				java.awt.Insets insets = getParent().getInsets();
-				getParent().setSize(image.getWidth() + insets.right + insets.left, image.getHeight() + insets.top + insets.bottom);
+				JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(getParent());
+				java.awt.Insets insets = topFrame.getInsets();
+				topFrame.setSize(image.getWidth() + insets.right + insets.left, image.getHeight() + insets.top + insets.bottom);
 				repaint();
 				setCursor(Cursor.getDefaultCursor());
 			}
@@ -156,12 +180,45 @@ public class PQCanvas extends Canvas {
 	} 
 
 	public static void main(String [] args) throws java.io.IOException {
+		System.setProperty("java.net.useSystemProxies", "true");
 		PQCanvas canvas = new PQCanvas();
-		java.awt.Frame frame = new java.awt.Frame("PnnQuant Test");
+		JFrame frame = new JFrame("PnnQuant Test");
 		frame.setSize(500, 500);
+		JPanel panel = new JPanel();
+		panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control V"), "paste");
+        panel.getActionMap().put("paste", new AbstractAction() {
+			private static final long serialVersionUID = 4914478601644487779L;
+
+			public void actionPerformed(ActionEvent e) {
+            	Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                try {
+                	DataFlavor[] keys = clipboard.getAvailableDataFlavors();
+                	if(keys.length < 1)
+                		return;
+                	
+                	Object data = clipboard.getData(keys[0]);
+                    if (data instanceof String) {
+                    	File file = new File((String) data);
+                    	if(file.exists())
+                    		canvas.set(file);
+                    	else
+                    		canvas.set(new URL((String) data));
+                    }
+                    else if(data instanceof BufferedImage)
+                    	canvas.set((BufferedImage) data);
+                    else if(data instanceof List)
+                    	canvas.set((File) ((List) data).get(0));
+				} catch (Exception ex) {
+					java.util.logging.Logger.getLogger(PQCanvas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+					javax.swing.JOptionPane.showMessageDialog(canvas, ex.getMessage(), "File not found", javax.swing.JOptionPane.ERROR_MESSAGE);
+				}
+            }
+        });
 		canvas.addClick();
 		canvas.addFileDrop();
-		frame.add(canvas);
+		panel.setLayout(new BorderLayout());
+		panel.add(canvas, BorderLayout.CENTER);
+		frame.setContentPane(panel);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		frame.setLocation(dim.width/2-frame.getSize().width/2, dim.height/2-frame.getSize().height/2);
 		frame.setVisible(true);
