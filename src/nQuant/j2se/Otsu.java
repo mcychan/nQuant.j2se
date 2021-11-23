@@ -99,11 +99,12 @@ public class Otsu
 	{
 		for(Color c : pixels)
 		{
+			if(c.getAlpha() < 128)
+				continue;
+			
 			hist[c.getRed()]++;
 			hist[c.getGreen()]++;
 			hist[c.getBlue()]++;
-			if(hasSemiTransparency)
-				hist[c.getAlpha()]++;
 		}
 	}
 
