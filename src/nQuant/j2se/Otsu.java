@@ -99,7 +99,7 @@ public class Otsu
 	{
 		for(Color c : pixels)
 		{
-			if(c.getAlpha() < 128)
+			if(c.getAlpha() <= alphaThreshold)
 				continue;
 			
 			hist[c.getRed()]++;
