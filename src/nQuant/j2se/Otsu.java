@@ -1,11 +1,7 @@
 package nQuant.j2se;
 
 import java.awt.Color;
-import java.awt.Transparency;
-import java.awt.color.ColorSpace;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferShort;
 import java.awt.image.IndexColorModel;
@@ -240,13 +236,6 @@ public class Otsu
 				max1 = green;
 		}
 
-		ColorModel cmSw = srcimg.getColorModel();
-		if(!(cmSw instanceof ComponentColorModel)) {
-			ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
-		    cmSw = new ComponentColorModel(cs, true, false, 
-		    		Transparency.TRANSLUCENT, DataBuffer.TYPE_INT);
-		}
-		
 		for (int i = 0; i < pixels.length; ++i) {
 			int green = cPixels[i].getGreen();
 			int pixel = (int)((green - min1) * (BYTE_MAX / (max1 - min1)));
