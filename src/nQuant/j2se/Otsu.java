@@ -230,6 +230,9 @@ public class Otsu
 					hasSemiTransparency = true;
 			}		
 			
+			if(alfa <= alphaThreshold)
+				continue;
+			
 			if (min1 > green)
 				min1 = green;
 
