@@ -169,7 +169,7 @@ public class PQCanvas extends Canvas {
 		        g2d.fill(new Rectangle(sz));
 		    }
 		    		    
-		    g2d.drawImage(image, 0, 0, (int) sz.getWidth(), (int) sz.getHeight(), this);
+		    g2d.drawImage(image, null, 0, 0);
 		}
 		else {
 			g2d.setFont(new Font("Arial", Font.BOLD, 20));
@@ -207,7 +207,7 @@ public class PQCanvas extends Canvas {
                     else if(data instanceof BufferedImage)
                     	canvas.set((BufferedImage) data);
                     else if(data instanceof List)
-                    	canvas.set((File) ((List) data).get(0));
+                    	canvas.set((File) ((List<File>) data).get(0));
 				} catch (Exception ex) {
 					java.util.logging.Logger.getLogger(PQCanvas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 					javax.swing.JOptionPane.showMessageDialog(canvas, ex.getMessage(), "File not found", javax.swing.JOptionPane.ERROR_MESSAGE);

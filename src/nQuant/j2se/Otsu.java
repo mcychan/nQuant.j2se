@@ -244,21 +244,16 @@ public class Otsu
 		if(!(cmSw instanceof ComponentColorModel)) {
 			ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
 		    cmSw = new ComponentColorModel(cs, true, false, 
-		    		Transparency.TRANSLUCENT, DataBuffer.TYPE_BYTE);
+		    		Transparency.TRANSLUCENT, DataBuffer.TYPE_INT);
 		}
 		
-		final int DJ = cmSw.getNumComponents();		
-		pixels = new int[cPixels.length * DJ];
-		for (int i = 0; i < pixels.length; i += DJ) {
-			int green = cPixels[i / DJ].getGreen();
+		for (int i = 0; i < pixels.length; ++i) {
+			int green = cPixels[i].getGreen();
 			int pixel = (int)((green - min1) * (BYTE_MAX / (max1 - min1)));
-			int j = i;
-			for(; j < i + (DJ - 1); ++j)
-				pixels[j] = pixel;
-			pixels[j] = cPixels[i / DJ].getAlpha();
+			pixels[i] = new Color(pixel, pixel, pixel, cPixels[i].getAlpha()).getRGB();
 		}
 		
-		BufferedImage grayScaleImage = new BufferedImage(iWidth, iHeight, BufferedImage.TYPE_BYTE_GRAY);
+		BufferedImage grayScaleImage = new BufferedImage(iWidth, iHeight, BufferedImage.TYPE_USHORT_GRAY);
 		grayScaleImage.getRaster().setPixels(0, 0, iWidth, iHeight, pixels);
 		return grayScaleImage;
 	}
@@ -320,7 +315,7 @@ public class Otsu
 		Color[] palette = new Color[2];
 		if (m_transparentPixelIndex >= 0)
 		{
-			palette[0] = m_transparentColor = new Color(51, 102, 102, 0);
+			palette[0] = m_transparentColor;
 			palette[1] = Color.BLACK;
 		}
 		else {
