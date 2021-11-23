@@ -137,15 +137,13 @@ public class Otsu
 			thresh = 200;				
 		}
 
-		int minThresh = (int)(thresh * weight);
-		int maxThresh = (int) thresh;
 		for (int i = 0; i < pixels.length; ++i)
 		{
-			Color c = pixels[i];
-			if (c.getRed() + c.getGreen() + c.getBlue() > maxThresh * 3)
-				pixels[i] = new Color(BYTE_MAX, BYTE_MAX, BYTE_MAX, c.getAlpha());
-			else if (m_transparentPixelIndex >= 0 || c.getRed() + c.getGreen() + c.getBlue() < minThresh * 3)
+			final Color c = pixels[i];
+			if (c.getRed() < thresh || c.getGreen() < thresh || c.getBlue() < thresh)
 				pixels[i] = new Color(0, 0, 0, c.getAlpha());
+			else
+				pixels[i] = new Color(BYTE_MAX, BYTE_MAX, BYTE_MAX, c.getAlpha());
 		}
 
 		return true;
@@ -264,8 +262,7 @@ public class Otsu
 			pixels[j] = cPixels[i / DJ].getAlpha();
 		}
 		
-		WritableRaster wr = cmSw.createCompatibleWritableRaster(iWidth, iHeight);
-		BufferedImage grayScaleImage = new BufferedImage(cmSw, wr, cmSw.isAlphaPremultiplied(), null);
+		BufferedImage grayScaleImage = new BufferedImage(iWidth, iHeight, BufferedImage.TYPE_BYTE_GRAY);
 		grayScaleImage.getRaster().setPixels(0, 0, iWidth, iHeight, pixels);
 		return grayScaleImage;
 	}
