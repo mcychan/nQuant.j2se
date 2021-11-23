@@ -129,13 +129,10 @@ public class Otsu
 		return findMax(vet, 256);
 	}	
 
-	private boolean threshold(Color[] pixels, short thresh, float weight)
+	private boolean threshold(Color[] pixels, short thresh)
 	{
 		if (thresh >= 200)
-		{
-			weight = .75f;
 			thresh = 200;				
-		}
 
 		for (int i = 0; i < pixels.length; ++i)
 		{
@@ -147,11 +144,6 @@ public class Otsu
 		}
 
 		return true;
-	}
-	
-	private boolean threshold(Color[] pixels, short thresh)
-	{
-		return threshold(pixels, thresh, 1.0f);
 	}
 
 	protected short nearestColorIndex(Color[] palette, final Color c)
