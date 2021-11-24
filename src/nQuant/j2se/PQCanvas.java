@@ -1,7 +1,6 @@
 package nQuant.j2se;
 
-import java.awt.BorderLayout;
-import java.awt.Canvas;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -14,8 +13,12 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -28,14 +31,19 @@ import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
-public class PQCanvas extends Canvas {
+public class PQCanvas extends JPanel implements MouseWheelListener {
 
 	private static final long serialVersionUID = -5166271928949046848L;	
 	private boolean hasAlpha;
+	private double zoom = 1.0;
 	private BufferedImage image = null;
 	private final TexturePaint tp;
 	
@@ -46,7 +54,7 @@ public class PQCanvas extends Canvas {
 	public void set(final BufferedImage img) throws Exception {
 		if(img != null) {
 			System.out.println("w = " + img.getWidth(this));
-			System.out.println("h = " + img.getHeight(this));
+			System.out.println("h = " + img.getHeight(this));			
 			new PnnWorker(img).execute();
 		}
 		else
@@ -67,8 +75,16 @@ public class PQCanvas extends Canvas {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-	}
+	}	
 	
+	public double getZoom() {
+		return zoom;
+	}
+
+	public void setZoom(double zoom) {
+		this.zoom = zoom;
+	}
+
 	private void addClick() {
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -123,9 +139,19 @@ public class PQCanvas extends Canvas {
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {	    	
-				JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(getParent());
+				final JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(getParent());
 				java.awt.Insets insets = topFrame.getInsets();
-				topFrame.setSize(image.getWidth() + insets.right + insets.left, image.getHeight() + insets.top + insets.bottom);
+				final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+				if(image.getWidth() > screenSize.getWidth() || image.getHeight() > screenSize.getHeight()) {
+					topFrame.setSize((int) screenSize.getWidth() + insets.right + insets.left, (int) screenSize.getHeight() - insets.top - insets.bottom);
+					topFrame.setLocation(-insets.left, 0);
+					setZoom(Math.min(screenSize.getWidth() / image.getWidth(), screenSize.getHeight() / image.getHeight()));
+				}
+				else {
+					topFrame.setSize(image.getWidth() + insets.right + insets.left, image.getHeight() + insets.top + insets.bottom);
+					setZoom(Math.min(topFrame.getWidth() / image.getWidth(), topFrame.getHeight() / image.getHeight()));
+				}
+					
 				repaint();
 				setCursor(Cursor.getDefaultCursor());
 			}
@@ -150,9 +176,11 @@ public class PQCanvas extends Canvas {
 	    return new TexturePaint(img, bounds);
 	}
 
-	public void paint(Graphics graphics) {
-		Graphics2D g2d = (Graphics2D) graphics;
+	@Override
+	public void paintComponent(Graphics graphics) {
+		Graphics2D g2d = (Graphics2D) graphics;		
 		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+		g2d.clearRect(0, 0, getWidth(), getHeight());
 		if (image != null) {			
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);		    
 		    g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
@@ -160,33 +188,68 @@ public class PQCanvas extends Canvas {
 		    g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
 		    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 		    
-		    Dimension sz = getParent().getSize();
-		    java.awt.Insets insets = getParent().getInsets();
-		    sz.setSize(sz.getWidth() - insets.right - insets.left, sz.getHeight() - insets.top - insets.bottom);
-		    
+		    Dimension sz = getParent().getSize();		    
 		    if(hasAlpha) {       
 		    	g2d.setPaint(tp);
 		        g2d.fill(new Rectangle(sz));
 		    }
-		    		    
+		    
+		    g2d.scale(zoom, zoom);  
 		    g2d.drawImage(image, null, 0, 0);
 		}
 		else {
+			g2d.scale(zoom, zoom);
 			g2d.setFont(new Font("Arial", Font.BOLD, 20));
 			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 			g2d.drawString("Please drag an image file to here!", getWidth() / 5, getHeight() / 2);
 		}
 		g2d.dispose();
-	} 
+	}
+	
+	@Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+		JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, this);
+		if (e.isControlDown()) {
+            double oldZoom = getZoom();
+            double amount = Math.pow(1.1, e.getScrollAmount());
+            if (e.getWheelRotation() > 0) {
+            	//zoom out (amount)
+                setZoom(oldZoom / amount);                
+            } else {
+            	//zoom in (amount)
+                setZoom(oldZoom * amount);
+            }
+            
+            if(Math.abs(oldZoom - getZoom()) > 0.1) {         	
+            	scrollPane.getViewport().setSize((int)(image.getWidth() * getZoom()), (int)(image.getHeight() * getZoom()));
+            	final JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(getParent());
+				java.awt.Insets insets = topFrame.getInsets();
+				final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+				final Dimension scrollSize = scrollPane.getViewport().getSize();
+				if(scrollSize.getWidth() > screenSize.getWidth() || scrollSize.getHeight() > screenSize.getHeight()) {
+					topFrame.setSize((int) screenSize.getWidth() + insets.right + insets.left, (int) screenSize.getHeight() - insets.top - insets.bottom);
+					topFrame.setLocation(-insets.left, 0);
+				}
+				else {
+					topFrame.setSize((int) scrollSize.getWidth() + insets.right + insets.left, (int) scrollSize.getHeight() + insets.top + insets.bottom);
+				}
+            	repaint();
+            }
+        }
+        else {
+            // if alt isn't down then propagate event to scrollPane            
+            scrollPane.getParent().dispatchEvent(e);
+        }
+    }
 
 	public static void main(String [] args) throws java.io.IOException {
 		System.setProperty("java.net.useSystemProxies", "true");
 		PQCanvas canvas = new PQCanvas();
 		JFrame frame = new JFrame("PnnQuant Test");
-		frame.setSize(500, 500);
-		JPanel panel = new JPanel();
-		panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control V"), "paste");
-        panel.getActionMap().put("paste", new AbstractAction() {
+		frame.setPreferredSize(new Dimension(500, 500));
+		JScrollPane scrollPane = new JScrollPane(canvas);
+		scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control V"), "paste");
+		scrollPane.getActionMap().put("paste", new AbstractAction() {
 			private static final long serialVersionUID = 4914478601644487779L;
 
 			public void actionPerformed(ActionEvent e) {
@@ -216,11 +279,14 @@ public class PQCanvas extends Canvas {
         });
 		canvas.addClick();
 		canvas.addFileDrop();
-		panel.setLayout(new BorderLayout());
-		panel.add(canvas, BorderLayout.CENTER);
-		frame.setContentPane(panel);
+		
+	    scrollPane.addMouseWheelListener(canvas);
+	    scrollPane.getViewport().setScrollMode(JViewport.BACKINGSTORE_SCROLL_MODE);
+	    frame.pack();
+		frame.setContentPane(scrollPane);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		frame.setLocation(dim.width/2-frame.getSize().width/2, dim.height/2-frame.getSize().height/2);
+		frame.setResizable(false);
 		frame.setVisible(true);
 		frame.addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent e) { 
