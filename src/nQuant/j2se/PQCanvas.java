@@ -1,6 +1,5 @@
 package nQuant.j2se;
 
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -13,8 +12,8 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
@@ -36,8 +35,6 @@ import javax.swing.JViewport;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 public class PQCanvas extends JPanel implements MouseWheelListener {
 
@@ -248,7 +245,7 @@ public class PQCanvas extends JPanel implements MouseWheelListener {
 		JFrame frame = new JFrame("PnnQuant Test");
 		frame.setPreferredSize(new Dimension(500, 500));
 		JScrollPane scrollPane = new JScrollPane(canvas);
-		scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control V"), "paste");
+		scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), "paste");
 		scrollPane.getActionMap().put("paste", new AbstractAction() {
 			private static final long serialVersionUID = 4914478601644487779L;
 
