@@ -3,33 +3,21 @@ package nQuant.j2se;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferShort;
 import java.awt.image.IndexColorModel;
-import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.util.HashMap;
 import java.util.Map;
 
+import static nQuant.j2se.BitmapUtilities.BYTE_MAX;
+
 public class Otsu
 {
-	protected static final char BYTE_MAX = -Byte.MIN_VALUE + Byte.MAX_VALUE;
 	protected short alphaThreshold = 0;
 	protected boolean hasSemiTransparency = false;
 	protected int m_transparentPixelIndex = -1;
 	protected Color m_transparentColor;
 	
 	protected IndexColorModel m_colorModel;
-	protected Map<Integer, Short> nearestMap = new HashMap<>();
-	
-	protected static double sqr(double value)
-	{
-		return value * value;
-	}
-	
-	private static int getBitsPerPixel(int nMaxColors)
-	{
-		return (int) Math.min(8, Math.log(nMaxColors) / Math.log(2));
-	}
+	protected Map<Integer, Short> nearestMap = new HashMap<>();	
 	
 	protected final void setColorModel(final Color[] palette)
 	{
@@ -44,7 +32,7 @@ public class Otsu
 			palettes[i] = c1.getRGB();
 		}
 		
-		m_colorModel = new IndexColorModel(getBitsPerPixel(nMaxColors),         // bits per pixel
+		m_colorModel = new IndexColorModel(BitmapUtilities.getBitsPerPixel(nMaxColors),         // bits per pixel
 			nMaxColors,         // size of color component array
 			palettes,   // color map
             0,         // offset in the map
@@ -126,21 +114,32 @@ public class Otsu
 		return findMax(vet, 256);
 	}	
 
-	private boolean threshold(Color[] pixels, short thresh)
+	private boolean threshold(Color[] pixels, short thresh, float weight)
 	{
+		int maxThresh = (int) thresh;
 		if (thresh >= 200)
+		{
+			weight = .85f;
+			maxThresh = (int) (thresh * weight);
 			thresh = 200;				
+		}
 
+		int minThresh = (int)(thresh * weight);		
 		for (int i = 0; i < pixels.length; ++i)
 		{
-			final Color c = pixels[i];
-			if (c.getRed() < thresh || c.getGreen() < thresh || c.getBlue() < thresh)
-				pixels[i] = new Color(0, 0, 0, c.getAlpha());
-			else
+			Color c = pixels[i];
+			if (c.getRed() + c.getGreen() + c.getBlue() > maxThresh * 3)
 				pixels[i] = new Color(BYTE_MAX, BYTE_MAX, BYTE_MAX, c.getAlpha());
+			else if (m_transparentPixelIndex >= 0 || c.getRed() + c.getGreen() + c.getBlue() < minThresh * 3)
+				pixels[i] = new Color(0, 0, 0, c.getAlpha());
 		}
 
 		return true;
+	}
+	
+	private boolean threshold(Color[] pixels, short thresh)
+	{
+		return threshold(pixels, thresh, 1.0f);
 	}
 
 	protected short nearestColorIndex(Color[] palette, final Color c)
@@ -157,19 +156,19 @@ public class Otsu
 		for (int i = 0; i < palette.length; ++i)
 		{
 			Color c2 = palette[i];
-			double curdist = sqr(c2.getAlpha() - c.getAlpha());
+			double curdist = BitmapUtilities.sqr(c2.getAlpha() - c.getAlpha());
 			if (curdist > mindist)
 				continue;
 
-			curdist += sqr(c2.getRed() - c.getRed());
+			curdist += BitmapUtilities.sqr(c2.getRed() - c.getRed());
 			if (curdist > mindist)
 				continue;
 
-			curdist += sqr(c2.getGreen() - c.getGreen());
+			curdist += BitmapUtilities.sqr(c2.getGreen() - c.getGreen());
 			if (curdist > mindist)
 				continue;
 
-			curdist += sqr(c2.getBlue() - c.getBlue());
+			curdist += BitmapUtilities.sqr(c2.getBlue() - c.getBlue());
 			if (curdist > mindist)
 				continue;
 
@@ -245,27 +244,18 @@ public class Otsu
 		BufferedImage grayScaleImage = new BufferedImage(iWidth, iHeight, BufferedImage.TYPE_USHORT_GRAY);
 		grayScaleImage.getRaster().setPixels(0, 0, iWidth, iHeight, pixels);
 		return grayScaleImage;
-	}
-	
-	protected int getColorIndex(final Color c, boolean hasSemiTransparency, boolean hasTransparency)
+	}	
+
+	protected int getColorIndex(final Color c)
 	{
-		if(hasSemiTransparency)
-			return (c.getAlpha() & 0xF0) << 8 | (c.getRed() & 0xF0) << 4 | (c.getGreen() & 0xF0) | (c.getBlue() >> 4);
-		if (hasTransparency)
-			return (c.getAlpha() & 0x80) << 8 | (c.getRed() & 0xF8) << 7 | (c.getGreen() & 0xF8) << 2 | (c.getBlue() >> 3);
-		return (c.getRed() & 0xF8) << 8 | (c.getGreen() & 0xFC) << 3 | (c.getBlue() >> 3);
-	}
-	
-	protected int GetColorIndex(final Color c)
-	{
-		return getColorIndex(c, hasSemiTransparency, m_transparentPixelIndex > -1);
+		return BitmapUtilities.getColorIndex(c, hasSemiTransparency, m_transparentPixelIndex > -1);
 	}
 	
 	protected Ditherable getDitherFn() {
 		return new Ditherable() {
 			@Override
 			public int getColorIndex(Color c) {
-				return Otsu.this.getColorIndex(c, hasSemiTransparency, m_transparentPixelIndex >= 0);
+				return BitmapUtilities.getColorIndex(c, hasSemiTransparency, m_transparentPixelIndex >= 0);
 			}
 			
 			@Override
@@ -274,17 +264,6 @@ public class Otsu
 			}
 			
 		};
-	}
-	
-	private BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {		
-		WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferShort(qPixels, qPixels.length), null);
-		if(icm.getPixelSize() < 8) {
-			for(int y = 0; y < height; ++y) {
-		    	for(int x = 0; x < width; ++x)
-		    		raster.setSample(x, y, 0, qPixels[x + y * width]);
-			}
-		}
-		return new BufferedImage(icm, raster, icm.isAlphaPremultiplied(), null);
 	}
 
 	public BufferedImage convertGrayScaleToBinary(BufferedImage srcimg, boolean isGrayscale)
@@ -322,7 +301,7 @@ public class Otsu
 		}	
 
 		nearestMap.clear();
-		return toIndexedBufferedImage(qPixels, m_colorModel, bitmapWidth, bitmapHeight);
+		return BitmapUtilities.toIndexedBufferedImage(qPixels, m_colorModel, bitmapWidth, bitmapHeight);
 	}
 	
 	public BufferedImage convertGrayScaleToBinary(BufferedImage srcimg)

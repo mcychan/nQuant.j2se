@@ -207,7 +207,7 @@ public class PQCanvas extends Canvas {
                     else if(data instanceof BufferedImage)
                     	canvas.set((BufferedImage) data);
                     else if(data instanceof List)
-                    	canvas.set((File) ((List<File>) data).get(0));
+                    	canvas.set(((List<File>) data).get(0));
 				} catch (Exception ex) {
 					java.util.logging.Logger.getLogger(PQCanvas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 					javax.swing.JOptionPane.showMessageDialog(canvas, ex.getMessage(), "File not found", javax.swing.JOptionPane.ERROR_MESSAGE);
