@@ -333,13 +333,15 @@ public class PnnQuantizer {
 
 	protected short closestColorIndex(final Color[] palette, final Color c)
 	{
-		short k = 0;
+		if (c.getAlpha() <= alphaThreshold)
+            return 0;
+		
 		int[] closest = new int[4];
 		int[] got = closestMap.get(c.getRGB());
 		if (got == null) {
 			closest[2] = closest[3] = Integer.MAX_VALUE;
 
-			for (; k < palette.length; ++k) {
+			for (short k = 0; k < palette.length; ++k) {
 				Color c2 = palette[k];
 				if(c2 == null)
 					break;

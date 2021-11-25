@@ -84,7 +84,8 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	}
 
 	public void setZoom(double zoom) {
-		this.zoom = zoom;
+		if(zoom > .05 && zoom < 100)
+			this.zoom = zoom;
 	}
 	
 	public Dimension getPreferredSize() {
@@ -188,9 +189,10 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				final JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(getParent());
 				java.awt.Insets insets = topFrame.getInsets();
 				final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-				if(image.getWidth() > screenSize.getWidth() || image.getHeight() > screenSize.getHeight()) {
-					topFrame.setSize((int) screenSize.getWidth() + insets.right + insets.left, (int) screenSize.getHeight() - insets.top - insets.bottom);
+				if(image.getWidth() > screenSize.getWidth() || image.getHeight() > screenSize.getHeight()) {					
 					topFrame.setLocation(-insets.left, 0);
+					topFrame.setVisible(false);
+					topFrame.setSize((int) screenSize.getWidth() + insets.right + insets.left, (int) screenSize.getHeight() - insets.top - insets.bottom);
 					setZoom(Math.min(screenSize.getWidth() / image.getWidth(), screenSize.getHeight() / image.getHeight()));
 				}
 				else {
@@ -199,6 +201,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				}				
 				
 				repaint();
+				topFrame.setVisible(true);
 				setCursor(Cursor.getDefaultCursor());
 			}
 		}
@@ -225,8 +228,8 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	@Override
 	public void paintComponent(Graphics graphics) {
 		Graphics2D g2d = (Graphics2D) graphics;		
-		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-		g2d.clearRect(0, 0, getWidth(), getHeight());
+		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);		
+        
 		if (image != null) {			
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);		    
 		    g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
@@ -234,12 +237,8 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 		    g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
 		    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 		    
-		    Dimension sz = getParent().getSize();		    
-		    if(hasAlpha) {       
-		    	g2d.setPaint(tp);
-		        g2d.fill(new Rectangle(sz));
-		    }
-		    
+		    g2d.setPaint(tp);
+	        g2d.fill(new Rectangle(getSize()));		    
 		    g2d.scale(zoom, zoom);  
 		    g2d.drawImage(image, null, 0, 0);
 		}
@@ -331,14 +330,12 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	        public void stateChanged(ChangeEvent e){
 	        	JViewport viewport = (JViewport) e.getSource();
 	        	viewport.revalidate();
-	        	viewport.repaint();
 	        }
 	    });
-	    scrollPane.getViewport().setScrollMode(JViewport.BACKINGSTORE_SCROLL_MODE);
+	    scrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
 	    frame.pack();
 		frame.setContentPane(scrollPane);
-		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
-		frame.setLocation(dim.width/2-frame.getSize().width/2, dim.height/2-frame.getSize().height/2);
+		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 		frame.addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent e) { 
