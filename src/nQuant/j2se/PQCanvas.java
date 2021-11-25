@@ -33,13 +33,18 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
+import javax.swing.Scrollable;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
-public class PQCanvas extends JPanel implements MouseWheelListener {
+public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 
 	private static final long serialVersionUID = -5166271928949046848L;	
 	private boolean hasAlpha;
+	private int maxUnitIncrement = 1;
 	private double zoom = 1.0;
 	private BufferedImage image = null;
 	private final TexturePaint tp;
@@ -55,7 +60,7 @@ public class PQCanvas extends JPanel implements MouseWheelListener {
 			new PnnWorker(img).execute();
 		}
 		else
-			javax.swing.JOptionPane.showMessageDialog(PQCanvas.this, "Cannot read image file", "Unknown image format", javax.swing.JOptionPane.ERROR_MESSAGE);
+			javax.swing.JOptionPane.showMessageDialog(PQCanvas.this, "Cannot read image", "Unknown image format", javax.swing.JOptionPane.ERROR_MESSAGE);
 	}
 
 	public void set(final File file) {
@@ -81,6 +86,52 @@ public class PQCanvas extends JPanel implements MouseWheelListener {
 	public void setZoom(double zoom) {
 		this.zoom = zoom;
 	}
+	
+	public Dimension getPreferredSize() {
+        if(image != null)
+        	return new Dimension((int) Math.ceil(image.getWidth() * getZoom()), (int) Math.ceil(image.getHeight() * getZoom()));
+        return getParent().getSize();
+    }
+
+    public Dimension getPreferredScrollableViewportSize() {
+        return getPreferredSize();
+    }
+
+    public int getScrollableUnitIncrement(Rectangle visibleRect,
+                                          int orientation,
+                                          int direction) {
+        //Get the current position.
+        int currentPosition = (orientation == SwingConstants.HORIZONTAL) ? visibleRect.x : visibleRect.y;
+
+        //Return the number of pixels between currentPosition
+        //and the nearest tick mark in the indicated direction.
+        if (direction < 0) {
+            int newPosition = currentPosition -
+                             (currentPosition / maxUnitIncrement)
+                              * maxUnitIncrement;
+            return (newPosition == 0) ? maxUnitIncrement : newPosition;
+        }
+        
+        return ((currentPosition / maxUnitIncrement) + 1) * maxUnitIncrement - currentPosition;
+    }
+
+    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+        if (orientation == SwingConstants.HORIZONTAL)
+            return visibleRect.width - maxUnitIncrement;
+        return visibleRect.height - maxUnitIncrement;
+    }
+
+    public boolean getScrollableTracksViewportWidth() {
+        return false;
+    }
+
+    public boolean getScrollableTracksViewportHeight() {
+        return false;
+    }
+
+    public void setMaxUnitIncrement(int pixels) {
+        maxUnitIncrement = pixels;
+    }
 
 	private void addClick() {
 		addMouseListener(new MouseAdapter() {
@@ -145,10 +196,10 @@ public class PQCanvas extends JPanel implements MouseWheelListener {
 					setZoom(Math.min(screenSize.getWidth() / image.getWidth(), screenSize.getHeight() / image.getHeight()));
 				}
 				else {
-					topFrame.setSize(image.getWidth() + insets.right + insets.left, image.getHeight() + insets.top + insets.bottom);
+					topFrame.setSize((int) (image.getWidth() + insets.right + 1.5 * insets.left), (int) (image.getHeight() + insets.top + 1.5 * insets.bottom));
 					setZoom(Math.min(topFrame.getWidth() / image.getWidth(), topFrame.getHeight() / image.getHeight()));
-				}
-					
+				}				
+				
 				repaint();
 				setCursor(Cursor.getDefaultCursor());
 			}
@@ -227,9 +278,9 @@ public class PQCanvas extends JPanel implements MouseWheelListener {
 					topFrame.setSize((int) screenSize.getWidth() + insets.right + insets.left, (int) screenSize.getHeight() - insets.top - insets.bottom);
 					topFrame.setLocation(-insets.left, 0);
 				}
-				else {
-					topFrame.setSize((int) scrollSize.getWidth() + insets.right + insets.left, (int) scrollSize.getHeight() + insets.top + insets.bottom);
-				}
+				else
+					topFrame.setSize((int) (scrollSize.getWidth() + insets.right + 1.5 * insets.left), (int) (scrollSize.getHeight() + insets.top + 1.5 * insets.bottom));
+
             	repaint();
             }
         }
@@ -278,12 +329,18 @@ public class PQCanvas extends JPanel implements MouseWheelListener {
 		canvas.addFileDrop();
 		
 	    scrollPane.addMouseWheelListener(canvas);
+	    scrollPane.getViewport().addChangeListener(new ChangeListener() {
+	        public void stateChanged(ChangeEvent e){
+	        	JViewport viewport = (JViewport) e.getSource();
+	        	viewport.revalidate();
+	        	viewport.repaint();
+	        }
+	    });
 	    scrollPane.getViewport().setScrollMode(JViewport.BACKINGSTORE_SCROLL_MODE);
 	    frame.pack();
 		frame.setContentPane(scrollPane);
 		Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
 		frame.setLocation(dim.width/2-frame.getSize().width/2, dim.height/2-frame.getSize().height/2);
-		frame.setResizable(false);
 		frame.setVisible(true);
 		frame.addWindowListener(new java.awt.event.WindowAdapter() {
 			public void windowClosing(java.awt.event.WindowEvent e) { 
