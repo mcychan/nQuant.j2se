@@ -37,8 +37,6 @@ import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 
@@ -246,6 +244,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			g2d.scale(zoom, zoom);
 			g2d.setFont(new Font("Arial", Font.BOLD, 20));
 			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+			g2d.clearRect(0, 0, getParent().getWidth(), getParent().getHeight());
 			g2d.drawString("Please drag an image file to here!", getWidth() / 5, getHeight() / 2);
 		}
 		g2d.dispose();
@@ -326,12 +325,6 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 		canvas.addFileDrop();
 		
 	    scrollPane.addMouseWheelListener(canvas);
-	    scrollPane.getViewport().addChangeListener(new ChangeListener() {
-	        public void stateChanged(ChangeEvent e){
-	        	JViewport viewport = (JViewport) e.getSource();
-	        	viewport.revalidate();
-	        }
-	    });
 	    scrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
 	    frame.pack();
 		frame.setContentPane(scrollPane);
