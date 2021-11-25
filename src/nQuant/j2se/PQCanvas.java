@@ -106,9 +106,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
         //Return the number of pixels between currentPosition
         //and the nearest tick mark in the indicated direction.
         if (direction < 0) {
-            int newPosition = currentPosition -
-                             (currentPosition / maxUnitIncrement)
-                              * maxUnitIncrement;
+            int newPosition = currentPosition - (currentPosition / maxUnitIncrement) * maxUnitIncrement;
             return (newPosition == 0) ? maxUnitIncrement : newPosition;
         }
         
@@ -285,7 +283,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
             }
         }
         else {
-            // if alt isn't down then propagate event to scrollPane            
+            // if ctrl isn't down then propagate event to scrollPane            
             scrollPane.getParent().dispatchEvent(e);
         }
     }
