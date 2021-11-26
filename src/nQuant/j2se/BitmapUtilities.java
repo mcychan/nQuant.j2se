@@ -23,22 +23,22 @@ public class BitmapUtilities {
 	}
 	
 	protected static int[] calcDitherPixel(Color c, short[] clamp, int[] rowerr, int cursor, boolean noBias)
-    {
-        int[] ditherPixel = new int[4];
-        if (noBias) {
-            ditherPixel[0] = clamp[((rowerr[cursor] + 0x1008) >> 4) + c.getRed()];
-            ditherPixel[1] = clamp[((rowerr[cursor + 1] + 0x1008) >> 4) + c.getGreen()];
-            ditherPixel[2] = clamp[((rowerr[cursor + 2] + 0x1008) >> 4) + c.getBlue()];
-            ditherPixel[3] = clamp[((rowerr[cursor + 3] + 0x1008) >> 4) + c.getAlpha()];
-            return ditherPixel;
-        }
+	{
+		int[] ditherPixel = new int[4];
+		if (noBias) {
+			ditherPixel[0] = clamp[((rowerr[cursor] + 0x1008) >> 4) + c.getRed()];
+			ditherPixel[1] = clamp[((rowerr[cursor + 1] + 0x1008) >> 4) + c.getGreen()];
+			ditherPixel[2] = clamp[((rowerr[cursor + 2] + 0x1008) >> 4) + c.getBlue()];
+			ditherPixel[3] = clamp[((rowerr[cursor + 3] + 0x1008) >> 4) + c.getAlpha()];
+			return ditherPixel;
+		}
 
-        ditherPixel[0] = clamp[((rowerr[cursor] + 0x2010) >> 5) + c.getRed()];
-        ditherPixel[1] = clamp[((rowerr[cursor + 1] + 0x1008) >> 4) + c.getGreen()];
-        ditherPixel[2] = clamp[((rowerr[cursor + 2] + 0x2010) >> 5) + c.getBlue()];
-        ditherPixel[3] = c.getAlpha();
-        return ditherPixel;
-    }
+		ditherPixel[0] = clamp[((rowerr[cursor] + 0x2010) >> 5) + c.getRed()];
+		ditherPixel[1] = clamp[((rowerr[cursor + 1] + 0x1008) >> 4) + c.getGreen()];
+		ditherPixel[2] = clamp[((rowerr[cursor + 2] + 0x2010) >> 5) + c.getBlue()];
+		ditherPixel[3] = c.getAlpha();
+		return ditherPixel;
+	}
 	
 	protected static short[] quantize_image(final int width, final int height, final Color[] pixels, final Color[] palette, final Ditherable ditherable, final boolean hasSemiTransparency, final boolean dither)
 	{
@@ -81,9 +81,9 @@ public class BitmapUtilities {
 					Color c = pixels[pixelIndex];
 					int[] ditherPixel = calcDitherPixel(c, clamp, row0, cursor0, noBias);
 					int r_pix = ditherPixel[0];
-                    int g_pix = ditherPixel[1];
-                    int b_pix = ditherPixel[2];
-                    int a_pix = ditherPixel[3];
+				int g_pix = ditherPixel[1];
+				int b_pix = ditherPixel[2];
+				int a_pix = ditherPixel[3];
 
 					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
 					if(noBias) {
