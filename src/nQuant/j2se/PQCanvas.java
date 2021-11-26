@@ -41,7 +41,7 @@ import javax.swing.SwingWorker;
 public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 
 	private static final long serialVersionUID = -5166271928949046848L;	
-	private boolean hasAlpha;
+	private volatile boolean hasAlpha;
 	private int maxUnitIncrement = 1;
 	private double zoom = 1.0;
 	private BufferedImage image = null;
@@ -235,8 +235,11 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 		    g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
 		    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 		    
-		    g2d.setPaint(tp);
-	        g2d.fill(new Rectangle(getSize()));		    
+			if(hasAlpha) {				
+				g2d.setPaint(tp);
+				g2d.fill(new Rectangle(getSize()));
+			}
+	        
 		    g2d.scale(zoom, zoom);  
 		    g2d.drawImage(image, null, 0, 0);
 		}
