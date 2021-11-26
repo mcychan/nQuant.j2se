@@ -422,7 +422,7 @@ public class PnnQuantizer {
 			int pixel = pixels[i];
 			int alfa = (pixel >> 24) & 0xff;
 			cPixels[i] = new Color(pixel, true);
-			if (alfa < BYTE_MAX) {				
+			if (alfa < 200) {				
 				if (alfa == 0) {
 					m_transparentPixelIndex = i;
 					m_transparentColor = cPixels[i];
