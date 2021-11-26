@@ -96,9 +96,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
         return getPreferredSize();
     }
 
-    public int getScrollableUnitIncrement(Rectangle visibleRect,
-                                          int orientation,
-                                          int direction) {
+    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
         //Get the current position.
         int currentPosition = (orientation == SwingConstants.HORIZONTAL) ? visibleRect.x : visibleRect.y;
 
@@ -244,7 +242,6 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 		    g2d.drawImage(image, null, 0, 0);
 		}
 		else {
-			g2d.scale(zoom, zoom);
 			g2d.setFont(new Font("Arial", Font.BOLD, 20));
 			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 			g2d.clearRect(0, 0, getParent().getWidth(), getParent().getHeight());
@@ -255,7 +252,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	
 	@Override
     public void mouseWheelMoved(MouseWheelEvent e) {
-		JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, this);
+		JScrollPane scrollPane = (JScrollPane) e.getSource();
 		if (e.isControlDown()) {
             double oldZoom = getZoom();
             double amount = Math.pow(1.1, e.getScrollAmount());
@@ -269,7 +266,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
             
             if(Math.abs(oldZoom - getZoom()) > 0.1) {         	
             	scrollPane.getViewport().setSize((int)(image.getWidth() * getZoom()), (int)(image.getHeight() * getZoom()));
-            	final JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(getParent());
+            	final JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(scrollPane);
 				java.awt.Insets insets = topFrame.getInsets();
 				final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 				final Dimension scrollSize = scrollPane.getViewport().getSize();
@@ -284,7 +281,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
             }
         }
         else {
-            // if ctrl isn't down then propagate event to scrollPane            
+            // if ctrl isn't down then propagate event to parent            
             scrollPane.getParent().dispatchEvent(e);
         }
     }
