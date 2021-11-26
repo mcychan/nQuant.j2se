@@ -255,7 +255,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	@Override
     public void mouseWheelMoved(MouseWheelEvent e) {
 		JScrollPane scrollPane = (JScrollPane) e.getSource();
-		if (e.isControlDown()) {
+		if (e.isControlDown() && image != null) {
             double oldZoom = getZoom();
             double amount = Math.pow(1.1, e.getScrollAmount());
             if (e.getWheelRotation() > 0) {
@@ -291,7 +291,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	public static void main(String [] args) throws java.io.IOException {
 		System.setProperty("java.net.useSystemProxies", "true");
 		PQCanvas canvas = new PQCanvas();
-		JFrame frame = new JFrame("PnnQuant Test");
+		JFrame frame = new JFrame("PnnQuant Playground");
 		frame.setPreferredSize(new Dimension(500, 500));
 		JScrollPane scrollPane = new JScrollPane(canvas);
 		scrollPane.getViewport().addChangeListener(new ChangeListener() {
