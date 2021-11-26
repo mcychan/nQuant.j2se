@@ -37,6 +37,8 @@ import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 
@@ -292,6 +294,12 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 		JFrame frame = new JFrame("PnnQuant Test");
 		frame.setPreferredSize(new Dimension(500, 500));
 		JScrollPane scrollPane = new JScrollPane(canvas);
+		scrollPane.getViewport().addChangeListener(new ChangeListener() {
+	        public void stateChanged(ChangeEvent e){
+	        	JViewport viewport = (JViewport) e.getSource();
+	        	viewport.revalidate();
+	        }
+	    });
 		scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), "paste");
 		scrollPane.getActionMap().put("paste", new AbstractAction() {
 			private static final long serialVersionUID = 4914478601644487779L;
