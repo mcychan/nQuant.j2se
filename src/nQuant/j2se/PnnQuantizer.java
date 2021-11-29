@@ -422,7 +422,7 @@ public class PnnQuantizer {
 			int pixel = pixels[i];
 			int alfa = (pixel >> 24) & 0xff;
 			cPixels[i] = new Color(pixel, true);
-			if (alfa < 200) {				
+			if (alfa < 200) {	
 				if (alfa == 0) {
 					m_transparentPixelIndex = i;
 					m_transparentColor = cPixels[i];
@@ -461,7 +461,7 @@ public class PnnQuantizer {
 
 		short[] qPixels = dither(cPixels, palette, nMaxColors, width, height, dither);
 
-		if (m_transparentPixelIndex >= 0) {
+		if (m_transparentPixelIndex >= 0 && nMaxColors <= 256) {
 			short k = qPixels[m_transparentPixelIndex];
 			if (nMaxColors > 2)
 				palette[k] = m_transparentColor;

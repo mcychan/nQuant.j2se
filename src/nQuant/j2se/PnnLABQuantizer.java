@@ -175,6 +175,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			else
 				ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(1.718) / maxbins);
 		}
+		else if(nMaxColors > 256)
+			ratio = Math.min(1.0, 1 - 1.0 / proportional);
 		else
 			ratio = Math.min(1.0, 0.14 * Math.exp(4.679 * proportional));
 		
@@ -182,6 +184,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			ratio += 0.5;		
 			ratio = Math.min(1.0, ratio);
 		}
+		System.out.println(ratio + ", " + proportional);
 		
 		int h, l, l2;
 		/* Initialize nearest neighbors and build heap of them */
