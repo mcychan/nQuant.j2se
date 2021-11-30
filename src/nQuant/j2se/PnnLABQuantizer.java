@@ -178,7 +178,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		else if(nMaxColors > 256)
 			ratio = Math.min(hasSemiTransparency ? 0.0 : 1.0, 1 - 1.0 / proportional);
 		else
-			ratio = Math.min(1.0, 0.14 * Math.exp(4.679 * proportional));
+			ratio = Math.min(hasSemiTransparency ? 0.0 : 1.0, 0.14 * Math.exp(4.679 * proportional));
 		
 		if (quan_rt < 0) {
 			ratio += 0.5;		
