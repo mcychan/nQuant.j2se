@@ -171,7 +171,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if (proportional > .018 && proportional < .022)
 				ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(3.13) / maxbins);
 			else if(proportional > .1)
-				ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(2.68) / maxbins);
+				ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(1.997) / maxbins);
 			else
 				ratio = Math.min(1.0, proportional + nMaxColors * Math.exp(1.718) / maxbins);
 		}
