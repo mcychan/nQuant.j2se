@@ -77,13 +77,13 @@ public class GilbertCurve {
         int a_pix = (int) Math.min(0xFF, Math.max(error.p[3], 0.0));
         
         Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
-        /*if (palette.length < 64) {
+        if (palette.length < 64) {
 	        int offset = ditherable.getColorIndex(c2);
 	        if (lookup[offset] == 0)
 	            lookup[offset] = (c2.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, c2) + 1;
 	        qPixels[bidx] = (short) (lookup[offset] - 1);
         }
-        else*/
+        else
         	qPixels[bidx] = ditherable.nearestColorIndex(palette, c2);
 
         errorq.poll();
