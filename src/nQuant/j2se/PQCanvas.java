@@ -167,7 +167,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 		protected BufferedImage doInBackground() throws Exception {
 			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 			final PnnQuantizer pq = new PnnLABQuantizer(img, PQCanvas.this);
-			BufferedImage highColorImage = pq.convert(256, true);
+			BufferedImage highColorImage = pq.convert(16, true);
 			hasAlpha = pq.hasAlpha();			
 			return highColorImage;
 			
@@ -198,7 +198,9 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 					setZoom(Math.min(topFrame.getWidth() / image.getWidth(), topFrame.getHeight() / image.getHeight()));
 				}				
 				
-				repaint();
+				final JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, getParent());
+				scrollPane.getHorizontalScrollBar().setValue(0);
+				scrollPane.getVerticalScrollBar().setValue(0);
 				topFrame.setVisible(true);
 				setCursor(Cursor.getDefaultCursor());
 			}
