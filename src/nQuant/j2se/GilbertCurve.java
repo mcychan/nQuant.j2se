@@ -35,6 +35,7 @@ public class GilbertCurve {
 	private final Ditherable ditherable;
 	private final Queue<ErrorBox> errorq;
 	private final float[] weights;
+	private final int[] lookup;
     
 	private static final byte DITHER_MAX = 9;
 	private static final float BLOCK_SIZE = 343f;	    
@@ -50,6 +51,7 @@ public class GilbertCurve {
         this.ditherable = ditherable;	        
         errorq = new ArrayDeque<>();
         weights = new float[DITHER_MAX];
+        lookup = new int[65536];
     }
     
     private static int sign(int x) {
@@ -74,8 +76,15 @@ public class GilbertCurve {
         int b_pix = (int) Math.min(0xFF, Math.max(error.p[2], 0.0));
         int a_pix = (int) Math.min(0xFF, Math.max(error.p[3], 0.0));
         
-        Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);	        
-        qPixels[bidx] = ditherable.nearestColorIndex(palette, c2);
+        Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
+        /*if (palette.length < 64) {
+	        int offset = ditherable.getColorIndex(c2);
+	        if (lookup[offset] == 0)
+	            lookup[offset] = (c2.getAlpha() == 0) ? 1 : ditherable.nearestColorIndex(palette, c2) + 1;
+	        qPixels[bidx] = (short) (lookup[offset] - 1);
+        }
+        else*/
+        	qPixels[bidx] = ditherable.nearestColorIndex(palette, c2);
 
         errorq.poll();
         c2 = palette[qPixels[bidx]];

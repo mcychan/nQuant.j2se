@@ -245,6 +245,34 @@ public class Otsu
 		grayScaleImage.getRaster().setPixels(0, 0, iWidth, iHeight, pixels);
 		return grayScaleImage;
 	}	
+	
+	private void convertToGrayScale(int[] pixels)
+	{
+		float min1 = BYTE_MAX;
+		float max1 = .0f;
+
+		for (int i = 0; i < pixels.length; ++i)
+		{
+			int alfa = (pixels[i] >> 24) & 0xff;
+			int green = (pixels[i] >> 8) & 0xff;
+			if (alfa <= alphaThreshold)
+				continue;
+
+			if (min1 > green)
+				min1 = green;
+
+			if (max1 < green)
+				max1 = green;
+		}
+
+		for (int i = 0; i < pixels.length; ++i)
+		{
+			int alfa = (pixels[i] >> 24) & 0xff;
+			int green = (pixels[i] >> 8) & 0xff;
+			int grey = (int)((green - min1) * (BYTE_MAX / (max1 - min1)));
+			pixels[i] = new Color(grey, grey, grey, alfa).getRGB();
+		}
+	}
 
 	protected int getColorIndex(final Color c)
 	{
@@ -267,18 +295,19 @@ public class Otsu
 	}
 
 	public BufferedImage convertGrayScaleToBinary(BufferedImage srcimg, boolean isGrayscale)
-	{
-		BufferedImage sourceImg = isGrayscale ? srcimg : convertToGrayScale(srcimg);						
-
-		int bitmapWidth = sourceImg.getWidth();
-		int bitmapHeight = sourceImg.getHeight();
+	{	
+		int bitmapWidth = srcimg.getWidth();
+		int bitmapHeight = srcimg.getHeight();
 
 		int[] pixels = srcimg.getRGB(0, 0, bitmapWidth, bitmapHeight, null, 0, bitmapWidth);
 		Color[] cPixels = grabPixels(pixels);
+		
+		if(!isGrayscale)
+			convertToGrayScale(pixels);
 
 		short otsuThreshold = getOtsuThreshold(cPixels);
 		if (!threshold(cPixels, otsuThreshold))
-			return sourceImg;
+			return srcimg;
 
 		Color[] palette = new Color[2];
 		if (m_transparentPixelIndex >= 0)
@@ -292,7 +321,7 @@ public class Otsu
 		}
 		setColorModel(palette);	
 
-		short[] qPixels = GilbertCurve.dither(bitmapWidth, bitmapHeight, cPixels, palette, getDitherFn());
+		short[] qPixels = GilbertCurve.dither(bitmapWidth, bitmapHeight, cPixels, palette, getDitherFn(), 1.0f);
 		if (m_transparentPixelIndex >= 0) {
 			short k = qPixels[m_transparentPixelIndex];
 			if (!palette[k].equals(m_transparentColor)) {
