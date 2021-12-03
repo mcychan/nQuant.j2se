@@ -185,6 +185,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				e.printStackTrace();
 			} finally {	    	
 				final JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(getParent());
+				topFrame.setVisible(false);
 				java.awt.Insets insets = topFrame.getInsets();
 				final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 				if(image.getWidth() > screenSize.getWidth() || image.getHeight() > screenSize.getHeight()) {					
@@ -200,7 +201,8 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				final JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, getParent());
 				scrollPane.getHorizontalScrollBar().setValue(0);
 				scrollPane.getVerticalScrollBar().setValue(0);
-				topFrame.repaint();
+				repaint();
+				topFrame.setVisible(true);
 				setCursor(Cursor.getDefaultCursor());
 			}
 		}
