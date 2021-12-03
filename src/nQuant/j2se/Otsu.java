@@ -114,7 +114,7 @@ public class Otsu
 		return findMax(vet, 256);
 	}	
 
-	private boolean threshold(Color[] pixels, short thresh, float weight)
+	private void threshold(Color[] pixels, short thresh, float weight)
 	{
 		int maxThresh = (int) thresh;
 		if (thresh >= 200)
@@ -133,13 +133,11 @@ public class Otsu
 			else if (m_transparentPixelIndex >= 0 || c.getRed() + c.getGreen() + c.getBlue() < minThresh * 3)
 				pixels[i] = new Color(0, 0, 0, c.getAlpha());
 		}
-
-		return true;
 	}
 	
-	private boolean threshold(Color[] pixels, short thresh)
+	private void threshold(Color[] pixels, short thresh)
 	{
-		return threshold(pixels, thresh, 1.0f);
+		threshold(pixels, thresh, 1.0f);
 	}
 
 	protected short nearestColorIndex(Color[] palette, final Color c)
@@ -208,18 +206,18 @@ public class Otsu
 
 		float min1 = BYTE_MAX;
 		float max1 = .0f;
-		final Color[] cPixels = new Color[pixels.length];		
 		for (int i = pixels.length - 1; i >= 0; --i) {
 			int pixel = pixels[i];
 			int alfa = (pixel >> 24) & 0xff;
 			int green = (pixel >> 8) & 0xff;
-			cPixels[i] = new Color(pixel, true);
 			if (alfa < BYTE_MAX) {				
 				if (alfa == 0) {
 					m_transparentPixelIndex = i;
-					m_transparentColor = cPixels[i];
-					if(m_transparentColor.getRGB() < BYTE_MAX)
-						cPixels[i] = m_transparentColor = new Color(51, 102, 102, alfa);
+					m_transparentColor = new Color(pixels[i], true);
+					if(m_transparentColor.getRGB() < BYTE_MAX) {
+						m_transparentColor = new Color(51, 102, 102, alfa);
+						pixels[i] = m_transparentColor.getRGB();
+					}
 				}
 				else
 					hasSemiTransparency = true;
@@ -236,9 +234,13 @@ public class Otsu
 		}
 
 		for (int i = 0; i < pixels.length; ++i) {
-			int green = cPixels[i].getGreen();
+			int alfa = (pixels[i] >> 24) & 0xff;
+			if(alfa <= alphaThreshold)
+				continue;
+			
+			int green = (pixels[i] >> 8) & 0xff;
 			int pixel = (int)((green - min1) * (BYTE_MAX / (max1 - min1)));
-			pixels[i] = new Color(pixel, pixel, pixel, cPixels[i].getAlpha()).getRGB();
+			pixels[i] = new Color(pixel, pixel, pixel, alfa).getRGB();
 		}
 		
 		BufferedImage grayScaleImage = new BufferedImage(iWidth, iHeight, BufferedImage.TYPE_USHORT_GRAY);
@@ -251,12 +253,13 @@ public class Otsu
 		float min1 = BYTE_MAX;
 		float max1 = .0f;
 
-		for (int i = 0; i < pixels.length; ++i)
+		for (int pixel : pixels)
 		{
-			int alfa = (pixels[i] >> 24) & 0xff;
-			int green = (pixels[i] >> 8) & 0xff;
+			int alfa = (pixel >> 24) & 0xff;
 			if (alfa <= alphaThreshold)
 				continue;
+			
+			int green = (pixel >> 8) & 0xff;			
 
 			if (min1 > green)
 				min1 = green;
@@ -268,6 +271,9 @@ public class Otsu
 		for (int i = 0; i < pixels.length; ++i)
 		{
 			int alfa = (pixels[i] >> 24) & 0xff;
+			if (alfa <= alphaThreshold)
+				continue;
+			
 			int green = (pixels[i] >> 8) & 0xff;
 			int grey = (int)((green - min1) * (BYTE_MAX / (max1 - min1)));
 			pixels[i] = new Color(grey, grey, grey, alfa).getRGB();
@@ -306,8 +312,7 @@ public class Otsu
 			convertToGrayScale(pixels);
 
 		short otsuThreshold = getOtsuThreshold(cPixels);
-		if (!threshold(cPixels, otsuThreshold))
-			return srcimg;
+		threshold(cPixels, otsuThreshold);
 
 		Color[] palette = new Color[2];
 		if (m_transparentPixelIndex >= 0)
@@ -321,7 +326,7 @@ public class Otsu
 		}
 		setColorModel(palette);	
 
-		short[] qPixels = GilbertCurve.dither(bitmapWidth, bitmapHeight, cPixels, palette, getDitherFn(), 1.0f);
+		short[] qPixels = GilbertCurve.dither(bitmapWidth, bitmapHeight, cPixels, palette, getDitherFn());
 		if (m_transparentPixelIndex >= 0) {
 			short k = qPixels[m_transparentPixelIndex];
 			if (!palette[k].equals(m_transparentColor)) {

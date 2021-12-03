@@ -189,7 +189,6 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 				if(image.getWidth() > screenSize.getWidth() || image.getHeight() > screenSize.getHeight()) {					
 					topFrame.setLocation(-insets.left, 0);
-					topFrame.setVisible(false);
 					topFrame.setSize((int) screenSize.getWidth() + insets.right + insets.left, (int) screenSize.getHeight() - insets.top - insets.bottom);
 					setZoom(Math.min(screenSize.getWidth() / image.getWidth(), screenSize.getHeight() / image.getHeight()));
 				}
@@ -201,7 +200,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				final JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, getParent());
 				scrollPane.getHorizontalScrollBar().setValue(0);
 				scrollPane.getVerticalScrollBar().setValue(0);
-				topFrame.setVisible(true);
+				topFrame.repaint();
 				setCursor(Cursor.getDefaultCursor());
 			}
 		}
@@ -226,8 +225,9 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	}
 
 	@Override
-	public void paintComponent(Graphics graphics) {
-		Graphics2D g2d = (Graphics2D) graphics;		
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		Graphics2D g2d = (Graphics2D) g.create();		
 		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);		
         
 		if (image != null) {			
@@ -268,7 +268,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
                 setZoom(oldZoom * amount);
             }
             
-            if(Math.abs(oldZoom - getZoom()) > 0.1) {         	
+            if(Math.abs(oldZoom - getZoom()) > 0.05) {         	
             	scrollPane.getViewport().setSize((int)(image.getWidth() * getZoom()), (int)(image.getHeight() * getZoom()));
             	final JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(scrollPane);
 				java.awt.Insets insets = topFrame.getInsets();
