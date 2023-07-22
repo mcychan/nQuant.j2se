@@ -23,13 +23,13 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 	private PnnLABQuantizer m_pq;
 	
 	private static int _dp = 1, _nMaxColors = 256;
-	private static double minRatio = 0, maxRatio = 1.0;			
+	private static double minRatio = 0, maxRatio = 1.0;
 
 	private static Map<String, double[]> _fitnessMap = new ConcurrentHashMap<>();
 
 	public PnnLABGAQuantizer(PnnLABQuantizer pq, int nMaxColors) {
 		// increment value when criteria violation occurs
-		_objectives = new double[4];		
+		_objectives = new double[4];
 		_random = new Random(pq.getPixels().length);
 		m_pq = new PnnLABQuantizer(pq);
 		if(pq.isGA()) {
@@ -37,13 +37,13 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 			return;
 		}		
 		
-		_nMaxColors = nMaxColors;								
+		_nMaxColors = nMaxColors;
 		
 		int[] pixels = m_pq.getPixels();
 		ThreadLocal<Boolean> isSemiTransparency = new ThreadLocal<>();
 		cPixels = m_pq.grabPixels(pixels, nMaxColors, isSemiTransparency);
-		boolean hasSemiTransparency = isSemiTransparency.get();		
-		minRatio = (hasSemiTransparency || nMaxColors < 64) ? .01 : .85;
+		boolean hasSemiTransparency = isSemiTransparency.get();
+		minRatio = (hasSemiTransparency || nMaxColors < 64) ? .0111 : .85;
 		maxRatio = Math.min(1.0, nMaxColors / ((nMaxColors < 64) ? 500.0 : 50.0));
 		_dp = maxRatio < .1 ? 10000 : 100;
 	}	
@@ -63,15 +63,36 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		return sb.toString();
 	}
 	
+	@FunctionalInterface
+	protected interface AmplifyFn {
+		double get(double val);
+	}
+	
+	private AmplifyFn getAmplifyFn(boolean tooSmall) {
+		if (tooSmall)
+			return val -> Math.exp(val);
+		return val -> Math.log(val);
+	}
+	
 	private void calculateError(double[] errors) {
-		double maxError = maxRatio < .1 ? 1.0 : .125;
+		double maxError = maxRatio < .1 ? .5 : .0625;
+		if(m_pq.hasAlpha())
+			maxError = 1;
+		
 		double fitness = 0;
-		for(int i = 0; i < errors.length; ++i) {			
+		boolean tooSmall = false; // any error < exp(1.0) concluded as too small
+		for(int i = 0; i < errors.length; ++i) {
 			errors[i] /= maxError * cPixels.length;
+			if(errors[i] < 3)
+				tooSmall = true;
+		}		
+		
+		AmplifyFn amplifyFn = getAmplifyFn(tooSmall);
+		for(int i = 0; i < errors.length; ++i) {
 			if(i == 0 && errors[i] > maxError)
-				errors[i] *= errors[i];
+				errors[i] *= amplifyFn.get(errors[i]);
 			else if(errors[i] > 2 * maxError)
-				errors[i] *= errors[i];
+				errors[i] *= amplifyFn.get(errors[i]);
 			fitness -= errors[i];
 		}
 		
@@ -79,7 +100,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		_fitness = fitness;
 	}
 	
-	private void calculateFitness() {		
+	private void calculateFitness() {
 		final String ratioKey = getRatioKey();
 		if(_fitnessMap.containsKey(ratioKey)) {
 			_objectives = _fitnessMap.get(ratioKey);
@@ -96,7 +117,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 			if(BlueNoise.RAW_BLUE_NOISE[i & 4095] > threshold)
 				continue;
 			
-			Color c = cPixels[i];			
+			Color c = cPixels[i];
 			Lab lab1 = m_pq.getLab(cPixels[i].getRGB());
 			short qPixelIndex = m_pq.nearestColorIndex(palette, c, i);
 			Lab lab2 = m_pq.getLab(palette[qPixelIndex].getRGB());
@@ -117,9 +138,9 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 	}
 
 	@Override
-	public void close() throws Exception {		
+	public void close() throws Exception {
 		cPixels = null;
-		_fitnessMap.clear();		
+		_fitnessMap.clear();
 	}
 	
 	private double randrange(double min, double max)
@@ -136,7 +157,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 	}
 
 	@Override
-	public float getFitness() {		
+	public float getFitness() {
 		return (float) _fitness;
 	}
 	
@@ -160,7 +181,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 	public PnnLABGAQuantizer crossover(PnnLABGAQuantizer mother, int numberOfCrossoverPoints, float crossoverProbability) {		
 		PnnLABGAQuantizer child = makeNewFromPrototype();
 		if (_random.nextInt(100) <= crossoverProbability)
-			return child;		
+			return child;
 		
 		double ratioX = rotateRight(this.ratioX, mother.getRatios()[1], 0.0);
 		double ratioY = rotateLeft(this.ratioY, mother.getRatios()[0], 0.0);
