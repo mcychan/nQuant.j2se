@@ -47,7 +47,7 @@ public class NsgaIII<T extends Chromosome<T> >
 
 	// Initializes NsgaIII
 	private NsgaIII(T prototype, int numberOfChromosomes)
-    {
+	{
 		_prototype = prototype;
 		_random = prototype.getRandom();
 		
@@ -77,9 +77,9 @@ public class NsgaIII<T extends Chromosome<T> >
 
 	// Returns pointer to best chromosomes in population
 	public T getResult()
-    {
+	{
 		return _best;
-    }
+	}
 	
 	private static int rand(int size)
 	{
@@ -169,21 +169,21 @@ public class NsgaIII<T extends Chromosome<T> >
 	
 	private static double perpendicularDistance(final double[] direction, final double[] point)
 	{
-	    double numerator = 0, denominator = 0;
-	    for (int i = 0; i < direction.length; ++i) {
-	        numerator += direction[i] * point[i];
-	        denominator += Math.pow(direction[i], 2);
-	    }
-	    
-	    if(denominator <= 0)
-	    	return Double.MAX_VALUE;
-	    
-	    double k = numerator / denominator;
-	    double d = 0;
-	    for (int i = 0; i < direction.length; ++i)
-	        d += Math.pow(k * direction[i] - point[i], 2);
+		double numerator = 0, denominator = 0;
+		for (int i = 0; i < direction.length; ++i) {
+			numerator += direction[i] * point[i];
+			denominator += Math.pow(direction[i], 2);
+		}
+		
+		if(denominator <= 0)
+			return Double.MAX_VALUE;
+		
+		double k = numerator / denominator;
+		double d = 0;
+		for (int i = 0; i < direction.length; ++i)
+			d += Math.pow(k * direction[i] - point[i], 2);
 
-	    return Math.sqrt(d);
+		return Math.sqrt(d);
 	}
 	
 	private void associate(List<ReferencePoint> rps, final List<T> pop, final List<List<Integer> > fronts) {
@@ -211,26 +211,26 @@ public class NsgaIII<T extends Chromosome<T> >
 
 	private static double[] guassianElimination(List<Double>[] A, final double[] b)
 	{
-	    final int N = A.length;
-	    for (int i = 0; i < N; ++i)
-	        A[i].add(b[i]);
+		final int N = A.length;
+		for (int i = 0; i < N; ++i)
+			A[i].add(b[i]);
 
-	    for (int base = 0; base < N - 1; ++base) {
-	        for (int target = base + 1; target < N; ++target) {
-	            double ratio = A[target].get(base) / A[base].get(base);
-	            for (int term = 0; term < A[base].size(); ++term)
-	                A[target].set(term, A[target].get(term) - A[base].get(term) * ratio);
-	        }
-	    }
+		for (int base = 0; base < N - 1; ++base) {
+			for (int target = base + 1; target < N; ++target) {
+				double ratio = A[target].get(base) / A[base].get(base);
+				for (int term = 0; term < A[base].size(); ++term)
+					A[target].set(term, A[target].get(term) - A[base].get(term) * ratio);
+			}
+		}
 
-	    double[] x = new double[N];
-	    for (int i = N - 1; i >= 0; --i) {
-	        for (int known = i + 1; known < N; ++known)
-	            A[i].set(N, A[i].get(N) - A[i].get(known) * x[known]);
+		double[] x = new double[N];
+		for (int i = N - 1; i >= 0; --i) {
+			for (int known = i + 1; known < N; ++known)
+				A[i].set(N, A[i].get(N) - A[i].get(known) * x[known]);
 
-	        x[i] = A[i].get(N) / A[i].get(i);
-	    }
-	    return x;
+			x[i] = A[i].get(N) / A[i].get(i);
+		}
+		return x;
 	}
 	
 	// ----------------------------------------------------------------------
@@ -366,18 +366,6 @@ public class NsgaIII<T extends Chromosome<T> >
 
 	}
 	
-	protected boolean dominates(T left, T right) {
-		boolean better = false;
-		for (int f = 0; f < left.getObjectives().length; ++f) {
-			if (left.getObjectives()[f] > right.getObjectives()[f])
-				return false;
-			
-			if (left.getObjectives()[f] < right.getObjectives()[f])
-				better = true;
-		}
-		return better;
-	}
-	
 	protected List<List<Integer> > nondominatedSort(List<T> pop) {
 		List<List<Integer> > fronts = new ArrayList<>();
 		int numAssignedIndividuals = 0;
@@ -393,11 +381,11 @@ public class NsgaIII<T extends Chromosome<T> >
 
 				boolean beDominated = false;
 				for (int j = 0; j < curFront.size(); ++j) {
-					if (dominates(pop.get( curFront.get(j) ), pop.get(i)) ) { // i is dominated
+					if (pop.get( curFront.get(j) ).dominates(pop.get(i)) ) { // i is dominated
 						beDominated = true;
 						break;
 					}
-					else if (dominates(pop.get(i), pop.get( curFront.get(j) )) ) // i dominates a member in the current front
+					else if (pop.get(i).dominates( pop.get( curFront.get(j) )) ) // i dominates a member in the current front
 						curFront.remove(j--);
 				}
 				
@@ -505,18 +493,19 @@ public class NsgaIII<T extends Chromosome<T> >
 	}
 
 	protected List<T> crossing(List<T> population)
-    {		
-		List<T> offspring = new ArrayList<T>(_populationSize);
-		IntStream.range(0, _populationSize).parallel().forEach(i -> {
+	{
+		int populationSize = population.size();
+		List<T> offspring = new ArrayList<T>(populationSize);
+		IntStream.range(0, populationSize).parallel().forEach(i -> {
 			if(i % 2 == 0) {
-				int father = rand(_populationSize), mother = rand(_populationSize);				
+				int father = rand(populationSize), mother = rand(populationSize);				
 				offspring.add(population.get(father).crossover(population.get(mother), _numberOfCrossoverPoints, _crossoverProbability));
-				if((i + 1) < _populationSize)
+				if((i + 1) < populationSize)
 					offspring.add(population.get(mother).crossover(population.get(father), _numberOfCrossoverPoints, _crossoverProbability));
 			}
 		});
 		return offspring;
-    }
+	}
 
 	protected List<T> initialize()
 	{
@@ -546,7 +535,7 @@ public class NsgaIII<T extends Chromosome<T> >
 	
 	// Starts and executes algorithm
 	public void run(int maxRepeat, double minFitness)
-    {
+	{
 		if (_prototype == null)
 			return;		
 		
@@ -592,7 +581,7 @@ public class NsgaIII<T extends Chromosome<T> >
 			
 			/******************* replacement *****************/	
 			pop[next] = replacement(pop[cur]);
-			_best = dominates(pop[next].get(0), pop[cur].get(0)) ? pop[next].get(0) : pop[cur].get(0);
+			_best = pop[next].get(0).dominates( pop[cur].get(0)) ? pop[next].get(0) : pop[cur].get(0);
 			
 			int temp = cur;
 			cur = next;

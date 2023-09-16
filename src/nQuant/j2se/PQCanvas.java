@@ -21,7 +21,11 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -50,22 +54,26 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	private int maxUnitIncrement = 1;
 	private double zoom = 1.0;
 	private BufferedImage image = null;
+	private List<BufferedImage> images = null;
 	private final TexturePaint tp;
 	
 	public PQCanvas() {
 		tp = makeTexturePaint(16);
 	}
 	
-	public void set(final BufferedImage img) throws Exception {
-		if(img != null)	
-			new PnnWorker(img).execute();
+	public void set(final List<BufferedImage> imgs) throws Exception {
+		if(!imgs.isEmpty())	
+			new PnnWorker(imgs).execute();
 		else
 			javax.swing.JOptionPane.showMessageDialog(PQCanvas.this, "Cannot read image", "Unknown image format", javax.swing.JOptionPane.ERROR_MESSAGE);
 	}
 
-	public void set(final File file) {
+	public void set(final File[] files) {
 		try {
-			set(ImageIO.read(file));			
+			List<BufferedImage> images = new ArrayList<>();
+			for(File file : files)
+				images.add(ImageIO.read(file));
+			set(images);			
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -73,7 +81,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	
 	public void set(final URL url) {
 		try {
-			set(ImageIO.read(url));
+			set(Collections.singletonList(ImageIO.read(url)));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -89,46 +97,46 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	}
 	
 	public Dimension getPreferredSize() {
-        if(image != null)
-        	return new Dimension((int) Math.ceil(image.getWidth() * getZoom()), (int) Math.ceil(image.getHeight() * getZoom()));
-        return getParent().getSize();
-    }
+		if(image != null)
+			return new Dimension((int) Math.ceil(image.getWidth() * getZoom()), (int) Math.ceil(image.getHeight() * getZoom()));
+		return getParent().getSize();
+	}
 
-    public Dimension getPreferredScrollableViewportSize() {
-        return getPreferredSize();
-    }
+	public Dimension getPreferredScrollableViewportSize() {
+		return getPreferredSize();
+	}
 
-    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-        //Get the current position.
-        int currentPosition = (orientation == SwingConstants.HORIZONTAL) ? visibleRect.x : visibleRect.y;
+	public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+		//Get the current position.
+		int currentPosition = (orientation == SwingConstants.HORIZONTAL) ? visibleRect.x : visibleRect.y;
 
-        //Return the number of pixels between currentPosition
-        //and the nearest tick mark in the indicated direction.
-        if (direction < 0) {
-            int newPosition = currentPosition - (currentPosition / maxUnitIncrement) * maxUnitIncrement;
-            return (newPosition == 0) ? maxUnitIncrement : newPosition;
-        }
-        
-        return ((currentPosition / maxUnitIncrement) + 1) * maxUnitIncrement - currentPosition;
-    }
+		//Return the number of pixels between currentPosition
+		//and the nearest tick mark in the indicated direction.
+		if (direction < 0) {
+			int newPosition = currentPosition - (currentPosition / maxUnitIncrement) * maxUnitIncrement;
+			return (newPosition == 0) ? maxUnitIncrement : newPosition;
+		}
+		
+		return ((currentPosition / maxUnitIncrement) + 1) * maxUnitIncrement - currentPosition;
+	}
 
-    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
-        if (orientation == SwingConstants.HORIZONTAL)
-            return visibleRect.width - maxUnitIncrement;
-        return visibleRect.height - maxUnitIncrement;
-    }
+	public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+		if (orientation == SwingConstants.HORIZONTAL)
+			return visibleRect.width - maxUnitIncrement;
+		return visibleRect.height - maxUnitIncrement;
+	}
 
-    public boolean getScrollableTracksViewportWidth() {
-        return false;
-    }
+	public boolean getScrollableTracksViewportWidth() {
+		return false;
+	}
 
-    public boolean getScrollableTracksViewportHeight() {
-        return false;
-    }
+	public boolean getScrollableTracksViewportHeight() {
+		return false;
+	}
 
-    public void setMaxUnitIncrement(int pixels) {
-        maxUnitIncrement = pixels;
-    }
+	public void setMaxUnitIncrement(int pixels) {
+		maxUnitIncrement = pixels;
+	}
 
 	private void addClick() {
 		addMouseListener(new MouseAdapter() {
@@ -137,7 +145,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				JFileChooser fileChooser = new JFileChooser();
 				fileChooser.setCurrentDirectory(new File(System.getProperty("user.home")));
 				if (fileChooser.showOpenDialog(PQCanvas.this) == JFileChooser.APPROVE_OPTION)
-					set(fileChooser.getSelectedFile());
+					set(fileChooser.getSelectedFiles());
 			}
 		});
 	}
@@ -147,7 +155,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			public void filesDropped(java.io.File[] files) {
 				try {
 					if (files.length > 0)
-						set(files[0]);
+						set(files);
 				} catch (Exception ex) {
 					java.util.logging.Logger.getLogger(PQCanvas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 					javax.swing.JOptionPane.showMessageDialog(PQCanvas.this, ex.getMessage(), "File not found", javax.swing.JOptionPane.ERROR_MESSAGE);
@@ -157,34 +165,34 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	}
 
 	private class PnnWorker extends SwingWorker<BufferedImage, String> { 
-		private final BufferedImage img;
+		private final List<BufferedImage> imgs;
 		private long startTime;
 
-		PnnWorker(BufferedImage img) throws Exception {
-			this.img = img;
+		PnnWorker(List<BufferedImage> imgs) throws Exception {
+			this.imgs = imgs;
 		}
 
 		@Override
 		protected BufferedImage doInBackground() throws Exception {
 			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 			startTime = System.currentTimeMillis();
-			/* final PnnQuantizer pq = new PnnLABQuantizer(img, PQCanvas.this);
+			final PnnQuantizer pq = new PnnLABQuantizer(imgs.get(0), PQCanvas.this);
 			BufferedImage highColorImage = pq.convert(256, true);
-			hasAlpha = pq.hasAlpha();			
-			return highColorImage; */
-			
-			NsgaIII<PnnLABGAQuantizer> alg = new APNsgaIII<>(new PnnLABGAQuantizer(new PnnLABQuantizer(img, PQCanvas.this), 256), 2, 2, 80, 3);
+			hasAlpha = pq.hasAlpha();
+			return highColorImage;
+
+			/* NsgaIII<PnnLABGAQuantizer> alg = new APNsgaIII<>(new PnnLABGAQuantizer(new PnnLABQuantizer(imgs.get(0), PQCanvas.this), imgs, 256), 2, 2, 80, 3);
 			alg.run(9999, -Math.ulp(1.0));
-			try (PnnLABGAQuantizer pGAq = alg.getResult()) {			
+			try (PnnLABGAQuantizer pGAq = alg.getResult()) {
 				System.out.println("\n" + pGAq.getResult());
-				BufferedImage highColorImage = pGAq.convert(true);
-				hasAlpha = pGAq.hasAlpha();			
-				return highColorImage;
-			}
-			
+				images = pGAq.convert(true);
+				hasAlpha = pGAq.hasAlpha();
+				return images.get(0);
+			} */
+
 			/* final Otsu otsu = new Otsu();
-			BufferedImage bwImage = otsu.convertGrayScaleToBinary(img);
-			hasAlpha = otsu.hasAlpha();			
+			BufferedImage bwImage = otsu.convertGrayScaleToBinary(imgs.get(0));
+			hasAlpha = otsu.hasAlpha();
 			return bwImage; */
 		}
 
@@ -241,23 +249,23 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		Graphics2D g2d = (Graphics2D) g.create();		
+		Graphics2D g2d = (Graphics2D) g.create();
 		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);		
-        
-		if (image != null) {			
+
+		if (image != null) {
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);		    
-		    g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-		    g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_DEFAULT);
-		    g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
-		    g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-		    
-			if(hasAlpha) {				
+			g2d.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+			g2d.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_DEFAULT);
+			g2d.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
+			g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+			
+			if(hasAlpha) {
 				g2d.setPaint(tp);
 				g2d.fill(new Rectangle(getSize()));
 			}
-	        
-		    g2d.scale(zoom, zoom);  
-		    g2d.drawImage(image, null, 0, 0);
+
+			g2d.scale(zoom, zoom);  
+			g2d.drawImage(image, null, 0, 0);
 		}
 		else {
 			g2d.setFont(new Font("Arial", Font.BOLD, 20));
@@ -269,22 +277,22 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	}
 	
 	@Override
-    public void mouseWheelMoved(MouseWheelEvent e) {
+	public void mouseWheelMoved(MouseWheelEvent e) {
 		JScrollPane scrollPane = (JScrollPane) e.getSource();
 		if ((e.isControlDown() || !scrollPane.getVerticalScrollBar().isVisible()) && image != null) {
-            double oldZoom = getZoom();
-            double amount = Math.pow(1.1, e.getScrollAmount());
-            if (e.getWheelRotation() > 0) {
-            	//zoom out (amount)
-                setZoom(oldZoom / amount);                
-            } else {
-            	//zoom in (amount)
-                setZoom(oldZoom * amount);
-            }
-            
-            if(Math.abs(oldZoom - getZoom()) > 0.05) {         	
-            	scrollPane.getViewport().setSize((int)(image.getWidth() * getZoom()), (int)(image.getHeight() * getZoom()));
-            	final JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(scrollPane);
+			double oldZoom = getZoom();
+			double amount = Math.pow(1.1, e.getScrollAmount());
+			if (e.getWheelRotation() > 0) {
+				//zoom out (amount)
+				setZoom(oldZoom / amount);                
+			} else {
+				//zoom in (amount)
+				setZoom(oldZoom * amount);
+			}
+			
+			if(Math.abs(oldZoom - getZoom()) > 0.05) {         	
+				scrollPane.getViewport().setSize((int)(image.getWidth() * getZoom()), (int)(image.getHeight() * getZoom()));
+				final JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(scrollPane);
 				java.awt.Insets insets = topFrame.getInsets();
 				final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 				final Dimension scrollSize = scrollPane.getViewport().getSize();
@@ -295,14 +303,14 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				else
 					topFrame.setSize((int) (scrollSize.getWidth() + insets.right + 1.5 * insets.left), (int) (scrollSize.getHeight() + insets.top + 1.5 * insets.bottom));
 
-            	repaint();
-            }
-        }
-        else {
-            // if ctrl isn't down then propagate event to parent            
-            scrollPane.getParent().dispatchEvent(e);
-        }
-    }
+				repaint();
+			}
+		}
+		else {
+			// if ctrl isn't down then propagate event to parent            
+			scrollPane.getParent().dispatchEvent(e);
+		}
+	}
 
 	public static void main(String [] args) throws java.io.IOException {
 		System.setProperty("java.net.useSystemProxies", "true");
@@ -311,46 +319,46 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 		frame.setPreferredSize(new Dimension(500, 500));
 		JScrollPane scrollPane = new JScrollPane(canvas);
 		scrollPane.getViewport().addChangeListener(new ChangeListener() {
-	        public void stateChanged(ChangeEvent e){
-	        	JViewport viewport = (JViewport) e.getSource();
-	        	viewport.revalidate();
-	        }
-	    });
+			public void stateChanged(ChangeEvent e){
+				JViewport viewport = (JViewport) e.getSource();
+				viewport.revalidate();
+			}
+		});
 		scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), "paste");
 		scrollPane.getActionMap().put("paste", new AbstractAction() {
 			private static final long serialVersionUID = 4914478601644487779L;
 
 			public void actionPerformed(ActionEvent e) {
-            	Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                try {
-                	DataFlavor[] keys = clipboard.getAvailableDataFlavors();
-                	if(keys.length < 1)
-                		return;
-                	
-                	Object data = clipboard.getData(keys[0]);
-                    if (data instanceof String) {
-                    	File file = new File((String) data);
-                    	if(file.exists())
-                    		canvas.set(file);
-                    	else
-                    		canvas.set(new URL((String) data));
-                    }
-                    else if(data instanceof BufferedImage)
-                    	canvas.set((BufferedImage) data);
-                    else if(data instanceof List)
-                    	canvas.set(((List<File>) data).get(0));
+				Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+				try {
+					DataFlavor[] keys = clipboard.getAvailableDataFlavors();
+					if(keys.length < 1)
+						return;
+					
+					Object data = clipboard.getData(keys[0]);
+					if (data instanceof String) {
+						File file = new File((String) data);
+						if(file.exists())
+							canvas.set(new File[] {file});
+						else
+							canvas.set(new URL((String) data));
+					}
+					else if(data instanceof BufferedImage)
+						canvas.set(Collections.singletonList((BufferedImage) data));
+					else if(data instanceof List)
+						canvas.set(((List<File>) data).stream().toArray(File[]::new));
 				} catch (Exception ex) {
 					java.util.logging.Logger.getLogger(PQCanvas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 					javax.swing.JOptionPane.showMessageDialog(canvas, ex.getMessage(), "File not found", javax.swing.JOptionPane.ERROR_MESSAGE);
 				}
-            }
-        });
+			}
+		});
 		canvas.addClick();
 		canvas.addFileDrop();
 		
-	    scrollPane.addMouseWheelListener(canvas);
-	    scrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
-	    frame.pack();
+		scrollPane.addMouseWheelListener(canvas);
+		scrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
+		frame.pack();
 		frame.setContentPane(scrollPane);
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
@@ -358,8 +366,21 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			public void windowClosing(java.awt.event.WindowEvent e) { 
 				try {
 					if(canvas.image != null) {
-						String tempFilePath = System.getProperty("java.io.tmpdir") + "result.png";
-						ImageIO.write(canvas.image, "png", new java.io.File(tempFilePath));
+						final String fileType = canvas.hasAlpha && canvas.images == null ? "png" : "gif";
+						String tempFilePath = System.getProperty("java.io.tmpdir") + "result." + fileType;
+						if(canvas.images != null) {
+							try (GifWriter writer = new GifWriter(tempFilePath, canvas.hasAlpha, 850, true)) {
+								canvas.images.stream().forEach(img -> {
+									try {
+										writer.writeToSequence(img);
+									} catch (IOException e1) {
+										throw new UncheckedIOException(e1);
+									}
+								});
+							}
+						}
+						else
+							ImageIO.write(canvas.image, fileType, new java.io.File(tempFilePath));							
 						System.out.println(tempFilePath);
 					}
 				} catch(Exception ex) {

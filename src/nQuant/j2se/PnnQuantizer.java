@@ -11,13 +11,12 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DirectColorModel;
 import java.awt.image.ImageObserver;
 import java.awt.image.IndexColorModel;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import static nQuant.j2se.BitmapUtilities.BYTE_MAX;
 
-public class PnnQuantizer {	
+public class PnnQuantizer {
 	protected short alphaThreshold = 0xF;
 	protected boolean hasSemiTransparency = false;
 	protected int m_transparentPixelIndex = -1;
@@ -38,7 +37,7 @@ public class PnnQuantizer {
 	protected Map<Integer, int[]> closestMap = new HashMap<>();
 	protected Map<Integer, Short> nearestMap = new HashMap<>();	
 
-	private PnnQuantizer(BufferedImage im, int w, int h) throws IOException {
+	private PnnQuantizer(BufferedImage im, int w, int h) {
 		width = w;
 		height = h;
 		setPixels(im);
@@ -54,12 +53,12 @@ public class PnnQuantizer {
 		m_transparentColor = quantizer.m_transparentColor;
 	}
 
-	public PnnQuantizer(BufferedImage im, ImageObserver obs) throws IOException {
+	public PnnQuantizer(BufferedImage im, ImageObserver obs) {
 		this(im, im.getWidth(obs), im.getHeight(obs));
 	}
 
-	private void setPixels(BufferedImage im) throws IOException {
-	    pixels = im.getRGB(0, 0, width, height, null, 0, width);
+	private void setPixels(BufferedImage im) {
+		pixels = im.getRGB(0, 0, width, height, null, 0, width);
 	}
 
 	private static final class Pnnbin {
@@ -91,7 +90,7 @@ public class PnnQuantizer {
 		double wb = bin1.bc;
 		
 		int start = 0;
-		if(BlueNoise.RAW_BLUE_NOISE[idx & 4095] > -88)
+		if(BlueNoise.TELL_BLUE_NOISE[idx & 4095] > -88)
 			start = (PG < coeffs[0][1]) ? coeffs.length : 1;
 		
 		for (int i = bin1.fw; i != 0; i = bins[i].fw) {
@@ -115,7 +114,7 @@ public class PnnQuantizer {
 			if (nerr >= err)
 				continue;
 
-			nerr += nerr2 * (1 - ratio) * PB * BitmapUtilities.sqr(bins[i].bc - wb);				
+			nerr += nerr2 * (1 - ratio) * PB * BitmapUtilities.sqr(bins[i].bc - wb);
 			if (nerr >= err)
 				continue;
 			
@@ -156,10 +155,10 @@ public class PnnQuantizer {
 			m_colorModel = new IndexColorModel(BitmapUtilities.getBitsPerPixel(nMaxColors),         // bits per pixel
 				nMaxColors,         // size of color component array
 				palettes,   // color map
-                0,         // offset in the map
-                m_transparentPixelIndex > -1,      // has alpha
-                m_transparentPixelIndex,         // the pixel value that should be transparent
-                DataBuffer.TYPE_BYTE);			
+				0,         // offset in the map
+				m_transparentPixelIndex > -1,      // has alpha
+				m_transparentPixelIndex,         // the pixel value that should be transparent
+				DataBuffer.TYPE_BYTE);
 		}
 		else if (hasSemiTransparency) {
 			final int DCM_4444_RED_MASK = 0x0f00;
@@ -193,12 +192,12 @@ public class PnnQuantizer {
 					DCM_565_BLU_MASK);
 		}
 	}
-	
+
 	@FunctionalInterface
 	protected interface QuanFn {
 		float get(float cnt);
 	}
-	
+
 	protected QuanFn getQuanFn(int nMaxColors, short quan_rt) {
 		if (quan_rt > 0) {
 			if (nMaxColors < 64)
@@ -362,7 +361,7 @@ public class PnnQuantizer {
 			k = 1;
 		
 		double pr = PR, pg = PG, pb = PB;
-		if(palette.length > 2 && BlueNoise.RAW_BLUE_NOISE[pos & 4095] > -88) {
+		if(palette.length > 2 && BlueNoise.TELL_BLUE_NOISE[pos & 4095] > -88) {
 			pr = coeffs[0][0]; pg = coeffs[0][1]; pb = coeffs[0][2];
 		}
 		
@@ -404,7 +403,7 @@ public class PnnQuantizer {
 			closest[2] = closest[3] = Integer.MAX_VALUE;
 			
 			double pr = PR, pg = PG, pb = PB;
-			if(BlueNoise.RAW_BLUE_NOISE[pos & 4095] > -88) {
+			if(BlueNoise.TELL_BLUE_NOISE[pos & 4095] > -88) {
 				pr = coeffs[0][0]; pg = coeffs[0][1]; pb = coeffs[0][2];
 			}
 
@@ -524,8 +523,8 @@ public class PnnQuantizer {
 		}
 		
 		Color[] palette;
-		if(m_palette == null) {			
-			final Color[] cPixels = grabPixels(pixels, nMaxColors, null);			
+		if(m_palette == null) {
+			final Color[] cPixels = grabPixels(pixels, nMaxColors, null);
 			if (nMaxColors > 2)
 				palette = pnnquan(cPixels, nMaxColors);
 			else {
@@ -537,7 +536,7 @@ public class PnnQuantizer {
 				else {
 					palette[0] = Color.BLACK;
 					palette[1] = Color.WHITE;
-				}				
+				}
 			}
 		}
 		else
@@ -545,10 +544,10 @@ public class PnnQuantizer {
 			
 		short[] qPixels = dither(palette, width, height, dither);
 		if (hasAlpha() && nMaxColors > 2)
-        {
-            short k = qPixels[m_transparentPixelIndex];
-            palette[k] = m_transparentColor;
-        }
+		{
+			short k = qPixels[m_transparentPixelIndex];
+			palette[k] = m_transparentColor;
+		}
 		setColorModel(palette);
 		return BitmapUtilities.processImagePixels(qPixels, m_colorModel, width, height);
 	}

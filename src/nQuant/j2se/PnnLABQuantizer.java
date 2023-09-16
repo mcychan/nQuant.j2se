@@ -7,7 +7,6 @@ Copyright (c) 2018-2023 Miller Cy Chan
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -24,7 +23,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	private boolean isGA = false;
 	private double proportional, ratioY = .5;
 
-	public PnnLABQuantizer(BufferedImage im, ImageObserver obs) throws IOException {
+	public PnnLABQuantizer(BufferedImage im, ImageObserver obs) {
 		super(im, obs);
 	}
 	
@@ -178,7 +177,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			bins[i].ac *= d;
 			bins[i].Lc *= d;
 			bins[i].Ac *= d;
-			bins[i].Bc *= d;			
+			bins[i].Bc *= d;
 
 			bins[maxbins++] = bins[i];
 		}
@@ -428,7 +427,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			closest[2] = closest[3] = Integer.MAX_VALUE;
 			
 			int start = 0;
-			if(c.getAlpha() > 0xE0 && BlueNoise.RAW_BLUE_NOISE[pos & 4095] > -88)
+			if(c.getAlpha() > 0xE0 && BlueNoise.TELL_BLUE_NOISE[pos & 4095] > -88)
 				start = 1;
 
 			for (short k = 0; k < palette.length; ++k) {
@@ -445,7 +444,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				err += PB * (1 - ratio) * BitmapUtilities.sqr(c2.getBlue() - c.getBlue());
 				if (err >= closest[3])
 					continue;
-								
+
 				if(hasSemiTransparency) {
 					err += PA * BitmapUtilities.sqr(c2.getAlpha() - c.getAlpha());
 					start = 1;
@@ -484,7 +483,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 
 		int MAX_ERR = palette.length;	
-		if(PG < coeffs[0][1] && BlueNoise.RAW_BLUE_NOISE[pos & 4095] > -88)
+		if(PG < coeffs[0][1] && BlueNoise.TELL_BLUE_NOISE[pos & 4095] > -88)
 			return nearestColorIndex(palette, c, pos);
 		
 		int idx = 1;
@@ -495,7 +494,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			return nearestColorIndex(palette, c, pos);
 		return (short) closest[idx];
 	}	
-	
+
 	protected Ditherable getDitherFn() {
 		return new Ditherable() {
 			@Override
@@ -510,13 +509,15 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			
 		};
 	}
-	
-	private void clear()
+
+	protected void clear()
 	{
+		m_palette = null;
+		saliencies = null;
 		closestMap.clear();
-		nearestMap.clear();		
+		nearestMap.clear();
 	}
-	
+
 	@Override
 	protected short[] dither(Color[] palette, int width, int height, boolean dither)
 	{
@@ -529,23 +530,30 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			double delta = BitmapUtilities.sqr(palette.length) / pixelMap.size();
 			float weight = delta > 0.023 ? 1.0f : (float) (37.013 * delta + 0.906);
 			BlueNoise.dither(width, height, pixels, palette, ditherable, qPixels, weight);
-		}		
-		
-		pixelMap.clear();
+		}
+
 		return qPixels;
-    }
-	
+	}
+
 	@Override
 	protected Color[] grabPixels(int[] pixels, int nMaxColors, ThreadLocal<Boolean> isSemiTransparency) {		
 		cPixels = super.grabPixels(pixels, nMaxColors, isSemiTransparency);
 		return cPixels;
 	}
-	
+
 	int[] getPixels()
 	{
 		return pixels;
 	}
-	
+
+	void setPixels(Color[] cPixels)
+	{
+		pixels = new int[cPixels.length];
+		int i = 0;
+		for(Color c : cPixels)
+			pixels[i++] = c.getRGB();
+	}
+
 	Color[] getCPixels()
 	{
 		return cPixels;
@@ -554,11 +562,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	boolean isGA() {
 		return isGA;
 	}
-	
-	boolean isDivergent() {
-		return proportional > .035 && proportional < .1;
-	}
-	
+
 	void setRatio(double ratioX, double ratioY) {
 		this.ratio = Math.min(1.0, ratioX);
 		this.ratioY = Math.min(1.0, ratioY);

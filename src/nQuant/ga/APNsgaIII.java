@@ -57,29 +57,29 @@ public class APNsgaIII<T extends Chromosome<T> > extends NsgaIII<T>
 	private void dualCtrlStrategy(List<T> population, int bestNotEnhance, int nMax)
 	{
 		int N = population.size();
-		int nTmp = N;		
-		for(int i = 0; i < nTmp; ++i) {
+		int nTmp = N;
+		for(int i = 0; i < nTmp; ++i) {			
 			T chromosome = population.get(i);
 			T tumor = chromosome.makeNewFromPrototype();
 			tumor.mutation(_mutationSize, _mutationProbability);
 			
 			_worst = population.get(population.size() - 1);
-			if(dominates(tumor, chromosome)) {
+			if(tumor.dominates(chromosome)) {
 				population.set(i, tumor);
-				if(dominates(tumor, _best))
+				if(tumor.dominates(_best))
 					_best = tumor;
 			}
 			else {
 				if(bestNotEnhance >= _maxRepeat && N < nMax) {
 					++N;
-					if(dominates(_worst, tumor)) {
+					if(_worst.dominates(tumor)) {
 						population.add(tumor);
 						_worst = tumor;
 					}
 					else
 						population.add(population.size() - 1, tumor);
 				}
-			}
+			}				
 		}
 		popDec(population);
 	}
@@ -141,7 +141,7 @@ public class APNsgaIII<T extends Chromosome<T> > extends NsgaIII<T>
 			
 			/******************* replacement *****************/		
 			pop[next] = replacement(pop[cur]);			
-			_best = dominates(pop[next].get(0), pop[cur].get(0)) ? pop[next].get(0) : pop[cur].get(0);
+			_best = pop[next].get(0).dominates( pop[cur].get(0)) ? pop[next].get(0) : pop[cur].get(0);
 			
 			dualCtrlStrategy(pop[next], bestNotEnhance, nMax);
 			

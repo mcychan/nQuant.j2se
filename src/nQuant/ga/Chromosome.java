@@ -19,5 +19,7 @@ public interface Chromosome<T extends Chromosome<T> > {
 	public T makeNewFromPrototype();
 
 	public Random getRandom();
-	
+
+	public boolean dominates(T other);
+
 }
