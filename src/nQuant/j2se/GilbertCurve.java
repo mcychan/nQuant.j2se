@@ -59,7 +59,7 @@ public class GilbertCurve {
 		ditherMax = ditherEdge = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge) : DITHER_MAX;
 		if(palette.length / weight > 5000 && (weight > .045 || (weight > .01 && palette.length <= 64)))
 			ditherEdge = (byte) BitmapUtilities.sqr(5 + edge);
-		thresold = DITHER_MAX > 9 ? -112 : -88;
+		thresold = DITHER_MAX > 9 ? -112 : -64;
 		weights = new float[DITHER_MAX];
 		lookup = new int[65536];
 	}
@@ -113,7 +113,7 @@ public class GilbertCurve {
 		boolean denoise = palette.length > 2;		
 		boolean diffuse = BlueNoise.TELL_BLUE_NOISE[bidx & 4095] > thresold;
 		double yDiff = diffuse ? 1 : CIELABConvertor.Y_Diff(pixel, c2);
-		boolean illusion = !diffuse && BlueNoise.TELL_BLUE_NOISE[(int) (yDiff * 4096)] > thresold;
+		boolean illusion = !diffuse && BlueNoise.TELL_BLUE_NOISE[(int) (yDiff * 15e6) & 4095] > thresold;
 		byte ditherCursor = illusion ? ditherMax : ditherEdge;
 		
 		int errLength = denoise ? error.p.length - 1 : 0;	
@@ -123,9 +123,9 @@ public class GilbertCurve {
 					error.p[j] = (float) Math.tanh(error.p[j] / maxErr * 20) * (ditherCursor - 1);
 				else {					
 					if(illusion)
-						error.p[j] /= (float) (1 + Math.sqrt(ditherCursor));
+						error.p[j] = (float) (error.p[j] / maxErr * yDiff) * (ditherCursor - 1);
 					else
-						error.p[j] = (float) (error.p[j] / maxErr * yDiff) * (ditherCursor - 1);						
+						error.p[j] /= (float) (1 + Math.sqrt(ditherCursor));												
 				}
 			}
 		}
