@@ -115,6 +115,8 @@ public class GilbertCurve {
 		double yDiff = diffuse ? 1 : CIELABConvertor.Y_Diff(pixel, c2);		
 		boolean illusion = !diffuse && BlueNoise.TELL_BLUE_NOISE[(int) (yDiff * 4096) & 4095] > thresold;
 		byte ditherCursor = illusion ? ditherMax : ditherEdge;
+		if(palette.length > 16 && palette.length < 256)
+			ditherCursor = (byte) Math.max(ditherCursor, palette.length - DITHER_MAX);
 		
 		int errLength = denoise ? error.p.length - 1 : 0;	
 		for(int j = 0; j < errLength; ++j) {
