@@ -26,7 +26,7 @@ public class GilbertCurve {
 		}
 	}
 	
-	private byte ditherEdge;
+	private byte ditherMax;
 	private final int width;
 	private final int height;
 	private final int[] pixels;
@@ -38,7 +38,7 @@ public class GilbertCurve {
 	private final float[] weights;
 	private final int[] lookup;	
 	
-	private final byte DITHER_MAX, ditherMax;	
+	private final byte DITHER_MAX;	
 	private final int thresold;
 	private static final float BLOCK_SIZE = 343f;
 	
@@ -56,9 +56,11 @@ public class GilbertCurve {
 		weight = Math.abs(weight);
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (byte) 25 : 16 : 9;
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
-		ditherMax = ditherEdge = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge) : DITHER_MAX;
+		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge) : DITHER_MAX;
 		if(palette.length / weight > 5000 && (weight > .045 || (weight > .01 && palette.length <= 64)))
-			ditherEdge = (byte) BitmapUtilities.sqr(5 + edge);
+			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
+		if(palette.length > 16 && palette.length < 256)
+			ditherMax = (byte) Math.max(ditherMax, palette.length - DITHER_MAX);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		weights = new float[DITHER_MAX];
 		lookup = new int[65536];
@@ -114,20 +116,17 @@ public class GilbertCurve {
 		boolean diffuse = BlueNoise.TELL_BLUE_NOISE[bidx & 4095] > thresold;
 		double yDiff = diffuse ? 1 : CIELABConvertor.Y_Diff(pixel, c2);		
 		boolean illusion = !diffuse && BlueNoise.TELL_BLUE_NOISE[(int) (yDiff * 4096) & 4095] > thresold;
-		byte ditherCursor = illusion ? ditherMax : ditherEdge;
-		if(palette.length > 16 && palette.length < 256)
-			ditherCursor = (byte) Math.max(ditherCursor, palette.length - DITHER_MAX);
 		
 		int errLength = denoise ? error.p.length - 1 : 0;	
 		for(int j = 0; j < errLength; ++j) {
-			if(Math.abs(error.p[j]) >= ditherCursor) {
+			if(Math.abs(error.p[j]) >= ditherMax) {
 				if (diffuse)
-					error.p[j] = (float) Math.tanh(error.p[j] / maxErr * 20) * (ditherCursor - 1);
+					error.p[j] = (float) Math.tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
 				else {					
 					if(illusion)
-						error.p[j] = (float) (error.p[j] / maxErr * yDiff) * (ditherCursor - 1);
+						error.p[j] = (float) (error.p[j] / maxErr * yDiff) * (ditherMax - 1);
 					else
-						error.p[j] /= (float) (1 + Math.sqrt(ditherCursor));												
+						error.p[j] /= (float) (1 + Math.sqrt(ditherMax));												
 				}
 			}
 		}
