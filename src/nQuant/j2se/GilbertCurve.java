@@ -59,8 +59,8 @@ public class GilbertCurve {
 		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge) : DITHER_MAX;
 		if(palette.length / weight > 5000 && (weight > .045 || (weight > .01 && palette.length <= 64)))
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
-		else if(palette.length / weight < 3200 && palette.length > 16 && palette.length < 256)
-			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
+		else if(palette.length > 16 && palette.length < 256)
+			ditherMax = (palette.length / weight) < 3200 ? (byte) BitmapUtilities.sqr(5 + edge) : (byte) BitmapUtilities.sqr(3 + edge);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		weights = new float[DITHER_MAX];
 		lookup = new int[65536];
