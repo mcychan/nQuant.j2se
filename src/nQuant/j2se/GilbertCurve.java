@@ -4,16 +4,19 @@ Copyright (c) 2021 - 2023 Miller Cy Chan
 * A general rectangle with a known orientation is split into three regions ("up", "right", "down"), for which the function calls itself recursively, until a trivial path can be produced. */
 
 import java.awt.Color;
-import java.util.Map;
-import java.util.Random;
-import java.util.TreeMap;
+import java.util.ArrayDeque;
+import java.util.Comparator;
+import java.util.PriorityQueue;
+import java.util.Queue;
 
 public class GilbertCurve {
 
 	private static final class ErrorBox
 	{
+		private double yDiff;
 		private final float[] p;
-		private ErrorBox() {
+		private ErrorBox(double yDiff) {
+			this.yDiff = yDiff;
 			p = new float[4];
 		}
 		
@@ -24,11 +27,10 @@ public class GilbertCurve {
 				c.getBlue(),
 				c.getAlpha()
 			};
-		}
+		}		
 	}
 	
 	private byte ditherMax;
-	private long pos;
 	private final boolean sortedByYDiff;
 	private final int width;
 	private final int height;
@@ -37,8 +39,7 @@ public class GilbertCurve {
 	private final short[] qPixels;
 	private final Ditherable ditherable;
 	private final float[] saliencies;
-	private final Random _random;
-	private final Map<Double, ErrorBox> errorMap;
+	private final Queue<ErrorBox> errorq;
 	private final float[] weights;
 	private final int[] lookup;	
 	
@@ -55,10 +56,16 @@ public class GilbertCurve {
 		this.qPixels = qPixels;
 		this.ditherable = ditherable;
 		this.saliencies = saliencies;
-		_random = new Random(pixels.length);
 		boolean hasAlpha = weight < 0;
 		sortedByYDiff = saliencies != null && !hasAlpha && palette.length >= 128;
-		errorMap = new TreeMap<>();
+		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
+
+			@Override
+			public int compare(ErrorBox o1, ErrorBox o2) {
+				return Double.compare(o2.yDiff, o1.yDiff);
+			}
+			
+		}) : new ArrayDeque<>();
 		weight = Math.abs(weight);
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (byte) 25 : 16 : 9;
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
@@ -76,15 +83,15 @@ public class GilbertCurve {
 		final int bidx = x + y * width;
 		Color pixel = new Color(pixels[bidx], true);
 		ErrorBox error = new ErrorBox(pixel);
-		int i = 0;
+		int i = sortedByYDiff ? weights.length - 1 : 0;
 		float maxErr = DITHER_MAX - 1; 
-		for(ErrorBox eb : errorMap.values()) { 
+		for(ErrorBox eb : errorq) { 
 			for(int j = 0; j < eb.p.length; ++j) {
 				error.p[j] += eb.p[j] * weights[i];
 				if(error.p[j] > maxErr)
 					maxErr = error.p[j];
-			}
-			++i;
+			}			
+			i += sortedByYDiff ? -1 : 1;
 		}
 
 		int r_pix = (int) Math.min(0xFF, Math.max(error.p[0], 0.0));
@@ -108,8 +115,7 @@ public class GilbertCurve {
 		else
 			qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);		
 		
-		Double[] indices = errorMap.keySet().toArray(new Double[0]);
-		errorMap.remove(indices[sortedByYDiff ? indices.length - 1 : 0]);
+		errorq.poll();
 
 		c2 = palette[qPixels[bidx]];
 		if (palette.length > 256)
@@ -122,8 +128,8 @@ public class GilbertCurve {
 
 		boolean denoise = palette.length > 2;		
 		boolean diffuse = BlueNoise.TELL_BLUE_NOISE[bidx & 4095] > thresold;
-		double yDiff = sortedByYDiff ? CIELABConvertor.Y_Diff(pixel, c2) : 1;		
-		boolean illusion = !diffuse && BlueNoise.TELL_BLUE_NOISE[(int) (yDiff * 4096) & 4095] > thresold;
+		error.yDiff = sortedByYDiff ? CIELABConvertor.Y_Diff(pixel, c2) : 1;		
+		boolean illusion = !diffuse && BlueNoise.TELL_BLUE_NOISE[(int) (error.yDiff * 4096) & 4095] > thresold;
 		
 		int errLength = denoise ? error.p.length - 1 : 0;	
 		for(int j = 0; j < errLength; ++j) {
@@ -132,16 +138,14 @@ public class GilbertCurve {
 					error.p[j] = (float) Math.tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
 				else {					
 					if(illusion)
-						error.p[j] = (float) (error.p[j] / maxErr * yDiff) * (ditherMax - 1);
+						error.p[j] = (float) (error.p[j] / maxErr * error.yDiff) * (ditherMax - 1);
 					else
 						error.p[j] /= (float) (1 + Math.sqrt(ditherMax));												
 				}
 			}
 		}
-		
-		double errKey = sortedByYDiff ? yDiff : pos++;
-		errKey += _random.nextDouble() * 1e-6;
-		errorMap.put(errKey, error);
+
+		errorq.add(error);
 	}
 
 	private void generate2d(int x, int y, int ax, int ay, int bx, int by) {
@@ -206,7 +210,7 @@ public class GilbertCurve {
 		final float weightRatio = (float) Math.pow(BLOCK_SIZE + 1f, 1f / (DITHER_MAX - 1f));
 		float weight = 1f, sumweight = 0f;
 		for(int c = 0; c < DITHER_MAX; ++c) {
-			errorMap.put(c * 1.0, new ErrorBox());
+			errorq.add(new ErrorBox(c * 1.0));
 			sumweight += (weights[DITHER_MAX - c - 1] = weight);
 			weight /= weightRatio;
 		}
