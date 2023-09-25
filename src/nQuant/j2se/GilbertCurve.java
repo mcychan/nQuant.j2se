@@ -4,8 +4,9 @@ Copyright (c) 2021 - 2023 Miller Cy Chan
 * A general rectangle with a known orientation is split into three regions ("up", "right", "down"), for which the function calls itself recursively, until a trivial path can be produced. */
 
 import java.awt.Color;
-import java.util.ArrayDeque;
-import java.util.Queue;
+import java.util.Map;
+import java.util.Random;
+import java.util.TreeMap;
 
 public class GilbertCurve {
 
@@ -27,6 +28,8 @@ public class GilbertCurve {
 	}
 	
 	private byte ditherMax;
+	private long pos;
+	private final boolean sortedByYDiff;
 	private final int width;
 	private final int height;
 	private final int[] pixels;
@@ -34,7 +37,8 @@ public class GilbertCurve {
 	private final short[] qPixels;
 	private final Ditherable ditherable;
 	private final float[] saliencies;
-	private final Queue<ErrorBox> errorq;
+	private final Random _random;
+	private final Map<Double, ErrorBox> errorMap;
 	private final float[] weights;
 	private final int[] lookup;	
 	
@@ -51,8 +55,10 @@ public class GilbertCurve {
 		this.qPixels = qPixels;
 		this.ditherable = ditherable;
 		this.saliencies = saliencies;
-		errorq = new ArrayDeque<>();
+		_random = new Random(pixels.length);
 		boolean hasAlpha = weight < 0;
+		sortedByYDiff = saliencies != null && !hasAlpha && palette.length >= 128;
+		errorMap = new TreeMap<>();
 		weight = Math.abs(weight);
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (byte) 25 : 16 : 9;
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
@@ -72,7 +78,7 @@ public class GilbertCurve {
 		ErrorBox error = new ErrorBox(pixel);
 		int i = 0;
 		float maxErr = DITHER_MAX - 1; 
-		for(ErrorBox eb : errorq) { 
+		for(ErrorBox eb : errorMap.values()) { 
 			for(int j = 0; j < eb.p.length; ++j) {
 				error.p[j] += eb.p[j] * weights[i];
 				if(error.p[j] > maxErr)
@@ -102,7 +108,9 @@ public class GilbertCurve {
 		else
 			qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);		
 		
-		errorq.poll();
+		Double[] indices = errorMap.keySet().toArray(new Double[0]);
+		errorMap.remove(indices[sortedByYDiff ? indices.length - 1 : 0]);
+
 		c2 = palette[qPixels[bidx]];
 		if (palette.length > 256)
 			qPixels[bidx] = (short) ditherable.getColorIndex(c2);
@@ -114,7 +122,7 @@ public class GilbertCurve {
 
 		boolean denoise = palette.length > 2;		
 		boolean diffuse = BlueNoise.TELL_BLUE_NOISE[bidx & 4095] > thresold;
-		double yDiff = diffuse ? 1 : CIELABConvertor.Y_Diff(pixel, c2);		
+		double yDiff = sortedByYDiff ? CIELABConvertor.Y_Diff(pixel, c2) : 1;		
 		boolean illusion = !diffuse && BlueNoise.TELL_BLUE_NOISE[(int) (yDiff * 4096) & 4095] > thresold;
 		
 		int errLength = denoise ? error.p.length - 1 : 0;	
@@ -130,8 +138,10 @@ public class GilbertCurve {
 				}
 			}
 		}
-
-		errorq.add(error);
+		
+		double errKey = sortedByYDiff ? yDiff : pos++;
+		errKey += _random.nextDouble() * 1e-6;
+		errorMap.put(errKey, error);
 	}
 
 	private void generate2d(int x, int y, int ax, int ay, int bx, int by) {
@@ -196,7 +206,7 @@ public class GilbertCurve {
 		final float weightRatio = (float) Math.pow(BLOCK_SIZE + 1f, 1f / (DITHER_MAX - 1f));
 		float weight = 1f, sumweight = 0f;
 		for(int c = 0; c < DITHER_MAX; ++c) {
-			errorq.add(new ErrorBox());
+			errorMap.put(c * 1.0, new ErrorBox());
 			sumweight += (weights[DITHER_MAX - c - 1] = weight);
 			weight /= weightRatio;
 		}
