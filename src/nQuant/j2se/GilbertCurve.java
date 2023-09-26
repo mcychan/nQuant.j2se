@@ -15,8 +15,7 @@ public class GilbertCurve {
 	{
 		private double yDiff;
 		private final float[] p;
-		private ErrorBox(double yDiff) {
-			this.yDiff = yDiff;
+		private ErrorBox() {
 			p = new float[4];
 		}
 		
@@ -57,7 +56,7 @@ public class GilbertCurve {
 		this.ditherable = ditherable;
 		this.saliencies = saliencies;
 		boolean hasAlpha = weight < 0;
-		sortedByYDiff = saliencies != null && !hasAlpha && palette.length >= 256;
+		sortedByYDiff = saliencies != null && !hasAlpha && palette.length >= 128;
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
 
 			@Override
@@ -208,7 +207,7 @@ public class GilbertCurve {
 		final float weightRatio = (float) Math.pow(BLOCK_SIZE + 1f, 1f / (DITHER_MAX - 1f));
 		float weight = 1f, sumweight = 0f;
 		for(int c = 0; c < DITHER_MAX; ++c) {
-			errorq.add(new ErrorBox(c * 1.0));
+			errorq.add(new ErrorBox());
 			sumweight += (weights[DITHER_MAX - c - 1] = weight);
 			weight /= weightRatio;
 		}
