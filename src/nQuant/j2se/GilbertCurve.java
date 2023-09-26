@@ -13,7 +13,7 @@ public class GilbertCurve {
 
 	private static final class ErrorBox
 	{
-		private double yDiff;
+		private double yDiff = 1.0;
 		private final float[] p;
 		private ErrorBox() {
 			p = new float[4];
