@@ -57,7 +57,7 @@ public class GilbertCurve {
 		this.ditherable = ditherable;
 		this.saliencies = saliencies;
 		boolean hasAlpha = weight < 0;
-		sortedByYDiff = saliencies != null && !hasAlpha && palette.length >= 128;
+		sortedByYDiff = saliencies != null && !hasAlpha && palette.length >= 256;
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
 
 			@Override
@@ -90,7 +90,7 @@ public class GilbertCurve {
 				error.p[j] += eb.p[j] * weights[i];
 				if(error.p[j] > maxErr)
 					maxErr = error.p[j];
-			}			
+			}
 			i += sortedByYDiff ? -1 : 1;
 		}
 
@@ -113,7 +113,7 @@ public class GilbertCurve {
 			}
 		}
 		else
-			qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);		
+			qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);
 		
 		errorq.poll();
 
@@ -126,22 +126,20 @@ public class GilbertCurve {
 		error.p[2] = b_pix - c2.getBlue();
 		error.p[3] = a_pix - c2.getAlpha();
 
-		boolean denoise = palette.length > 2;		
+		boolean denoise = palette.length > 2;
 		boolean diffuse = BlueNoise.TELL_BLUE_NOISE[bidx & 4095] > thresold;
-		error.yDiff = sortedByYDiff ? CIELABConvertor.Y_Diff(pixel, c2) : 1;		
+		error.yDiff = sortedByYDiff ? CIELABConvertor.Y_Diff(pixel, c2) : 1;
 		boolean illusion = !diffuse && BlueNoise.TELL_BLUE_NOISE[(int) (error.yDiff * 4096) & 4095] > thresold;
 		
-		int errLength = denoise ? error.p.length - 1 : 0;	
+		int errLength = denoise ? error.p.length - 1 : 0;
 		for(int j = 0; j < errLength; ++j) {
 			if(Math.abs(error.p[j]) >= ditherMax) {
 				if (diffuse)
 					error.p[j] = (float) Math.tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
-				else {					
-					if(illusion)
-						error.p[j] = (float) (error.p[j] / maxErr * error.yDiff) * (ditherMax - 1);
-					else
-						error.p[j] /= (float) (1 + Math.sqrt(ditherMax));												
-				}
+				else if(illusion)
+					error.p[j] = (float) (error.p[j] / maxErr * error.yDiff) * (ditherMax - 1);
+				else
+					error.p[j] /= (float) (1 + Math.sqrt(ditherMax));
 			}
 		}
 
