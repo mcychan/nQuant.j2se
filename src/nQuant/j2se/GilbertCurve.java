@@ -13,7 +13,7 @@ public class GilbertCurve {
 
 	private static final class ErrorBox
 	{
-		private double yDiff = 1.0;
+		private double yDiff = -1.0;
 		private final float[] p;
 		private ErrorBox() {
 			p = new float[4];
@@ -91,6 +91,8 @@ public class GilbertCurve {
 					maxErr = error.p[j];
 			}
 			i += sortedByYDiff ? -1 : 1;
+			if(eb.yDiff < 0)
+				eb.yDiff = error.yDiff;
 		}
 
 		int r_pix = (int) Math.min(0xFF, Math.max(error.p[0], 0.0));
