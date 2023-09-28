@@ -76,7 +76,7 @@ public class GilbertCurve {
 		float maxErr = DITHER_MAX - 1;
 		int i = sortedByYDiff ? weights.length - 1 : 0;
 		for(ErrorBox eb : errorq) {
-			if(i < 0 || i > weights.length)
+			if(i < 0 || i >= weights.length)
 				break;
 
 			for(int j = 0; j < eb.p.length; ++j) {
