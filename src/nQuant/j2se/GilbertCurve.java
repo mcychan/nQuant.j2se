@@ -29,7 +29,7 @@ public class GilbertCurve {
 		}		
 	}
 	
-	private byte ditherMax;
+	private byte ditherMax, DITHER_MAX;
 	private float[] weights;
 	private final boolean sortedByYDiff;
 	private final int width;
@@ -41,8 +41,7 @@ public class GilbertCurve {
 	private final float[] saliencies;
 	private final Queue<ErrorBox> errorq;
 	private final int[] lookup;	
-	
-	private final byte DITHER_MAX;	
+
 	private final int thresold;
 	private static final float BLOCK_SIZE = 343f;
 	
@@ -56,7 +55,7 @@ public class GilbertCurve {
 		this.ditherable = ditherable;
 		this.saliencies = saliencies;
 		boolean hasAlpha = weight < 0;
-		sortedByYDiff = !hasAlpha && palette.length >= 256;
+		sortedByYDiff = !hasAlpha && palette.length >= 64;
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
 
 			@Override
@@ -67,6 +66,8 @@ public class GilbertCurve {
 		}) : new ArrayDeque<>();
 		weight = Math.abs(weight);
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (byte) 25 : 16 : 9;
+		if(sortedByYDiff && palette.length < 256)
+			DITHER_MAX = 4;
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
 		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge) : DITHER_MAX;
 		if(palette.length / weight > 5000 && (weight > .045 || (weight > .01 && palette.length <= 64)))
