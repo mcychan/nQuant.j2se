@@ -216,8 +216,7 @@ public class GilbertCurve {
 		float weight = 1f, sumweight = 0f;
 		weights = new float[size];
 		for(int c = 0; c < size; ++c) {
-			if(!sortedByYDiff)
-				errorq.add(new ErrorBox());
+			errorq.add(new ErrorBox());
 			sumweight += (weights[size - c - 1] = weight);
 			weight /= weightRatio;
 		}
