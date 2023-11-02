@@ -1,4 +1,4 @@
-﻿package nQuant.j2se;
+package nQuant.j2se;
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -632,7 +632,7 @@ public class NeuQuantizer {
 		setColorModel(palette);
 		return BitmapUtilities.processImagePixels(qPixels, m_colorModel, width, height);
 	}
-	
+
 	public boolean hasAlpha() {
 		return m_transparentPixelIndex > -1;
 	}
