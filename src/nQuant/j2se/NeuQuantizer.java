@@ -244,7 +244,7 @@ public class NeuQuantizer {
 		double repel_step = exclusion_threshold * (radpower[0] / alpharadbias);
 
 		for (int j = 0; j < netsize; ++j) {
-
+			float repelStep = (float) repel_step;
 			if (diffs[j].alpha < exclusion_threshold
 				&& diffs[j].L < exclusion_threshold
 				&& diffs[j].A < exclusion_threshold
@@ -254,10 +254,10 @@ public class NeuQuantizer {
 				Lab repel_vec = new Lab();
 				repel_vec.alpha = posneg(diffs[j].alpha); repel_vec.L = posneg(diffs[j].L); repel_vec.A = posneg(diffs[j].A); repel_vec.B = posneg(diffs[j].B);
 
-				network[j].alpha += repel_vec.alpha * repel_step;
-				network[j].L += repel_vec.L * repel_step;
-				network[j].A += repel_vec.A * repel_step;
-				network[j].B += repel_vec.B * repel_step;
+				network[j].alpha += repel_vec.alpha * repelStep;
+				network[j].L += repel_vec.L * repelStep;
+				network[j].A += repel_vec.A * repelStep;
+				network[j].B += repel_vec.B * repelStep;
 			}
 		}
 
