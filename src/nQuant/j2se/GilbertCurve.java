@@ -73,13 +73,12 @@ public class GilbertCurve {
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
 		else if(palette.length / weight < 3200 && palette.length > 16 && palette.length < 256)
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
-		System.out.println(log2(palette.length));
 		margin = (int) BitmapUtilities.sqr(log2(palette.length) - 1);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		weights = new float[0];
 		lookup = new int[65536];
 	}
-	
+
 	private int log2(int v) {
 		int p = 0;
 		int v2 = v >> 1;
@@ -87,7 +86,7 @@ public class GilbertCurve {
 			v2 >>= 1;
 			++p;
 		}		
-		return p;		
+		return p;
 	}
 
 	private void ditherPixel(int x, int y){
