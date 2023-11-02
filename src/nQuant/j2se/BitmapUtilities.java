@@ -3,6 +3,7 @@ package nQuant.j2se;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DirectColorModel;
@@ -186,5 +187,58 @@ public class BitmapUtilities {
 
 		highColorImage.getRaster().setDataElements(0, 0, width, height, qPixels);
 		return highColorImage;
+	}
+	
+	public static ColorModel createColorModel(final Color[] palette, int transparentPixelIndex, boolean hasSemiTransparency, boolean hasTransparency)
+	{
+		int nMaxColors = palette.length;
+		
+		if(nMaxColors <= 256) {
+			int[] palettes = new int[nMaxColors];
+			for(int i = 0; i < nMaxColors; ++i) {
+				palettes[i] = palette[i].getRGB();
+				if(palette[0].equals(new Color(palette[i].getRed(), palette[i].getGreen(), palette[i].getBlue(), 0)))
+					palettes[0] = new Color(51, 102, 102, 0).getRGB();
+			}
+			
+			return new IndexColorModel(getBitsPerPixel(nMaxColors),         // bits per pixel
+				nMaxColors,         // size of color component array
+				palettes,   // color map
+				0,         // offset in the map
+				transparentPixelIndex > -1,      // has alpha
+				transparentPixelIndex,         // the pixel value that should be transparent
+				DataBuffer.TYPE_BYTE);
+		}
+		else if (hasSemiTransparency) {
+			final int DCM_4444_RED_MASK = 0x0f00;
+			final int DCM_4444_GRN_MASK = 0x00f0;
+			final int DCM_4444_BLU_MASK = 0x000f;
+			final int DCM_4444_ALP_MASK = 0xf000;
+			return new DirectColorModel(16,
+					DCM_4444_RED_MASK,
+					DCM_4444_GRN_MASK,
+					DCM_4444_BLU_MASK,
+					DCM_4444_ALP_MASK);
+		}
+		else if (transparentPixelIndex > -1) {
+			final int DCM_1555_RED_MASK = 0x7c00;
+			final int DCM_1555_GRN_MASK = 0x03e0;
+			final int DCM_1555_BLU_MASK = 0x001f;
+			final int DCM_1555_ALP_MASK = 0x8000;
+			return new DirectColorModel(16,
+					DCM_1555_RED_MASK,
+					DCM_1555_GRN_MASK,
+					DCM_1555_BLU_MASK,
+					DCM_1555_ALP_MASK);
+		}
+		else {
+			final int DCM_565_RED_MASK = 63488;
+			final int DCM_565_GRN_MASK = 2016;
+			final int DCM_565_BLU_MASK = 31;
+			return new DirectColorModel(16,
+					DCM_565_RED_MASK,
+					DCM_565_GRN_MASK,
+					DCM_565_BLU_MASK);
+		}
 	}
 }
