@@ -69,6 +69,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	
 	public PQCanvas() {
 		tp = makeTexturePaint(16);
+		trustEveryone();
 	}
 	
 	public void set(final List<BufferedImage> imgs) throws Exception {
@@ -83,7 +84,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			List<BufferedImage> images = new ArrayList<>();
 			for(File file : files)
 				images.add(ImageIO.read(file));
-			set(images);			
+			set(images);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -172,10 +173,15 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			public boolean importData(JComponent component, Transferable transferable) {
 				try {
 					for (DataFlavor flavor : transferable.getTransferDataFlavors()) {
+						if (DataFlavor.stringFlavor.equals(flavor)) {
+							URL url = new URL((String) transferable.getTransferData(DataFlavor.stringFlavor));
+							set(url);
+							return true;
+						}
 						if (DataFlavor.imageFlavor.equals(flavor)) {
 							BufferedImage img = (BufferedImage) transferable.getTransferData(DataFlavor.imageFlavor);
 							set(Collections.singletonList(img));
-								return true;
+							return true;
 						}
 						if (flavor.isFlavorJavaFileListType()) {
 							List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
@@ -264,19 +270,19 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	private TexturePaint makeTexturePaint(int size) {
 		BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
 		java.awt.Color[] colors = new java.awt.Color[] {new java.awt.Color(255, 255, 255, 127), new java.awt.Color(192, 192, 192, 127)};
-        
+		
 		int s2 = size / 2;
-		Graphics2D g2d = img.createGraphics();	        
-	    g2d.setColor(colors[0]);
-	    g2d.fillRect(0, 0, s2, s2);
-	    g2d.setColor(colors[1]);
-	    g2d.fillRect(0, s2, s2, s2);
-	    g2d.fillRect(s2, 0, s2, s2);
-	    g2d.setColor(colors[0]);
-	    g2d.fillRect(s2, s2, s2, s2);
-	    g2d.dispose();
-	    Rectangle2D bounds = new Rectangle2D.Float(0, 0, size, size);
-	    return new TexturePaint(img, bounds);
+		Graphics2D g2d = img.createGraphics();
+		g2d.setColor(colors[0]);
+		g2d.fillRect(0, 0, s2, s2);
+		g2d.setColor(colors[1]);
+		g2d.fillRect(0, s2, s2, s2);
+		g2d.fillRect(s2, 0, s2, s2);
+		g2d.setColor(colors[0]);
+		g2d.fillRect(s2, s2, s2, s2);
+		g2d.dispose();
+		Rectangle2D bounds = new Rectangle2D.Float(0, 0, size, size);
+		return new TexturePaint(img, bounds);
 	}
 
 	@Override
@@ -344,26 +350,24 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			scrollPane.getParent().dispatchEvent(e);
 		}
 	}
-	
+
 	private static void trustEveryone() { 
-	    try { 
-	            HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier(){ 
-	                    public boolean verify(String hostname, SSLSession session) { 
-	                            return true; 
-	                    }}); 
-	            SSLContext context = SSLContext.getInstance("TLS"); 
-	            context.init(null, new X509TrustManager[]{new X509TrustManager(){ 
-	                    public void checkClientTrusted(X509Certificate[] chain, 
-	                                    String authType) throws CertificateException {} 
-	                    public void checkServerTrusted(X509Certificate[] chain, 
-	                                    String authType) throws CertificateException {} 
-	                    public X509Certificate[] getAcceptedIssuers() { 
-	                            return new X509Certificate[0]; 
-	                    }}}, new SecureRandom()); 
-	            HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory()); 
-	    } catch (Exception e) { // should never happen 
-	            e.printStackTrace(); 
-	    } 
+		try { 
+			HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+				public boolean verify(String hostname, SSLSession session) {
+					return true; 
+				}}); 
+			SSLContext context = SSLContext.getInstance("TLS"); 
+			context.init(null, new X509TrustManager[]{new X509TrustManager() {
+				public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+				public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+				public X509Certificate[] getAcceptedIssuers() { 
+					return new X509Certificate[0];
+				}}}, new SecureRandom()); 
+			HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
+		} catch (Exception e) { // should never happen 
+			e.printStackTrace(); 
+		}
 	}
 
 	public static void main(String [] args) throws java.io.IOException {
@@ -394,10 +398,8 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 						File file = new File((String) data);
 						if(file.exists())
 							canvas.set(new File[] {file});
-						else {
-							trustEveryone();
+						else
 							canvas.set(new URL((String) data));
-						}
 					}
 					else if(data instanceof BufferedImage)
 						canvas.set(Collections.singletonList((BufferedImage) data));
