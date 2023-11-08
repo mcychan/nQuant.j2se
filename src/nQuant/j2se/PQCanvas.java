@@ -11,6 +11,7 @@ import java.awt.TexturePaint;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -24,11 +25,19 @@ import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URL;
+import java.security.SecureRandom;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.X509TrustManager;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -41,6 +50,7 @@ import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.TransferHandler;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -150,18 +160,41 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 		});
 	}
 
-	private void addFileDrop() {
-		new FileDrop(this, /*dragBorder,*/ new FileDrop.Listener() {
-			public void filesDropped(java.io.File[] files) {
+	@Override
+	public TransferHandler getTransferHandler() {
+		return new TransferHandler() {
+			@Override
+			public boolean canImport(JComponent component, DataFlavor[] flavors) {
+				return true;
+			}
+			
+			@Override
+			public boolean importData(JComponent component, Transferable transferable) {
 				try {
-					if (files.length > 0)
-						set(files);
+					for (DataFlavor flavor : transferable.getTransferDataFlavors()) {
+						if (DataFlavor.imageFlavor.equals(flavor)) {
+							BufferedImage img = (BufferedImage) transferable.getTransferData(DataFlavor.imageFlavor);
+							set(Collections.singletonList(img));
+								return true;
+						}
+						if (flavor.isFlavorJavaFileListType()) {
+							List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+							if (files.size() > 0)
+								set(files.toArray(new File[0]));
+						}
+					}
 				} catch (Exception ex) {
 					java.util.logging.Logger.getLogger(PQCanvas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 					javax.swing.JOptionPane.showMessageDialog(PQCanvas.this, ex.getMessage(), "File not found", javax.swing.JOptionPane.ERROR_MESSAGE);
 				}
-			}   // end filesDropped
-		}); // end FileDrop.Listener
+				return false;
+			}
+			
+			@Override
+			public int getSourceActions(JComponent component) {
+				return COPY;
+			}
+		};
 	}
 
 	private class PnnWorker extends SwingWorker<BufferedImage, String> { 
@@ -311,6 +344,27 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			scrollPane.getParent().dispatchEvent(e);
 		}
 	}
+	
+	private static void trustEveryone() { 
+	    try { 
+	            HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier(){ 
+	                    public boolean verify(String hostname, SSLSession session) { 
+	                            return true; 
+	                    }}); 
+	            SSLContext context = SSLContext.getInstance("TLS"); 
+	            context.init(null, new X509TrustManager[]{new X509TrustManager(){ 
+	                    public void checkClientTrusted(X509Certificate[] chain, 
+	                                    String authType) throws CertificateException {} 
+	                    public void checkServerTrusted(X509Certificate[] chain, 
+	                                    String authType) throws CertificateException {} 
+	                    public X509Certificate[] getAcceptedIssuers() { 
+	                            return new X509Certificate[0]; 
+	                    }}}, new SecureRandom()); 
+	            HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory()); 
+	    } catch (Exception e) { // should never happen 
+	            e.printStackTrace(); 
+	    } 
+	}
 
 	public static void main(String [] args) throws java.io.IOException {
 		System.setProperty("java.net.useSystemProxies", "true");
@@ -340,13 +394,15 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 						File file = new File((String) data);
 						if(file.exists())
 							canvas.set(new File[] {file});
-						else
+						else {
+							trustEveryone();
 							canvas.set(new URL((String) data));
+						}
 					}
 					else if(data instanceof BufferedImage)
 						canvas.set(Collections.singletonList((BufferedImage) data));
 					else if(data instanceof List)
-						canvas.set(((List<File>) data).stream().toArray(File[]::new));
+						canvas.set(((List<File>) data).toArray(new File[0]));
 				} catch (Exception ex) {
 					java.util.logging.Logger.getLogger(PQCanvas.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
 					javax.swing.JOptionPane.showMessageDialog(canvas, ex.getMessage(), "File not found", javax.swing.JOptionPane.ERROR_MESSAGE);
@@ -354,7 +410,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			}
 		});
 		canvas.addClick();
-		canvas.addFileDrop();
+		canvas.setTransferHandler(canvas.getTransferHandler());
 		
 		scrollPane.addMouseWheelListener(canvas);
 		scrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
