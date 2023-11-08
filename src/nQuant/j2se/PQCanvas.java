@@ -242,7 +242,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				System.out.println("\n" + (System.currentTimeMillis() - startTime) / 1000.0 + " seconds");
 			} catch (Exception e) {
 				e.printStackTrace();
-			} finally {	    	
+			} finally {
 				final JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(getParent());
 				topFrame.setVisible(false);
 				java.awt.Insets insets = topFrame.getInsets();
@@ -255,8 +255,8 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				else {
 					topFrame.setSize((int) (image.getWidth() + insets.right + 1.5 * insets.left), (int) (image.getHeight() + insets.top + 1.5 * insets.bottom));
 					setZoom(Math.min(topFrame.getWidth() / image.getWidth(), topFrame.getHeight() / image.getHeight()));
-				}				
-				
+				}
+
 				final JScrollPane scrollPane = (JScrollPane) SwingUtilities.getAncestorOfClass(JScrollPane.class, getParent());
 				scrollPane.getHorizontalScrollBar().setValue(0);
 				scrollPane.getVerticalScrollBar().setValue(0);
@@ -359,9 +359,15 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				}}); 
 			SSLContext context = SSLContext.getInstance("TLS"); 
 			context.init(null, new X509TrustManager[]{new X509TrustManager() {
-				public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
-				public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
-				public X509Certificate[] getAcceptedIssuers() { 
+				public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+					if(chain.length < 1)
+						throw new CertificateException();
+				}
+				public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+					if(chain.length < 1)
+						throw new CertificateException();
+				}
+				public X509Certificate[] getAcceptedIssuers() {
 					return new X509Certificate[0];
 				}}}, new SecureRandom()); 
 			HttpsURLConnection.setDefaultSSLSocketFactory(context.getSocketFactory());
