@@ -42,7 +42,7 @@ public class GilbertCurve {
 	private final Queue<ErrorBox> errorq;
 	private final int[] lookup;	
 
-	private final int thresold;
+	private final int margin, thresold;
 	private static final float BLOCK_SIZE = 343f;
 	
 	private GilbertCurve(final int width, final int height, final int[] pixels, final Color[] palette, final short[] qPixels, final Ditherable ditherable, final float[] saliencies, double weight)
@@ -56,6 +56,7 @@ public class GilbertCurve {
 		this.saliencies = saliencies;
 		boolean hasAlpha = weight < 0;
 		weight = Math.abs(weight);
+		margin = weight < .003 ? 12 : 6;
 		sortedByYDiff = !hasAlpha && palette.length >= 128 && weight >= .04;
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
 
@@ -108,8 +109,8 @@ public class GilbertCurve {
 			if (lookup[offset] == 0)
 				lookup[offset] = ditherable.nearestColorIndex(palette, c2, bidx) + 1;
 			qPixels[bidx] = (short) (lookup[offset] - 1);
-			
-			if(saliencies != null && CIELABConvertor.Y_Diff(pixel, c2) > palette.length - 7) {
+	
+			if(saliencies != null && CIELABConvertor.Y_Diff(pixel, c2) > palette.length - margin) {
 				final float strength = 1 / 3f;
 				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], 1 / saliencies[bidx], strength, x, y);
 				qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);
