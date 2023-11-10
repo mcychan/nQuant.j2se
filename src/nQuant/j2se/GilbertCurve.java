@@ -57,7 +57,7 @@ public class GilbertCurve {
 		boolean hasAlpha = weight < 0;
 		weight = Math.abs(weight);
 		margin = weight < .003 ? 12 : 6;
-		sortedByYDiff = !hasAlpha && palette.length >= 128 && weight >= .04;
+		sortedByYDiff = palette.length >= 128 && (hasAlpha ? weight < .18 : weight >= .04);
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
 
 			@Override
