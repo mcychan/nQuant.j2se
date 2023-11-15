@@ -56,7 +56,7 @@ public class GilbertCurve {
 		this.saliencies = saliencies;
 		boolean hasAlpha = weight < 0;
 		weight = Math.abs(weight);
-		margin = weight < .003 ? 12 : 6;
+		margin = weight < .0025 ? 12 : 6;
 		sortedByYDiff = palette.length >= 128 && (hasAlpha ? weight < .18 : weight >= .04);
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
 
@@ -70,9 +70,10 @@ public class GilbertCurve {
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (byte) 25 : 16 : 9;
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
 		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge) : DITHER_MAX;
+		final int density = palette.length > 16 ? 3200 : 1500;
 		if(palette.length / weight > 5000 && (weight > .045 || (weight > .01 && palette.length <= 64)))
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
-		else if(palette.length / weight < 3200 && palette.length >= 16 && palette.length < 256)
+		else if(palette.length / weight < density && palette.length >= 16 && palette.length < 256)
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		weights = new float[0];
