@@ -90,8 +90,9 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 	
 	private void calculateFitness() {
 		final String ratioKey = getRatioKey();
-		if(_fitnessMap.containsKey(ratioKey)) {
-			_objectives = _fitnessMap.get(ratioKey);
+		final double[] objectives = _fitnessMap.get(ratioKey);
+		if(objectives != null) {
+			_objectives = objectives;
 			_fitness = -1 * Arrays.stream(_objectives).sum();
 			return;
 		}	
