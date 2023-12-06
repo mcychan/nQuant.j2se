@@ -156,7 +156,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		double theta = Math.PI * randrange(minRatio, maxRatio) / Math.exp(delta);
 		double result = u * Math.sin(theta) + v * Math.cos(theta);
 		if(result <= minRatio || result >= maxRatio)
-			result = rotateLeft(u, v, delta + .5);
+			result = boxMuller(result, v);
 		return result;
 	}
 	
@@ -164,7 +164,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		double theta = Math.PI * randrange(minRatio, maxRatio) / Math.exp(delta);
 		double result = u * Math.cos(theta) - v * Math.sin(theta);
 		if(result <= minRatio || result >= maxRatio)
-			result = rotateRight(u, v, delta + .5);
+			result = boxMuller(result, v);
 		return result;
 	}
 
@@ -179,6 +179,10 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		child.setRatio(ratioX, ratioY);
 		child.calculateFitness();
 		return child;
+	}
+	
+	private double boxMuller(double value, double r1) {
+		return Math.sqrt(-2 * Math.log(value)) * Math.cos(2 * Math.PI * r1);
 	}
 	
 	private double boxMuller(double value) {
