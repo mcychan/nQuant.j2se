@@ -67,7 +67,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		sb.append(";").append((int) (ratioY * _dp * 100));
 		return sb.toString();
 	}
-
+	
 	private void calculateError(double[] errors) {
 		double maxError = maxRatio < .1 ? .5 : .0625;
 		if(m_pq.hasAlpha())
@@ -87,7 +87,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		_objectives = errors;
 		_fitness = fitness;
 	}
-
+	
 	private void calculateFitness() {
 		final String ratioKey = getRatioKey();
 		final double[] objectives = _fitnessMap.get(ratioKey);
@@ -111,7 +111,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 				Lab lab1 = m_pq.getLab(cPixels[i].getRGB());
 				short qPixelIndex = m_pq.nearestColorIndex(palette, c, i);
 				Lab lab2 = m_pq.getLab(palette[qPixelIndex].getRGB());
-
+							
 				if(m_pq.hasAlpha()) {
 					errors[0] += BitmapUtilities.sqr(lab2.L - lab1.L);
 					errors[1] += BitmapUtilities.sqr(lab2.A - lab1.A);
@@ -151,16 +151,12 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 	public float getFitness() {
 		return (float) _fitness;
 	}
-
-	private double boxMuller(double value, double r1) {
-		return Math.sqrt(-2 * Math.log(value)) * Math.cos(2 * Math.PI * r1);
-	}
-
+	
 	private double rotateLeft(double u, double v, double delta) {
 		double theta = Math.PI * randrange(minRatio, maxRatio) / Math.exp(delta);
 		double result = u * Math.sin(theta) + v * Math.cos(theta);
 		if(result <= minRatio || result >= maxRatio)
-			result = boxMuller(result, v);
+			result = rotateLeft(u, v, delta + .5);
 		return result;
 	}
 	
@@ -168,12 +164,12 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		double theta = Math.PI * randrange(minRatio, maxRatio) / Math.exp(delta);
 		double result = u * Math.cos(theta) - v * Math.sin(theta);
 		if(result <= minRatio || result >= maxRatio)
-			result = boxMuller(result, v);
+			result = rotateRight(u, v, delta + .5);
 		return result;
 	}
 
 	@Override
-	public PnnLABGAQuantizer crossover(PnnLABGAQuantizer mother, int numberOfCrossoverPoints, float crossoverProbability) {
+	public PnnLABGAQuantizer crossover(PnnLABGAQuantizer mother, int numberOfCrossoverPoints, float crossoverProbability) {		
 		PnnLABGAQuantizer child = makeNewFromPrototype();
 		if (_random.nextInt(100) <= crossoverProbability)
 			return child;
