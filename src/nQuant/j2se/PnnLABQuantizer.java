@@ -128,7 +128,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	protected QuanFn getQuanFn(int nMaxColors, short quan_rt) {
 		if (quan_rt > 0) {
 			if (quan_rt > 1)
-				return cnt -> (int) Math.pow(cnt, 0.75);
+				return cnt -> (float) Math.pow(cnt, 0.75);
 			if (nMaxColors < 64)
 				return cnt -> (int) Math.sqrt(cnt);			
 
@@ -187,9 +187,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			quan_rt = -1;
 		
 		weight = Math.min(0.9, nMaxColors * 1.0 / maxbins);
-		if (weight > .0015 && weight < .002)
+		if (weight > .0015 && weight < .0022)
 			quan_rt = 2;
-		if (weight < .04 && PG >= coeffs[0][1]) {
+		if (weight < .04 && PG < 1 && PG >= coeffs[0][1]) {
 			double delta = Math.exp(1.75) * weight;
 			PG -= delta;
 			PB += delta;
