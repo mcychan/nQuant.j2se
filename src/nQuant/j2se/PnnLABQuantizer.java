@@ -187,7 +187,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			quan_rt = -1;
 		
 		weight = Math.min(0.9, nMaxColors * 1.0 / maxbins);
-		if (weight < .001 || (weight > .0015 && weight < .0022))
+		if (nMaxColors < 16 || (weight > .0015 && weight < .0022))
 			quan_rt = 2;
 		if (weight < .04 && PG < 1 && PG >= coeffs[0][1]) {
 			double delta = Math.exp(1.75) * weight;
@@ -195,6 +195,11 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			PB += delta;
 			if (nMaxColors >= 64)
 				quan_rt = 0;
+		}
+		if (nMaxColors < 64) {
+			double weightB = nMaxColors / 8000.0;
+			if (Math.abs(weightB - weight) < .001)
+				quan_rt = 2;
 		}
 		
 		if(pixelMap.size() <= nMaxColors) {
