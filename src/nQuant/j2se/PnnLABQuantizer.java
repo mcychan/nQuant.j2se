@@ -241,7 +241,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					ratio = Math.min(1.0, 1.0 - weight);
 				else if(proportional > .04)
 					ratio = Math.min(1.0, weight * Math.exp(1.56));
-				else if(proportional > .033)
+				else if(proportional > .025 && weight < .002)
 					ratio = Math.min(1.0, proportional + weight * Math.exp(3.66));
 				else
 					ratio = Math.min(1.0, proportional + weight * Math.exp(1.718));
