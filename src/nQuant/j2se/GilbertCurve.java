@@ -81,7 +81,7 @@ public class GilbertCurve {
 	}
 
 	private void ditherPixel(int x, int y){
-		final int bidx = x + y * width;
+		final int bidx = x + y * width;	
 		Color pixel = new Color(pixels[bidx], true);
 		ErrorBox error = new ErrorBox(pixel);
 		
@@ -110,8 +110,9 @@ public class GilbertCurve {
 			if (lookup[offset] == 0)
 				lookup[offset] = ditherable.nearestColorIndex(palette, c2, bidx) + 1;
 			qPixels[bidx] = (short) (lookup[offset] - 1);
-	
-			if(saliencies != null && CIELABConvertor.Y_Diff(pixel, c2) > Math.max(1, palette.length - margin)) {
+
+			int acceptedDiff = Math.max(1, palette.length - margin);
+			if(saliencies != null && (CIELABConvertor.Y_Diff(pixel, c2) > acceptedDiff || CIELABConvertor.U_Diff(pixel, c2) > (2 * acceptedDiff))) {
 				final float strength = 1 / 3f;
 				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], 1 / saliencies[bidx], strength, x, y);
 				qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);
