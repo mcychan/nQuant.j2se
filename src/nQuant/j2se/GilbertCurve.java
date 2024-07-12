@@ -69,7 +69,8 @@ public class GilbertCurve {
 		
 		DITHER_MAX = weight < .01 ? (weight > .0025) ? (byte) 25 : 16 : 9;
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
-		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge) : DITHER_MAX;
+		double deviation = weight > .002 ? -.75 : 1;
+		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge * deviation) : DITHER_MAX;
 		final int density = palette.length > 16 ? 3200 : 1500;
 		if(palette.length / weight > 5000 && (weight > .045 || (weight > .01 && palette.length <= 64)))
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
