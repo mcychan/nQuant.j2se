@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.lang.model.type.UnknownTypeException;
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -82,8 +83,12 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	public void set(final File[] files) {
 		try {
 			List<BufferedImage> images = new ArrayList<>();
-			for(File file : files)
-				images.add(ImageIO.read(file));
+			for(File file : files) {
+				BufferedImage img = ImageIO.read(file);
+				if(img == null)
+					throw new UnsupportedOperationException(file.getAbsolutePath());
+				images.add(img);
+			}
 			set(images);
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -92,7 +97,10 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 	
 	public void set(final URL url) {
 		try {
-			set(Collections.singletonList(ImageIO.read(url)));
+			BufferedImage img = ImageIO.read(url);
+			if(img == null)
+				throw new UnsupportedOperationException(url.getPath());
+			set(Collections.singletonList(img));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -303,7 +311,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				g2d.fill(new Rectangle(getSize()));
 			}
 
-			g2d.scale(zoom, zoom);  
+			g2d.scale(zoom, zoom);
 			g2d.drawImage(image, null, 0, 0);
 		}
 		else {
@@ -323,13 +331,13 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			double amount = Math.pow(1.1, e.getScrollAmount());
 			if (e.getWheelRotation() > 0) {
 				//zoom out (amount)
-				setZoom(oldZoom / amount);                
+				setZoom(oldZoom / amount);
 			} else {
 				//zoom in (amount)
 				setZoom(oldZoom * amount);
 			}
 			
-			if(Math.abs(oldZoom - getZoom()) > 0.05) {         	
+			if(Math.abs(oldZoom - getZoom()) > 0.05) {
 				scrollPane.getViewport().setSize((int)(image.getWidth() * getZoom()), (int)(image.getHeight() * getZoom()));
 				final JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(scrollPane);
 				java.awt.Insets insets = topFrame.getInsets();
@@ -346,7 +354,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			}
 		}
 		else {
-			// if ctrl isn't down then propagate event to parent            
+			// if ctrl isn't down then propagate event to parent
 			scrollPane.getParent().dispatchEvent(e);
 		}
 	}
@@ -444,7 +452,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 							}
 						}
 						else
-							ImageIO.write(canvas.image, fileType, new java.io.File(tempFilePath));							
+							ImageIO.write(canvas.image, fileType, new java.io.File(tempFilePath));
 						System.out.println(tempFilePath);
 					}
 				} catch(Exception ex) {
