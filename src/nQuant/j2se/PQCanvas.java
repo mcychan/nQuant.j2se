@@ -179,21 +179,23 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			@Override
 			public boolean importData(JComponent component, Transferable transferable) {
 				try {
-					for (DataFlavor flavor : transferable.getTransferDataFlavors()) {
-						if (DataFlavor.stringFlavor.equals(flavor)) {
-							URL url = new URL((String) transferable.getTransferData(DataFlavor.stringFlavor));
-							set(url);
-							return true;
-						}
+					for (DataFlavor flavor : transferable.getTransferDataFlavors()) {						
 						if (DataFlavor.imageFlavor.equals(flavor)) {
 							BufferedImage img = (BufferedImage) transferable.getTransferData(DataFlavor.imageFlavor);
 							set(Collections.singletonList(img));
 							return true;
 						}
-						if (flavor.isFlavorJavaFileListType()) {
-							List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-							if (files.size() > 0)
+						List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+						if (files != null) {
+							if (files.size() > 0) {
 								set(files.toArray(new File[0]));
+								return true;
+							}
+						}
+						if (DataFlavor.stringFlavor.equals(flavor)) {
+							URL url = new URL((String) transferable.getTransferData(DataFlavor.stringFlavor));
+							set(url);
+							return true;
 						}
 					}
 				} catch (Exception ex) {
