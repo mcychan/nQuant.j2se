@@ -528,7 +528,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	protected short[] dither(Color[] palette, int width, int height, boolean dither)
 	{
 		Ditherable ditherable = getDitherFn();
-		if(hasSemiTransparency)
+		if(hasSemiTransparency || isGA)
 			weight *= -1;
 		short[] qPixels = GilbertCurve.dither(width, height, pixels, palette, ditherable, saliencies, weight);
 		

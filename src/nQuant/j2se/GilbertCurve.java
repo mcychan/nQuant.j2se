@@ -1,6 +1,6 @@
 package nQuant.j2se;
 /* Generalized Hilbert ("gilbert") space-filling curve for rectangular domains of arbitrary (non-power of two) sizes.
-Copyright (c) 2021 - 2023 Miller Cy Chan
+Copyright (c) 2021 - 2024 Miller Cy Chan
 * A general rectangle with a known orientation is split into three regions ("up", "right", "down"), for which the function calls itself recursively, until a trivial path can be produced. */
 
 import java.awt.Color;
@@ -55,9 +55,9 @@ public class GilbertCurve {
 		this.ditherable = ditherable;
 		this.saliencies = saliencies;
 		boolean hasAlpha = weight < 0;
+		sortedByYDiff = palette.length >= 128 && (hasAlpha ? weight < .18 : weight >= .052);
 		weight = Math.abs(weight);
 		margin = weight < .0025 ? 12 : 6;
-		sortedByYDiff = palette.length >= 128 && (hasAlpha ? weight < .18 : weight >= .052);
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
 
 			@Override
