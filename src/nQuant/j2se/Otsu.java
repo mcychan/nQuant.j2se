@@ -1,9 +1,14 @@
 package nQuant.j2se;
+/* Otsu's Image Segmentation Method
+  Copyright (C) 2009 Tolga Birdal
+  Copyright (c) 2018-2024 Miller Cy Chan
+*/
 
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,10 +40,10 @@ public class Otsu
 		m_colorModel = new IndexColorModel(BitmapUtilities.getBitsPerPixel(nMaxColors),         // bits per pixel
 			nMaxColors,         // size of color component array
 			palettes,   // color map
-            0,         // offset in the map
-            m_transparentPixelIndex > -1,      // has alpha
-            m_transparentPixelIndex,         // the pixel value that should be transparent
-            DataBuffer.TYPE_BYTE);			
+			0,         // offset in the map
+			m_transparentPixelIndex > -1,      // has alpha
+			m_transparentPixelIndex,         // the pixel value that should be transparent
+			DataBuffer.TYPE_BYTE);
 	}
 
 	// function is used to compute the q values in the equation
@@ -115,7 +120,7 @@ public class Otsu
 		return findMax(vet, 256);
 	}	
 
-	private void threshold(int[] pixels, short thresh, float weight)
+	private void threshold(final int[] pixels, int[] dest, short thresh, float weight)
 	{
 		int maxThresh = (int) thresh;
 		if (thresh >= 200)
@@ -125,20 +130,162 @@ public class Otsu
 			thresh = 200;
 		}
 
-		int minThresh = (int)(thresh * weight);		
+		int minThresh = (int)(thresh * (m_transparentPixelIndex >= 0 ? .9f : weight));
+		final double shadow = m_transparentPixelIndex >= 0 ? 3.5 : 3;
 		for (int i = 0; i < pixels.length; ++i)
 		{
 			Color c = new Color(pixels[i], true);
-			if (c.getRed() + c.getGreen() + c.getBlue() > maxThresh * 3)
-				pixels[i] = new Color(BYTE_MAX, BYTE_MAX, BYTE_MAX, c.getAlpha()).getRGB();
-			else if (hasAlpha() || c.getRed() + c.getGreen() + c.getBlue() < minThresh * 3)
-				pixels[i] = new Color(0, 0, 0, c.getAlpha()).getRGB();
+			if (c.getAlpha() < alphaThreshold && c.getRed() + c.getGreen() + c.getBlue() > maxThresh * 3)
+				dest[i] = new Color(BYTE_MAX, BYTE_MAX, BYTE_MAX, c.getAlpha()).getRGB();
+			else if (c.getRed() + c.getGreen() + c.getBlue() < minThresh * shadow)
+				dest[i] = new Color(0, 0, 0, c.getAlpha()).getRGB();
 		}
 	}
 	
-	private void threshold(int[] pixels, short thresh)
+	private int[] cannyFilter(final int width, final int[] pixelsGray, double lowerThreshold, double higherThreshold) {
+		final int height = pixelsGray.length / width;
+		final int area = width * height;
+
+		int[] pixelsCanny = new int[area];
+		Arrays.fill(pixelsCanny, Color.WHITE.getRGB());
+
+		int[][] gx = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+		int[][] gy = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+		double[] G = new double[area];
+		int[] theta = new int[area];
+		double largestG = 0.0;
+
+		// perform canny edge detection on everything but the edges
+		for (int i = 1; i < height - 1; ++i) {
+			for (int j = 1; j < width - 1; ++j) {
+				// find gx and gy for each pixel
+				double gxValue = 0.0;
+				double gyValue = 0.0;
+				for (int x = -1; x <= 1; ++x) {
+					for (int y = -1; y <= 1; ++y) {
+						final Color c = new Color(pixelsGray[(i + x) * width +  j + y], true);
+						gxValue += gx[1 - x][1 - y] * c.getGreen();
+						gyValue += gy[1 - x][1 - y] * c.getGreen();
+					}
+				}
+
+				final int center = i * width + j;
+				// calculate G and theta
+				G[center] = Math.sqrt(Math.pow(gxValue, 2) + Math.pow(gyValue, 2));
+				double atanResult = Math.atan2(gyValue, gxValue) * 180.0 / Math.PI;
+				theta[center] = (int)(180.0 + atanResult);
+
+				if (G[center] > largestG)
+					largestG = G[center];
+
+				// setting the edges
+				if (i == 1) {
+					G[center - 1] = G[center];
+					theta[center - 1] = theta[center];
+				}
+				else if (j == 1) {
+					G[center - width] = G[center];
+					theta[center - width] = theta[center];
+				}
+				else if (i == height - 1) {
+					G[center + 1] = G[center];
+					theta[center + 1] = theta[center];
+				}
+				else if (j == width - 1) {
+					G[center + width] = G[center];
+					theta[center + width] = theta[center];
+				}
+
+				// setting the corners
+				if (i == 1 && j == 1) {
+					G[center - width - 1] = G[center];
+					theta[center - width - 1] = theta[center];
+				}
+				else if (i == 1 && j == width - 1) {
+					G[center - width + 1] = G[center];
+					theta[center - width + 1] = theta[center];
+				}
+				else if (i == height - 1 && j == 1) {
+					G[center + width - 1] = G[center];
+					theta[center + width - 1] = theta[center];
+				}
+				else if (i == height - 1 && j == width - 1) {
+					G[center + width + 1] = G[center];
+					theta[center + width + 1] = theta[center];
+				}
+
+				// to the nearest 45 degrees
+				theta[center] = (int) Math.rint(theta[center] / 45) * 45;
+			}
+		}
+
+		largestG *= .5;
+
+		// non-maximum suppression
+		for (int i = 1; i < height - 1; ++i) {
+			for (int j = 1; j < width - 1; ++j) {
+				final int center = i * width + j;
+				if (theta[center] == 0 || theta[center] == 180) {
+					if (G[center] < G[center - 1] || G[center] < G[center + 1])
+						G[center] = 0;
+				}
+				else if (theta[center] == 45 || theta[center] == 225) {
+					if (G[center] < G[center + width + 1] || G[center] < G[center - width - 1])
+						G[center] = 0;
+				}
+				else if (theta[center] == 90 || theta[center] == 270) {
+					if (G[center] < G[center + width] || G[center] < G[center - width])
+						G[center] = 0;
+				}
+				else {
+					if (G[center] < G[center + width - 1] || G[center] < G[center - width + 1])
+						G[center] = 0;
+				}
+
+				int grey = CIELABConvertor.clamp(BYTE_MAX - G[center] * (255.0 / largestG), 0, BYTE_MAX);
+				Color c = new Color(pixelsGray[center], true);
+				pixelsCanny[center] = new Color(grey, grey, grey, c.getAlpha()).getRGB();
+			}
+		}
+
+		int k = 0;
+		double minThreshold = lowerThreshold * largestG, maxThreshold = higherThreshold * largestG;
+		do {
+			for (int i = 1; i < height - 1; ++i) {
+				for (int j = 1; j < width - 1; ++j) {
+					int center = i * width + j;
+					if (G[center] < minThreshold)
+						G[center] = 0;
+					else if (G[center] >= maxThreshold)
+						continue;
+					else if (G[center] < maxThreshold) {
+						G[center] = 0;
+						for (int x = -1; x <= 1; ++x) {
+							for (int y = -1; y <= 1; y++) {
+								if (x == 0 && y == 0)
+									continue;
+								if (G[center + x * width + y] >= maxThreshold) {
+									G[center] = higherThreshold * largestG;
+									k = 0;
+									x = 2;
+									break;
+								}
+							}
+						}
+					}
+					
+					int grey = CIELABConvertor.clamp(BYTE_MAX - G[center] * 255.0 / largestG, 0, BYTE_MAX);
+					Color c = new Color(pixelsGray[center], true);
+					pixelsCanny[center] = new Color(grey, grey, grey, c.getAlpha()).getRGB();
+				}
+			}
+		} while (k++ < 100);
+		return pixelsCanny;
+	}
+	
+	private void threshold(int[] pixels, int[] dest, short thresh)
 	{
-		threshold(pixels, thresh, 1.0f);
+		threshold(pixels, dest, thresh, 1.0f);
 	}
 
 	protected short nearestColorIndex(Color[] palette, final Color c)
@@ -149,7 +296,7 @@ public class Otsu
 
 		short k = 0;
 		if (c.getAlpha() <= alphaThreshold)
-            return k;
+			return k;
 
 		double mindist = 1e100;
 		for (int i = 0; i < palette.length; ++i)
@@ -184,14 +331,14 @@ public class Otsu
 			int pixel = pixels[i];
 			int alfa = (pixel >> 24) & 0xff;
 			pixels[i] = new Color(pixel, true).getRGB();
-			if (alfa < 0xE0) {				
+			if (alfa < 0xE0) {
 				if (alfa == 0) {
 					m_transparentPixelIndex = i;
 					pixels[i] = m_transparentColor.getRGB();
 				}
 				else if(alfa > alphaThreshold)
 					hasSemiTransparency = true;
-			}			
+			}
 		}
 	}
 
@@ -207,7 +354,7 @@ public class Otsu
 			int pixel = pixels[i];
 			int alfa = (pixel >> 24) & 0xff;
 			int green = (pixel >> 8) & 0xff;
-			if (alfa < 0xE0) {				
+			if (alfa < 0xE0) {
 				if (alfa == 0) {
 					m_transparentPixelIndex = i;
 					m_transparentColor = new Color(pixels[i], true);
@@ -241,7 +388,7 @@ public class Otsu
 		return grayScaleImage;
 	}	
 	
-	private void convertToGrayScale(int[] pixels)
+	private void convertToGrayScale(int[] pixels, int[] dest)
 	{
 		float min1 = BYTE_MAX;
 		float max1 = .0f;
@@ -252,7 +399,7 @@ public class Otsu
 			if (alfa <= alphaThreshold)
 				continue;
 			
-			int green = (pixel >> 8) & 0xff;			
+			int green = (pixel >> 8) & 0xff;
 
 			if (min1 > green)
 				min1 = green;
@@ -299,12 +446,15 @@ public class Otsu
 
 		int[] pixels = srcimg.getRGB(0, 0, bitmapWidth, bitmapHeight, null, 0, bitmapWidth);
 		grabPixels(pixels);
-		
+
+		int[] pixelsGray = pixels.clone();
 		if(!isGrayscale)
-			convertToGrayScale(pixels);
+			convertToGrayScale(pixels, pixelsGray);
 
 		short otsuThreshold = getOtsuThreshold(pixels);
-		threshold(pixels, otsuThreshold);
+		double lowerThreshold = 0.03, higherThreshold = 0.1;
+		pixels = cannyFilter(bitmapWidth, pixelsGray, lowerThreshold, higherThreshold);
+		threshold(pixelsGray, pixels, otsuThreshold);
 
 		Color[] palette = new Color[2];
 		if (hasAlpha())
@@ -316,7 +466,7 @@ public class Otsu
 			palette[0] = Color.BLACK;
 			palette[1] = Color.WHITE;
 		}
-		setColorModel(palette);	
+		setColorModel(palette);
 
 		short[] qPixels = GilbertCurve.dither(bitmapWidth, bitmapHeight, pixels, palette, getDitherFn(), null, 1);
 		if (hasAlpha()) {
@@ -329,12 +479,12 @@ public class Otsu
 		nearestMap.clear();
 		return BitmapUtilities.toIndexedBufferedImage(qPixels, m_colorModel, bitmapWidth, bitmapHeight);
 	}
-	
+
 	public BufferedImage convertGrayScaleToBinary(BufferedImage srcimg)
 	{
 		return convertGrayScaleToBinary(srcimg, false);
 	}
-	
+
 	public boolean hasAlpha() {
 		return m_transparentPixelIndex > -1;
 	}
