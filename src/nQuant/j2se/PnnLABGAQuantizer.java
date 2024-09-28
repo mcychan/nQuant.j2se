@@ -155,7 +155,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 	private double rotateLeft(double u, double v, double delta) {
 		double theta = Math.PI * randrange(minRatio, maxRatio) / Math.exp(delta);
 		double result = u * Math.sin(theta) + v * Math.cos(theta);
-		if(result <= minRatio || result >= maxRatio)
+		if (delta < 50 && (result <= minRatio || result >= maxRatio))
 			result = rotateLeft(u, v, delta + .5);
 		return result;
 	}
@@ -163,7 +163,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 	private double rotateRight(double u, double v, double delta) {
 		double theta = Math.PI * randrange(minRatio, maxRatio) / Math.exp(delta);
 		double result = u * Math.cos(theta) - v * Math.sin(theta);
-		if(result <= minRatio || result >= maxRatio)
+		if (delta < 50 && (result <= minRatio || result >= maxRatio))
 			result = rotateRight(u, v, delta + .5);
 		return result;
 	}
