@@ -9,5 +9,5 @@ Faster approaches have been proposed by Kurita using a heap structure, and by Fr
 The Java version of the code, together with a test driver, using simple drag and drop method to convert the dropped image to 256 colors directly.
 The main method is located at PQCanvas.java. It will open a JFrame dialog.
 
-Original photo:<br><img src="https://i.stack.imgur.com/SE5x9.png" /><br>
+Original photo:<br><img src="https://mcychan.github.io/PnnQuant.js/demo/img/SE5x9.jpg" /><br>
 Reduced to 256 colors by Pairwise Nearest Neighbor Quantization Algorithm:<br><img src="https://user-images.githubusercontent.com/26831069/129530423-0767e45a-001f-4024-aeed-49e897b5da62.png" />
