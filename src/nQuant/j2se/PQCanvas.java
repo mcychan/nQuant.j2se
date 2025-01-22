@@ -19,7 +19,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -312,8 +314,10 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				g2d.fill(new Rectangle(getSize()));
 			}
 
-			g2d.scale(zoom, zoom);
-			g2d.drawImage(image, null, 0, 0);
+		    AffineTransform scaleInstance = AffineTransform.getScaleInstance(zoom, zoom);
+		    AffineTransformOp scaleOp = new AffineTransformOp(scaleInstance, AffineTransformOp.TYPE_BILINEAR);		    
+
+			g2d.drawImage(image, scaleOp, 0, 0);
 		}
 		else {
 			g2d.setFont(new Font("Arial", Font.BOLD, 20));

@@ -1,7 +1,7 @@
 package nQuant.j2se;
 
 /* Fast pairwise nearest neighbor based algorithm with CIELAB color space advanced version
-Copyright (c) 2018-2023 Miller Cy Chan
+Copyright (c) 2018-2025 Miller Cy Chan
 * error measure; time used is proportional to number of bins squared - WJ */
 
 import java.awt.Color;
@@ -528,8 +528,21 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	protected short[] dither(Color[] palette, int width, int height, boolean dither)
 	{
 		Ditherable ditherable = getDitherFn();
-		if(hasSemiTransparency || isGA)
+		if(hasSemiTransparency)
 			weight *= -1;
+		
+		if(dither && !hasAlpha() && palette.length < 3) {
+			saliencies = new float[pixels.length];
+			float saliencyBase = .1f;
+
+			/* Build histogram */
+			for (int i = 0; i < pixels.length; ++i) {
+				Color c = cPixels[i];
+				Lab lab1 = getLab(c.getRGB());
+
+				saliencies[i] = saliencyBase + (1 - saliencyBase) * lab1.L / 100f;
+			}
+		}
 		short[] qPixels = GilbertCurve.dither(width, height, pixels, palette, ditherable, saliencies, weight);
 		
 		if(!dither) {

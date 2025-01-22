@@ -1,6 +1,6 @@
 package nQuant.j2se;
 /* Generalized Hilbert ("gilbert") space-filling curve for rectangular domains of arbitrary (non-power of two) sizes.
-Copyright (c) 2021 - 2024 Miller Cy Chan
+Copyright (c) 2021 - 2025 Miller Cy Chan
 * A general rectangle with a known orientation is split into three regions ("up", "right", "down"), for which the function calls itself recursively, until a trivial path can be produced. */
 
 import java.awt.Color;
@@ -106,13 +106,21 @@ public class GilbertCurve {
 		int a_pix = (int) Math.min(0xFF, Math.max(error.p[3], 0.0));
 		
 		Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
-		if (palette.length <= 32 && a_pix > 0xF0) {
+		if (saliencies != null && palette.length < 3) {			
+			final int acceptedDiff = 1;
+			if(CIELABConvertor.Y_Diff(pixel, c2) > acceptedDiff) {
+				final float strength = 1 / 3f;
+				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], 1 / saliencies[bidx], strength, x, y);
+			}
+			qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);
+		}
+		else if (palette.length <= 32 && a_pix > 0xF0) {
 			int offset = ditherable.getColorIndex(c2);
 			if (lookup[offset] == 0)
 				lookup[offset] = ditherable.nearestColorIndex(palette, c2, bidx) + 1;
 			qPixels[bidx] = (short) (lookup[offset] - 1);
 
-			int acceptedDiff = Math.max(2, palette.length - margin);
+			final int acceptedDiff = Math.max(2, palette.length - margin);
 			if(saliencies != null && (CIELABConvertor.Y_Diff(pixel, c2) > acceptedDiff || CIELABConvertor.U_Diff(pixel, c2) > (2 * acceptedDiff))) {
 				final float strength = 1 / 3f;
 				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], 1 / saliencies[bidx], strength, x, y);
