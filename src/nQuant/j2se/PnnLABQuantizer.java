@@ -535,7 +535,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			saliencies = new float[pixels.length];
 			float saliencyBase = .1f;
 
-			/* Build histogram */
 			for (int i = 0; i < pixels.length; ++i) {
 				Color c = cPixels[i];
 				Lab lab1 = getLab(c.getRGB());

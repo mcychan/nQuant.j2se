@@ -23,6 +23,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
+import java.awt.image.IndexColorModel;
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -443,7 +444,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			public void windowClosing(java.awt.event.WindowEvent e) { 
 				try {
 					if(canvas.image != null) {
-						final String fileType = canvas.hasAlpha && canvas.images == null ? "png" : "gif";
+						final String fileType = canvas.images != null || canvas.image.getColorModel() instanceof IndexColorModel ? "gif" : "png";
 						String tempFilePath = System.getProperty("java.io.tmpdir") + "result." + fileType;
 						if(canvas.images != null) {
 							try (GifWriter writer = new GifWriter(tempFilePath, canvas.hasAlpha, 850, true)) {
