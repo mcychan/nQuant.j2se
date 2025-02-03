@@ -106,7 +106,7 @@ public class GilbertCurve {
 		int a_pix = (int) Math.min(0xFF, Math.max(error.p[3], 0.0));
 		
 		Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
-		if (saliencies != null) {
+		if (saliencies != null && !sortedByYDiff) {
 			final float strength = 1 / 3f;
 			final float beta = palette.length > 8 ? .7f : 1;
 			final int acceptedDiff = Math.max(2, palette.length - margin);
