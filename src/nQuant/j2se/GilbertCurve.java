@@ -106,7 +106,7 @@ public class GilbertCurve {
 		int a_pix = (int) Math.min(0xFF, Math.max(error.p[3], 0.0));
 		
 		Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
-		if (saliencies != null && (palette.length < 3 || margin > 6)) {
+		if (saliencies != null) {
 			final float strength = 1 / 3f;
 			final float beta = palette.length > 8 ? .7f : 1;
 			final int acceptedDiff = Math.max(2, palette.length - margin);
@@ -115,10 +115,16 @@ public class GilbertCurve {
 			else if (palette.length <= 8 || CIELABConvertor.Y_Diff(pixel, c2) < (2 * acceptedDiff))
 				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], beta * .5f / saliencies[bidx], strength, x, y);
 			
-			if (palette.length > 8 && (CIELABConvertor.Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor.U_Diff(pixel, c2) > (2 * acceptedDiff))) {
-				float kappa = saliencies[bidx] < .25f ? beta * .4f * saliencies[bidx] : beta * .4f / saliencies[bidx];
+			if (palette.length < 3 || margin > 6) {
+				if (palette.length > 8 && (CIELABConvertor.Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor.U_Diff(pixel, c2) > (2 * acceptedDiff))) {
+					float kappa = saliencies[bidx] < .25f ? beta * .4f * saliencies[bidx] : beta * .4f / saliencies[bidx];
+					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
+					c2 = BlueNoise.diffuse(c1, palette[qPixels[bidx]], kappa, strength, x, y);
+				}
+			}
+			else if (palette.length > 8 && (CIELABConvertor.Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor.U_Diff(pixel, c2) > acceptedDiff)) {
 				Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-				c2 = BlueNoise.diffuse(c1, palette[qPixels[bidx]], kappa, strength, x, y);
+				c2 = BlueNoise.diffuse(c1, palette[qPixels[bidx]], beta * .4f * saliencies[bidx], strength, x, y);
 			}
 
 			int offset = ditherable.getColorIndex(c2);
