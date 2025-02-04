@@ -34,6 +34,7 @@ public class GilbertCurve {
 	private final boolean sortedByYDiff;
 	private final int width;
 	private final int height;
+	private final float beta;
 	private final int[] pixels;
 	private final Color[] palette;
 	private final short[] qPixels;
@@ -58,6 +59,7 @@ public class GilbertCurve {
 		sortedByYDiff = palette.length >= 128 && (hasAlpha ? weight < .18 : weight >= .052);
 		weight = Math.abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
+		beta = palette.length > 8 ? palette.length > 24 ? .25f : .7f : 1;
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
 
 			@Override
@@ -108,7 +110,6 @@ public class GilbertCurve {
 		Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
 		if (saliencies != null && !sortedByYDiff) {
 			final float strength = 1 / 3f;
-			final float beta = palette.length > 8 ? palette.length > 24 ? .25f : .7f : 1;
 			final int acceptedDiff = Math.max(2, palette.length - margin);
 			if (palette.length <= 8 && saliencies[bidx] > .2f && saliencies[bidx] < .25f)
 				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], beta / saliencies[bidx], strength, x, y);
