@@ -108,7 +108,7 @@ public class GilbertCurve {
 		Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
 		if (saliencies != null && !sortedByYDiff) {
 			final float strength = 1 / 3f;
-			final float beta = palette.length > 8 ? .7f : 1;
+			final float beta = palette.length > 8 ? palette.length > 24 ? .25f : .7f : 1;
 			final int acceptedDiff = Math.max(2, palette.length - margin);
 			if (palette.length <= 8 && saliencies[bidx] > .2f && saliencies[bidx] < .25f)
 				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], beta / saliencies[bidx], strength, x, y);
