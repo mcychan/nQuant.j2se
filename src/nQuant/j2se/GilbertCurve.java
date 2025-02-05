@@ -26,7 +26,7 @@ public class GilbertCurve {
 				c.getBlue(),
 				c.getAlpha()
 			};
-		}		
+		}
 	}
 	
 	private byte ditherMax, DITHER_MAX;
@@ -34,7 +34,7 @@ public class GilbertCurve {
 	private float[] weights;
 	private final boolean sortedByYDiff;
 	private final int width;
-	private final int height;	
+	private final int height;
 	private final int[] pixels;
 	private final Color[] palette;
 	private final short[] qPixels;
@@ -126,7 +126,7 @@ public class GilbertCurve {
 				}
 			}
 			else if (palette.length > 8 && (CIELABConvertor.Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor.U_Diff(pixel, c2) > acceptedDiff)) {
-				if(beta < .3f)
+				if(beta < .3f && (palette.length <= 32 || saliencies[bidx] < beta))
 					c2 = BlueNoise.diffuse(c2, palette[qPixels[bidx]], beta * .4f * saliencies[bidx], strength, x, y);
 				else
 					c2 = new Color(r_pix, g_pix, b_pix, a_pix);
