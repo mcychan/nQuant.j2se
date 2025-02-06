@@ -488,7 +488,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			closestMap.put(c.getRGB(), closest);
 		}
 
-		int MAX_ERR = palette.length;	
+		int MAX_ERR = palette.length;
 		if(PG < coeffs[0][1] && BlueNoise.TELL_BLUE_NOISE[pos & 4095] > -88)
 			return nearestColorIndex(palette, c, pos);
 		
@@ -531,7 +531,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if(hasSemiTransparency)
 			weight *= -1;
 		
-		if(dither && !hasAlpha() && palette.length < 3) {
+		if(dither && saliencies == null && weight < .052) {
 			saliencies = new float[pixels.length];
 			float saliencyBase = .1f;
 
@@ -554,7 +554,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	}
 
 	@Override
-	protected Color[] grabPixels(int[] pixels, int nMaxColors, ThreadLocal<Boolean> isSemiTransparency) {		
+	protected Color[] grabPixels(int[] pixels, int nMaxColors, ThreadLocal<Boolean> isSemiTransparency) {
 		cPixels = super.grabPixels(pixels, nMaxColors, isSemiTransparency);
 		return cPixels;
 	}

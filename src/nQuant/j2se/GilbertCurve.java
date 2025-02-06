@@ -60,8 +60,9 @@ public class GilbertCurve {
 		weight = Math.abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		beta = palette.length > 8 ? palette.length > 24 ? .25f : .7f : 1;
-		if(weight > .02)
-			beta *= .5f;
+		if(palette.length > 64 || weight > .02)
+			beta *= .4f;
+
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
 
 			@Override
