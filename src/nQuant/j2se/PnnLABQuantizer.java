@@ -531,7 +531,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if(hasSemiTransparency)
 			weight *= -1;
 		
-		if(dither && !hasSemiTransparency && saliencies == null && weight < .052) {
+		if(dither && !hasSemiTransparency && saliencies == null && (weight < .052 || weight > .99)) {
 			saliencies = new float[pixels.length];
 			float saliencyBase = .1f;
 
