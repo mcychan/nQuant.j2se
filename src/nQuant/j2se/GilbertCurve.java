@@ -115,9 +115,12 @@ public class GilbertCurve {
 			final float strength = 1 / 3f;
 			final int acceptedDiff = Math.max(2, palette.length - margin);
 			if (palette.length <= 8 && saliencies[bidx] > .2f && saliencies[bidx] < .25f)
-				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], beta / saliencies[bidx], strength, x, y);
-			else if (palette.length <= 8 || CIELABConvertor.Y_Diff(pixel, c2) < (2 * acceptedDiff))
+				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], beta * 2 / saliencies[bidx], strength, x, y);
+			else if (palette.length <= 8 || CIELABConvertor.Y_Diff(pixel, c2) < (2 * acceptedDiff)) {
 				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], beta * .5f / saliencies[bidx], strength, x, y);
+				if (CIELABConvertor.U_Diff(pixel, c2) > (8 * acceptedDiff))
+					c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], beta / saliencies[bidx], strength, x, y);
+			}
 			
 			if (palette.length < 3 || margin > 6) {
 				if (palette.length > 8 && (CIELABConvertor.Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor.U_Diff(pixel, c2) > (2 * acceptedDiff))) {
