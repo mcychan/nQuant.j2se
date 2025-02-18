@@ -53,7 +53,7 @@ public class GilbertCurve {
 		this.pixels = pixels;
 		this.palette = palette;
 		this.qPixels = qPixels;
-		this.ditherable = ditherable;		
+		this.ditherable = ditherable;
 		boolean hasAlpha = weight < 0;
 		this.saliencies = hasAlpha ? null : saliencies;
 		weight = Math.abs(weight);
