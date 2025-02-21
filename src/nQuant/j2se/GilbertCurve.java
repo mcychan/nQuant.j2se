@@ -60,8 +60,10 @@ public class GilbertCurve {
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = palette.length >= 128 && (hasAlpha ? weight < .18 : weight >= .052);
 		beta = palette.length > 8 ? (float) (1.05f - .0125f * palette.length) : 1;
-		double boundary = .01 - .000063 * palette.length;
-		beta = (float) (weight > boundary ? Math.max(.25, beta - palette.length * weight) : Math.min(1.5, beta + palette.length * weight));
+		if (palette.length > 8) {
+			double boundary = .01 - .000063 * palette.length;
+			beta = (float) (weight > boundary ? Math.max(.25, beta - palette.length * weight) : Math.min(1.5, beta + palette.length * weight));
+		}
 		if(palette.length > 64 || (beta < 1 && weight > .02))
 			beta *= .4f;
 
