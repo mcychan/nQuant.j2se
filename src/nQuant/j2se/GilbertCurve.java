@@ -59,7 +59,7 @@ public class GilbertCurve {
 		weight = Math.abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = palette.length >= 128 && (hasAlpha ? weight < .18 : weight >= .052);
-		beta = palette.length > 8 ? (float) (1.05f - .0125f * palette.length) : 1;
+		beta = palette.length > 8 ? (float) (.6f - .00625f * palette.length) : 1;
 		if (palette.length > 8) {
 			double boundary = .005 - .0000625 * palette.length;
 			beta = (float) (weight > boundary ? Math.max(.25, beta - palette.length * weight) : Math.min(1.5, beta + palette.length * weight));
