@@ -1,7 +1,8 @@
 package nQuant.j2se;
+
 /* Otsu's Image Segmentation Method
-  Copyright (C) 2009 Tolga Birdal
-  Copyright (c) 2018-2024 Miller Cy Chan
+* Copyright (C) 2009 Tolga Birdal
+* Copyright (c) 2018 - 2025 Miller Cy Chan
 */
 
 import java.awt.Color;
@@ -125,7 +126,7 @@ public class Otsu
 		int maxThresh = (int) thresh;
 		if (thresh >= 200)
 		{
-			weight = hasAlpha() ? .9f : .8f;
+			weight = .78f;
 			maxThresh = (int) (thresh * weight);
 			thresh = 200;
 		}
@@ -142,6 +143,11 @@ public class Otsu
 		}
 	}
 	
+	private void threshold(final int[] pixels, int[] dest, short thresh)
+	{
+		threshold(pixels, dest, thresh, 1.0f);
+	}
+	
 	private int[] cannyFilter(final int width, final int[] pixelsGray, double lowerThreshold, double higherThreshold) {
 		final int height = pixelsGray.length / width;
 		final int area = width * height;
@@ -149,8 +155,8 @@ public class Otsu
 		int[] pixelsCanny = new int[area];
 		Arrays.fill(pixelsCanny, Color.WHITE.getRGB());
 
-		int[][] gx = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
-		int[][] gy = {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
+		int[][] gx = new int[][] {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
+		int[][] gy = new int[][] {{-1, -2, -1}, {0, 0, 0}, {1, 2, 1}};
 		double[] G = new double[area];
 		int[] theta = new int[area];
 		double largestG = 0.0;
@@ -163,7 +169,7 @@ public class Otsu
 				double gyValue = 0.0;
 				for (int x = -1; x <= 1; ++x) {
 					for (int y = -1; y <= 1; ++y) {
-						final Color c = new Color(pixelsGray[(i + x) * width +  j + y], true);
+						final Color c = new Color(pixelsGray[(i + x) * width + j + y], true);
 						gxValue += gx[1 - x][1 - y] * c.getGreen();
 						gyValue += gy[1 - x][1 - y] * c.getGreen();
 					}
@@ -171,7 +177,7 @@ public class Otsu
 
 				final int center = i * width + j;
 				// calculate G and theta
-				G[center] = Math.sqrt(Math.pow(gxValue, 2) + Math.pow(gyValue, 2));
+				G[center] = Math.sqrt(BitmapUtilities.sqr(gxValue) + BitmapUtilities.sqr(gyValue));
 				double atanResult = Math.atan2(gyValue, gxValue) * 180.0 / Math.PI;
 				theta[center] = (int)(180.0 + atanResult);
 
@@ -242,7 +248,7 @@ public class Otsu
 						G[center] = 0;
 				}
 
-				int grey = CIELABConvertor.clamp(BYTE_MAX - G[center] * (255.0 / largestG), 0, BYTE_MAX);
+				int grey = BYTE_MAX - ((int) Math.rint(G[center] * (255.0 / largestG)) & BYTE_MAX);
 				Color c = new Color(pixelsGray[center], true);
 				pixelsCanny[center] = new Color(grey, grey, grey, c.getAlpha()).getRGB();
 			}
@@ -253,7 +259,7 @@ public class Otsu
 		do {
 			for (int i = 1; i < height - 1; ++i) {
 				for (int j = 1; j < width - 1; ++j) {
-					int center = i * width + j;
+					final int center = i * width + j;
 					if (G[center] < minThreshold)
 						G[center] = 0;
 					else if (G[center] >= maxThreshold)
@@ -274,18 +280,13 @@ public class Otsu
 						}
 					}
 					
-					int grey = CIELABConvertor.clamp(BYTE_MAX - G[center] * 255.0 / largestG, 0, BYTE_MAX);
+					int grey = BYTE_MAX - ((int) Math.rint(G[center] * (255.0 / largestG)) & BYTE_MAX);
 					Color c = new Color(pixelsGray[center], true);
 					pixelsCanny[center] = new Color(grey, grey, grey, c.getAlpha()).getRGB();
 				}
 			}
 		} while (k++ < 100);
 		return pixelsCanny;
-	}
-	
-	private void threshold(int[] pixels, int[] dest, short thresh)
-	{
-		threshold(pixels, dest, thresh, 1.0f);
 	}
 
 	protected short nearestColorIndex(Color[] palette, final Color c)
@@ -296,7 +297,7 @@ public class Otsu
 
 		short k = 0;
 		if (c.getAlpha() <= alphaThreshold)
-			return k;
+            return k;
 
 		double mindist = 1e100;
 		for (int i = 0; i < palette.length; ++i)
@@ -338,7 +339,7 @@ public class Otsu
 				}
 				else if(alfa > alphaThreshold)
 					hasSemiTransparency = true;
-			}
+			}			
 		}
 	}
 
@@ -388,7 +389,7 @@ public class Otsu
 		return grayScaleImage;
 	}	
 	
-	private void convertToGrayScale(int[] pixels, int[] dest)
+	private void convertToGrayScale(final int[] pixels, int[] dest)
 	{
 		float min1 = BYTE_MAX;
 		float max1 = .0f;
@@ -416,7 +417,7 @@ public class Otsu
 			
 			int green = (pixels[i] >> 8) & 0xff;
 			int grey = (int)((green - min1) * (BYTE_MAX / (max1 - min1)));
-			pixels[i] = new Color(grey, grey, grey, alfa).getRGB();
+			dest[i] = new Color(grey, grey, grey, alfa).getRGB();
 		}
 	}
 
@@ -446,12 +447,12 @@ public class Otsu
 
 		int[] pixels = srcimg.getRGB(0, 0, bitmapWidth, bitmapHeight, null, 0, bitmapWidth);
 		grabPixels(pixels);
-
+		
 		int[] pixelsGray = pixels.clone();
 		if(!isGrayscale)
 			convertToGrayScale(pixels, pixelsGray);
 
-		short otsuThreshold = getOtsuThreshold(pixels);
+		short otsuThreshold = getOtsuThreshold(pixelsGray);
 		double lowerThreshold = 0.03, higherThreshold = 0.1;
 		pixels = cannyFilter(bitmapWidth, pixelsGray, lowerThreshold, higherThreshold);
 		threshold(pixelsGray, pixels, otsuThreshold);
@@ -466,7 +467,7 @@ public class Otsu
 			palette[0] = Color.BLACK;
 			palette[1] = Color.WHITE;
 		}
-		setColorModel(palette);
+		setColorModel(palette);	
 
 		short[] qPixels = GilbertCurve.dither(bitmapWidth, bitmapHeight, pixels, palette, getDitherFn(), null, 1);
 		if (hasAlpha()) {
@@ -479,12 +480,12 @@ public class Otsu
 		nearestMap.clear();
 		return BitmapUtilities.toIndexedBufferedImage(qPixels, m_colorModel, bitmapWidth, bitmapHeight);
 	}
-
+	
 	public BufferedImage convertGrayScaleToBinary(BufferedImage srcimg)
 	{
 		return convertGrayScaleToBinary(srcimg, false);
 	}
-
+	
 	public boolean hasAlpha() {
 		return m_transparentPixelIndex > -1;
 	}
