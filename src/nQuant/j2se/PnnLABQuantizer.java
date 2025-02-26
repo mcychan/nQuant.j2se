@@ -373,7 +373,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				if (hasSemiTransparency)
 					curdist += BitmapUtilities.sqr(c2.getAlpha() - c.getAlpha());
 			}
-			else if (hasSemiTransparency) {
+			else if (hasSemiTransparency || palette.length < 16) {
 				curdist += BitmapUtilities.sqr(lab2.L - lab1.L);
 				if (curdist > mindist)
 					continue;
