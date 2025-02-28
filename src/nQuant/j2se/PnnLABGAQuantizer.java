@@ -50,6 +50,8 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		boolean hasSemiTransparency = isSemiTransparency.get();
 		minRatio = (hasSemiTransparency || nMaxColors < 64) ? .0111 : .85;
 		maxRatio = Math.min(1.0, nMaxColors / ((nMaxColors < 64) ? 400.0 : 50.0));
+		if (nMaxColors < 64)
+			maxRatio = .2;
 		_dp = maxRatio < .1 ? 10000 : 100;
 	}	
 
@@ -155,7 +157,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 	private double rotateLeft(double u, double v, double delta) {
 		double theta = Math.PI * randrange(minRatio, maxRatio) / Math.exp(delta);
 		double result = u * Math.sin(theta) + v * Math.cos(theta);
-		if (delta < 50 && (result <= minRatio || result >= maxRatio))
+		if(result <= minRatio || result >= maxRatio)
 			result = rotateLeft(u, v, delta + .5);
 		return result;
 	}
@@ -163,7 +165,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 	private double rotateRight(double u, double v, double delta) {
 		double theta = Math.PI * randrange(minRatio, maxRatio) / Math.exp(delta);
 		double result = u * Math.cos(theta) - v * Math.sin(theta);
-		if (delta < 50 && (result <= minRatio || result >= maxRatio))
+		if(result <= minRatio || result >= maxRatio)
 			result = rotateRight(u, v, delta + .5);
 		return result;
 	}
