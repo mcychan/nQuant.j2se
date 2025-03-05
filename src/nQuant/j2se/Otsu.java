@@ -148,7 +148,7 @@ public class Otsu
 		threshold(pixels, dest, thresh, 1.0f);
 	}
 	
-	private int[] cannyFilter(final int width, final int[] pixelsGray, double lowerThreshold, double higherThreshold) {
+	private int[] cannyFilter(final int width, final int[] pixelsGray, double lowerThreshold, double higherThreshold, boolean dither) {
 		final int height = pixelsGray.length / width;
 		final int area = width * height;
 
@@ -250,7 +250,7 @@ public class Otsu
 
 				int grey = BYTE_MAX - ((int) Math.rint(G[center] * (255.0 / largestG)) & BYTE_MAX);
 				Color c = new Color(pixelsGray[center], true);
-				pixelsCanny[center] = new Color(grey, grey, grey, c.getAlpha()).getRGB();
+				pixelsCanny[center] = !dither && (c.getRed() + c.getGreen() + c.getBlue()) > 760 ? Color.WHITE.getRGB() : new Color(grey, grey, grey, c.getAlpha()).getRGB();
 			}
 		}
 
@@ -282,7 +282,7 @@ public class Otsu
 					
 					int grey = BYTE_MAX - ((int) Math.rint(G[center] * (255.0 / largestG)) & BYTE_MAX);
 					Color c = new Color(pixelsGray[center], true);
-					pixelsCanny[center] = new Color(grey, grey, grey, c.getAlpha()).getRGB();
+					pixelsCanny[center] = !dither && (c.getRed() + c.getGreen() + c.getBlue()) > 760 ? Color.WHITE.getRGB() : new Color(grey, grey, grey, c.getAlpha()).getRGB();
 				}
 			}
 		} while (k++ < 100);
@@ -440,7 +440,7 @@ public class Otsu
 		};
 	}
 
-	public BufferedImage convertGrayScaleToBinary(BufferedImage srcimg, boolean isGrayscale)
+	public BufferedImage convertGrayScaleToBinary(BufferedImage srcimg, boolean isGrayscale, boolean dither)
 	{	
 		int bitmapWidth = srcimg.getWidth();
 		int bitmapHeight = srcimg.getHeight();
@@ -454,7 +454,7 @@ public class Otsu
 
 		short otsuThreshold = getOtsuThreshold(pixelsGray);
 		double lowerThreshold = 0.03, higherThreshold = 0.1;
-		pixels = cannyFilter(bitmapWidth, pixelsGray, lowerThreshold, higherThreshold);
+		pixels = cannyFilter(bitmapWidth, pixelsGray, lowerThreshold, higherThreshold, dither);
 		threshold(pixelsGray, pixels, otsuThreshold);
 
 		Color[] palette = new Color[2];
@@ -481,9 +481,14 @@ public class Otsu
 		return BitmapUtilities.toIndexedBufferedImage(qPixels, m_colorModel, bitmapWidth, bitmapHeight);
 	}
 	
+	public BufferedImage convertGrayScaleToBinary(BufferedImage srcimg, boolean dither)
+	{
+		return convertGrayScaleToBinary(srcimg, false, dither);
+	}
+	
 	public BufferedImage convertGrayScaleToBinary(BufferedImage srcimg)
 	{
-		return convertGrayScaleToBinary(srcimg, false);
+		return convertGrayScaleToBinary(srcimg, false, true);
 	}
 	
 	public boolean hasAlpha() {
