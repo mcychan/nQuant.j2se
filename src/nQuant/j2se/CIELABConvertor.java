@@ -262,7 +262,7 @@ public class CIELABConvertor {
 		
 		double y = color2Y.apply(c1);
 		double y2 = color2Y.apply(c2);
-		return (y2 - y) * XYZ_WHITE_REFERENCE_Y;
+		return Math.abs(y2 - y) * XYZ_WHITE_REFERENCE_Y;
 	}
 	
 	static double U_Diff(final Color c1, final Color c2)
@@ -273,7 +273,7 @@ public class CIELABConvertor {
 		
 		double u = color2U.apply(c1);
 		double u2 = color2U.apply(c2);
-		return u2 - u;
+		return Math.abs(u2 - u);
 	}
 
 }

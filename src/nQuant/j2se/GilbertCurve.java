@@ -63,7 +63,9 @@ public class GilbertCurve {
 		if (palette.length > 4) {
 			double boundary = .005 - .0000625 * palette.length;
 			beta = (float) (weight > boundary ? Math.max(.25, beta - palette.length * weight) : Math.min(1.5, beta + palette.length * weight));
-			if (palette.length < 16)
+			if(palette.length > 32)
+				beta += .1f;
+			else if (palette.length < 16)
 				beta *= .75f;
 		}
 		else
@@ -124,29 +126,26 @@ public class GilbertCurve {
 			final int acceptedDiff = Math.max(2, palette.length - margin);
 			if (palette.length <= 4 && saliencies[bidx] > .2f && saliencies[bidx] < .25f)
 				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], beta * 2 / saliencies[bidx], strength, x, y);
-			else if (palette.length <= 4 || Math.abs(CIELABConvertor.Y_Diff(pixel, c2)) < (2 * acceptedDiff)) {
+			else if (palette.length <= 4 || CIELABConvertor.Y_Diff(pixel, c2) < (2 * acceptedDiff)) {
 				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], beta * .5f / saliencies[bidx], strength, x, y);
-				double uDiff = CIELABConvertor.U_Diff(pixel, c2);
-				if (palette.length <= 4 && Math.abs(uDiff) > (8 * acceptedDiff)) {
+				if (palette.length <= 4 && CIELABConvertor.U_Diff(pixel, c2) > (8 * acceptedDiff)) {
 					Color c1 = saliencies[bidx] > .65f ? pixel : new Color(r_pix, g_pix, b_pix, a_pix);
 					c2 = BlueNoise.diffuse(c1, palette[qPixels[bidx]], beta * saliencies[bidx], strength, x, y);
-					uDiff = CIELABConvertor.U_Diff(pixel, c2);
-				}				
-				if (Math.abs(uDiff) > (margin * acceptedDiff))
-					c2 = BlueNoise.diffuse(c2, palette[qPixels[bidx]], uDiff < 0 ? beta / saliencies[bidx] : beta * saliencies[bidx], strength, x, y);				
+				}
+				if (CIELABConvertor.U_Diff(pixel, c2) > (margin * acceptedDiff))
+					c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], beta / saliencies[bidx], strength, x, y);
 			}
 			
-			double yDiff = CIELABConvertor.Y_Diff(pixel, c2), uDiff = CIELABConvertor.U_Diff(pixel, c2);
 			if (palette.length < 3 || margin > 6) {
-				if (palette.length > 8 && (Math.abs(yDiff) > (beta * acceptedDiff) || Math.abs(uDiff) > (2 * acceptedDiff))) {
-					float kappa = (yDiff > 0 || uDiff > 0) ? beta * .4f * saliencies[bidx] : beta * .2f * saliencies[bidx];
+				if (palette.length > 8 && (CIELABConvertor.Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor.U_Diff(pixel, c2) > (2 * acceptedDiff))) {
+					float kappa = saliencies[bidx] < .4f ? beta * .4f * saliencies[bidx] : beta * .4f / saliencies[bidx];
 					Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
 					c2 = BlueNoise.diffuse(c1, palette[qPixels[bidx]], kappa, strength, x, y);
 				}
 			}
-			else if (palette.length > 8 && (Math.abs(yDiff) > (beta * acceptedDiff) || Math.abs(uDiff) > acceptedDiff)) {
+			else if (palette.length > 8 && (CIELABConvertor.Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor.U_Diff(pixel, c2) > acceptedDiff)) {
 				if(beta < .3f && (palette.length <= 32 || saliencies[bidx] < beta))
-					c2 = BlueNoise.diffuse(c2, palette[qPixels[bidx]], (yDiff > 0 || uDiff > 0) ? beta * .4f * saliencies[bidx] : beta * .4f / saliencies[bidx], strength, x, y);
+					c2 = BlueNoise.diffuse(c2, palette[qPixels[bidx]], beta * .4f * saliencies[bidx], strength, x, y);
 				else
 					c2 = new Color(r_pix, g_pix, b_pix, a_pix);
 			}
@@ -163,7 +162,7 @@ public class GilbertCurve {
 			qPixels[bidx] = (short) (lookup[offset] - 1);
 
 			final int acceptedDiff = Math.max(2, palette.length - margin);
-			if (saliencies != null && (Math.abs(CIELABConvertor.Y_Diff(pixel, c2)) > acceptedDiff || Math.abs(CIELABConvertor.U_Diff(pixel, c2)) > (2 * acceptedDiff))) {
+			if (saliencies != null && (CIELABConvertor.Y_Diff(pixel, c2) > acceptedDiff || CIELABConvertor.U_Diff(pixel, c2) > (2 * acceptedDiff))) {
 				final float strength = 1 / 3f;
 				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], 1 / saliencies[bidx], strength, x, y);
 				qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);
@@ -188,7 +187,7 @@ public class GilbertCurve {
 
 		boolean denoise = palette.length > 2;
 		boolean diffuse = BlueNoise.TELL_BLUE_NOISE[bidx & 4095] > thresold;
-		error.yDiff = sortedByYDiff ? Math.abs(CIELABConvertor.Y_Diff(pixel, c2)) : 1;
+		error.yDiff = sortedByYDiff ? CIELABConvertor.Y_Diff(pixel, c2) : 1;
 		boolean illusion = !diffuse && BlueNoise.TELL_BLUE_NOISE[(int) (error.yDiff * 4096) & 4095] > thresold;
 		
 		int errLength = denoise ? error.p.length - 1 : 0;
