@@ -469,7 +469,7 @@ public class Otsu
 		}
 		setColorModel(palette);	
 
-		short[] qPixels = GilbertCurve.dither(bitmapWidth, bitmapHeight, pixels, palette, getDitherFn(), null, 1);
+		short[] qPixels = GilbertCurve.dither(bitmapWidth, bitmapHeight, pixels, palette, getDitherFn(), null, 1, true);
 		if (hasAlpha()) {
 			short k = qPixels[m_transparentPixelIndex];
 			if (!palette[k].equals(m_transparentColor)) {

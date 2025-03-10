@@ -32,7 +32,7 @@ public class GilbertCurve {
 	private byte ditherMax, DITHER_MAX;
 	private float beta;
 	private float[] weights;
-	private final boolean sortedByYDiff;
+	private final boolean dither, sortedByYDiff;
 	private final int width;
 	private final int height;
 	private final int[] pixels;
@@ -46,7 +46,7 @@ public class GilbertCurve {
 	private final int margin, thresold;
 	private static final float BLOCK_SIZE = 343f;
 	
-	private GilbertCurve(final int width, final int height, final int[] pixels, final Color[] palette, final short[] qPixels, final Ditherable ditherable, final float[] saliencies, double weight)
+	private GilbertCurve(final int width, final int height, final int[] pixels, final Color[] palette, final short[] qPixels, final Ditherable ditherable, final float[] saliencies, double weight, boolean dither)
 	{
 		this.width = width;
 		this.height = height;
@@ -56,6 +56,7 @@ public class GilbertCurve {
 		this.ditherable = ditherable;
 		boolean hasAlpha = weight < 0;
 		this.saliencies = hasAlpha ? null : saliencies;
+		this.dither = dither;
 		weight = Math.abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = palette.length >= 128 && (hasAlpha ? weight < .18 : weight >= .052);
@@ -121,7 +122,7 @@ public class GilbertCurve {
 		int a_pix = (int) Math.min(0xFF, Math.max(error.p[3], 0.0));
 		
 		Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
-		if (saliencies != null && !sortedByYDiff) {
+		if (saliencies != null && dither && !sortedByYDiff) {
 			final float strength = 1 / 3f;
 			final int acceptedDiff = Math.max(2, palette.length - margin);
 			if (palette.length <= 4 && saliencies[bidx] > .2f && saliencies[bidx] < .25f)
@@ -289,10 +290,10 @@ public class GilbertCurve {
 			generate2d(0, 0, 0, height, width, 0);
 	}
 	
-	public static short[] dither(final int width, final int height, final int[] pixels, final Color[] palette, final Ditherable ditherable, final float[] saliencies, final double weight)
+	public static short[] dither(final int width, final int height, final int[] pixels, final Color[] palette, final Ditherable ditherable, final float[] saliencies, final double weight, final boolean dither)
 	{
 		short[] qPixels = new short[pixels.length];
-		new GilbertCurve(width, height, pixels, palette, qPixels, ditherable, saliencies, weight).run();
+		new GilbertCurve(width, height, pixels, palette, qPixels, ditherable, saliencies, weight, dither).run();
 		return qPixels;
 	}
 }

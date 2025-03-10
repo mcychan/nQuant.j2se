@@ -561,7 +561,7 @@ public class NeuQuantizer {
 			double weight = 1;
 			if(hasSemiTransparency)
 				weight *= -1;
-			short[] qPixels = GilbertCurve.dither(width, height, pixels, palette, ditherable, null, weight); 
+			short[] qPixels = GilbertCurve.dither(width, height, pixels, palette, ditherable, null, weight, dither); 
 			return qPixels;
 		}
 		
