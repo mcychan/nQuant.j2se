@@ -83,7 +83,7 @@ public class GilbertCurve {
 			
 		}) : new ArrayDeque<>();
 		
-		DITHER_MAX = weight < .01 ? (weight > .0025) ? (byte) 25 : 16 : 9;
+		DITHER_MAX = weight < .015 ? (weight > .0025) ? (byte) 25 : 16 : 9;
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
 		double deviation = !hasAlpha && weight > .0025 ? -.25 : 1;
 		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge * deviation) : DITHER_MAX;
@@ -150,6 +150,9 @@ public class GilbertCurve {
 				else
 					c2 = new Color(r_pix, g_pix, b_pix, a_pix);
 			}
+			
+			if (DITHER_MAX < 16 && saliencies[bidx] < .6f && CIELABConvertor.Y_Diff(pixel, c2) > margin - 1)
+				c2 = new Color(r_pix, g_pix, b_pix, a_pix);
 
 			int offset = ditherable.getColorIndex(c2);
 			if (lookup[offset] == 0)
