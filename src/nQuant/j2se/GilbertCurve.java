@@ -64,7 +64,7 @@ public class GilbertCurve {
 		if (palette.length > 4) {
 			double boundary = .005 - .0000625 * palette.length;
 			beta = (float) (weight > boundary ? .25 : Math.min(1.5, beta + palette.length * weight));
-			if(palette.length > 32)
+			if(palette.length > 32 && palette.length < 256)
 				beta += .1f;
 		}
 		else
@@ -95,7 +95,7 @@ public class GilbertCurve {
 		lookup = new int[65536];
 	}
 
-	private void ditherPixel(int x, int y){
+	private void ditherPixel(int x, int y) {
 		final int bidx = x + y * width;	
 		Color pixel = new Color(pixels[bidx], true);
 		ErrorBox error = new ErrorBox(pixel);
