@@ -222,9 +222,10 @@ public class GilbertCurve {
 
 		if (unaccepted) {
 			qPixels[bidx] = ditherPixel(x, y, c2, 1.25f);
-			c2 = palette[qPixels[bidx]];
-			if (palette.length > 256)
+			if (palette.length > 256) {
+				c2 = palette[qPixels[bidx]];
 				qPixels[bidx] = (short) ditherable.getColorIndex(c2);
+			}
 		}
 
 		errorq.add(error);
