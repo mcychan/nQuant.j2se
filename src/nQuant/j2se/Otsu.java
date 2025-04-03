@@ -250,7 +250,7 @@ public class Otsu
 
 				int grey = BYTE_MAX - ((int) Math.rint(G[center] * (255.0 / largestG)) & BYTE_MAX);
 				Color c = new Color(pixelsGray[center], true);
-				pixelsCanny[center] = !dither && (c.getRed() + c.getGreen() + c.getBlue()) > 760 ? Color.WHITE.getRGB() : new Color(grey, grey, grey, c.getAlpha()).getRGB();
+				pixelsCanny[center] = new Color(grey, grey, grey, c.getAlpha()).getRGB();
 			}
 		}
 
