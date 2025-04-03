@@ -263,7 +263,7 @@ public class Otsu
 					if (G[center] < minThreshold)
 						G[center] = 0;
 					else if (G[center] >= maxThreshold)
-						continue;
+						G[center] = BYTE_MAX;
 					else if (G[center] < maxThreshold) {
 						G[center] = 0;
 						for (int x = -1; x <= 1; ++x) {
@@ -282,10 +282,10 @@ public class Otsu
 					
 					int grey = BYTE_MAX - ((int) Math.rint(G[center] * (255.0 / largestG)) & BYTE_MAX);
 					Color c = new Color(pixelsGray[center], true);
-					pixelsCanny[center] = !dither && (c.getRed() + c.getGreen() + c.getBlue()) > 760 ? Color.WHITE.getRGB() : new Color(grey, grey, grey, c.getAlpha()).getRGB();
+					pixelsCanny[center] = new Color(grey, grey, grey, c.getAlpha()).getRGB();
 				}
 			}
-		} while (k++ < 100);
+		} while (k++ < 100 && dither);
 		return pixelsCanny;
 	}
 
@@ -453,7 +453,11 @@ public class Otsu
 			convertToGrayScale(pixels, pixelsGray);
 
 		short otsuThreshold = getOtsuThreshold(pixelsGray);
-		double lowerThreshold = 0.03, higherThreshold = 0.1;
+		double lowerThreshold = .03, higherThreshold = .1;
+		if(!dither) {
+			lowerThreshold = otsuThreshold / 3.0;
+			higherThreshold = otsuThreshold;
+		}
 		pixels = cannyFilter(bitmapWidth, pixelsGray, lowerThreshold, higherThreshold, dither);
 		threshold(pixelsGray, pixels, otsuThreshold);
 
