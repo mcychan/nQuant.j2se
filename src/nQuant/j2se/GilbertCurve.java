@@ -33,8 +33,8 @@ public class GilbertCurve {
 	private float beta;
 	private float[] weights;
 	private final boolean dither, sortedByYDiff;
-	private final int width;
-	private final int height;
+	private final int width, height;
+	private final double weight;
 	private final int[] pixels;
 	private final Color[] palette;
 	private final short[] qPixels;
@@ -57,7 +57,7 @@ public class GilbertCurve {
 		boolean hasAlpha = weight < 0;
 		this.saliencies = hasAlpha ? null : saliencies;
 		this.dither = dither;
-		weight = Math.abs(weight);
+		this.weight = Math.abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = palette.length > 128 && (!hasAlpha || weight < .18);
 		beta = palette.length > 4 ? (float) (.6f - .00625f * palette.length) : 1;
@@ -119,7 +119,7 @@ public class GilbertCurve {
 		}
 		
 		if (palette.length < 3 || margin > 6) {
-			if (palette.length > 16 && (CIELABConvertor.Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor.U_Diff(pixel, c2) > (2 * acceptedDiff))) {
+			if (palette.length > 4 && weight < .0025 && (CIELABConvertor.Y_Diff(pixel, c2) > (beta * acceptedDiff) || CIELABConvertor.U_Diff(pixel, c2) > (2 * acceptedDiff))) {
 				float kappa = saliencies[bidx] < .4f ? beta * .4f * saliencies[bidx] : beta * .4f / saliencies[bidx];
 				Color c1 = saliencies[bidx] < .6f ? pixel : new Color(r_pix, g_pix, b_pix, a_pix);
 				c2 = BlueNoise.diffuse(c1, qPixel, kappa, strength, x, y);
