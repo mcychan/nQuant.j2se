@@ -86,10 +86,6 @@ public class PnnQuantizer {
 		double wg = bin1.gc;
 		double wb = bin1.bc;
 		
-		int start = 0;
-		if(BlueNoise.TELL_BLUE_NOISE[idx & 4095] > -88)
-			start = (PG < coeffs[0][1]) ? coeffs.length : 1;
-		
 		for (int i = bin1.fw; i != 0; i = bins[i].fw) {
 			double n2 = bins[i].cnt, nerr2 = (n1 * n2) / (n1 + n2);
 			if (nerr2 >= err)
@@ -97,8 +93,7 @@ public class PnnQuantizer {
 			
 			double nerr = 0.0;
 			if(hasSemiTransparency) {
-				start = 1;
-				nerr += nerr2 * (1 - ratio) * PA * BitmapUtilities.sqr(bins[i].ac - wa);
+				nerr += nerr2 * PA * BitmapUtilities.sqr(bins[i].ac - wa);
 				if (nerr >= err)
 					continue;
 			}
@@ -115,7 +110,7 @@ public class PnnQuantizer {
 			if (nerr >= err)
 				continue;
 			
-			for (int j = start; j < coeffs.length; ++j) {
+			for (int j = 0; j < coeffs.length; ++j) {
 				nerr += nerr2 * ratio * BitmapUtilities.sqr(coeffs[j][0] * (bins[i].rc - wr));
 				if (nerr >= err)
 					break;
@@ -314,7 +309,7 @@ public class PnnQuantizer {
 		}
 		
 		double mindist = 1e100;
-		for (int i = k; i<palette.length; ++i) {
+		for (int i = k; i < palette.length; ++i) {
 			Color c2 = palette[i];
 
 			double curdist = PA * BitmapUtilities.sqr(c2.getAlpha() - c.getAlpha());
@@ -351,9 +346,6 @@ public class PnnQuantizer {
 			closest[2] = closest[3] = Integer.MAX_VALUE;
 			
 			double pr = PR, pg = PG, pb = PB;
-			if(BlueNoise.TELL_BLUE_NOISE[pos & 4095] > -88) {
-				pr = coeffs[0][0]; pg = coeffs[0][1]; pb = coeffs[0][2];
-			}
 
 			for (short k = 0; k < palette.length; ++k) {
 				Color c2 = palette[k];
