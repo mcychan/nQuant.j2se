@@ -1,7 +1,7 @@
 package nQuant.j2se;
 /* Fast pairwise nearest neighbor based algorithm for multilevel thresholding
 Copyright (C) 2004-2016 Mark Tyler and Dmitry Groshev
-Copyright (c) 2018-2022 Miller Cy Chan
+Copyright (c) 2018-2025 Miller Cy Chan
  * error measure; time used is proportional to number of bins squared - WJ */
 
 import java.awt.Color;
@@ -86,6 +86,10 @@ public class PnnQuantizer {
 		double wg = bin1.gc;
 		double wb = bin1.bc;
 		
+		int start = 0;
+		if(BlueNoise.TELL_BLUE_NOISE[idx & 4095] > -88)
+			start = (PG < coeffs[0][1]) ? coeffs.length : 1;
+		
 		for (int i = bin1.fw; i != 0; i = bins[i].fw) {
 			double n2 = bins[i].cnt, nerr2 = (n1 * n2) / (n1 + n2);
 			if (nerr2 >= err)
@@ -110,7 +114,7 @@ public class PnnQuantizer {
 			if (nerr >= err)
 				continue;
 			
-			for (int j = 0; j < coeffs.length; ++j) {
+			for (int j = start; j < coeffs.length; ++j) {
 				nerr += nerr2 * ratio * BitmapUtilities.sqr(coeffs[j][0] * (bins[i].rc - wr));
 				if (nerr >= err)
 					break;
@@ -304,9 +308,6 @@ public class PnnQuantizer {
 			k = 1;
 		
 		double pr = PR, pg = PG, pb = PB;
-		if(palette.length > 2 && BlueNoise.TELL_BLUE_NOISE[pos & 4095] > -88) {
-			pr = coeffs[0][0]; pg = coeffs[0][1]; pb = coeffs[0][2];
-		}
 		
 		double mindist = 1e100;
 		for (int i = k; i < palette.length; ++i) {
