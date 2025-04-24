@@ -87,7 +87,7 @@ public class PnnQuantizer {
 		double wb = bin1.bc;
 		
 		int start = 0;
-		if(BlueNoise.TELL_BLUE_NOISE[idx & 4095] > -88)
+		if(BlueNoise.TELL_BLUE_NOISE[idx & 4095] > 0)
 			start = (PG < coeffs[0][1]) ? coeffs.length : 1;
 		
 		for (int i = bin1.fw; i != 0; i = bins[i].fw) {
