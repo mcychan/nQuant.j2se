@@ -235,8 +235,12 @@ public class GilbertCurve {
 			}
 			else if (CIELABConvertor.Y_Diff(pixel, c2) > 3 && CIELABConvertor.U_Diff(pixel, c2) > 3) {
 				final float strength = 1 / 3f;
-				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], 1 / 3f, strength, x, y);
+				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], strength, strength, x, y);
 				qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);
+				if (palette.length > 256) {
+					c2 = palette[qPixels[bidx]];
+					qPixels[bidx] = (short) ditherable.getColorIndex(c2);
+				}
 			}
 		}
 
