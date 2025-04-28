@@ -220,13 +220,23 @@ public class GilbertCurve {
 				else
 					error.p[j] /= (float) (1 + Math.sqrt(ditherMax));
 			}
+			
+			if (sortedByYDiff && saliencies == null && Math.abs(error.p[j]) >= DITHER_MAX)
+				unaccepted = true;
 		}
 
 		if (unaccepted) {
-			qPixels[bidx] = ditherPixel(x, y, c2, 1.25f);
-			if (palette.length > 256) {
-				c2 = palette[qPixels[bidx]];
-				qPixels[bidx] = (short) ditherable.getColorIndex(c2);
+			if (saliencies != null) {
+				qPixels[bidx] = ditherPixel(x, y, c2, 1.25f);
+				if (palette.length > 256) {
+					c2 = palette[qPixels[bidx]];
+					qPixels[bidx] = (short) ditherable.getColorIndex(c2);
+				}
+			}
+			else if (CIELABConvertor.Y_Diff(pixel, c2) > 3 && CIELABConvertor.U_Diff(pixel, c2) > 3) {
+				final float strength = 1 / 3f;
+				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], 1 / 3f, strength, x, y);
+				qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);
 			}
 		}
 
