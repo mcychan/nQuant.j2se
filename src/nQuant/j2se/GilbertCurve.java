@@ -72,7 +72,7 @@ public class GilbertCurve {
 		
 		if (palette.length > 64 || (palette.length > 4 && weight > .02))
 			beta *= .4f;		
-		if (palette.length > 128 && weight < .02)
+		if (palette.length > 64 && weight < .02)
 			beta = .2f;
 
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
@@ -112,7 +112,8 @@ public class GilbertCurve {
 		if (palette.length <= 4 && saliencies[bidx] > .2f && saliencies[bidx] < .25f)
 			c2 = BlueNoise.diffuse(pixel, qPixel, beta * 2 / saliencies[bidx], strength, x, y);
 		else if (palette.length <= 4 || CIELABConvertor.Y_Diff(pixel, c2) < (2 * acceptedDiff)) {
-			c2 = BlueNoise.diffuse(pixel, qPixel, beta * .5f / saliencies[bidx], strength, x, y);
+			if (palette.length <= 128 || BlueNoise.TELL_BLUE_NOISE[bidx & 4095] > 0)
+				c2 = BlueNoise.diffuse(pixel, qPixel, beta * .5f / saliencies[bidx], strength, x, y);
 			if (palette.length <= 4 && CIELABConvertor.U_Diff(pixel, c2) > (8 * acceptedDiff)) {
 				Color c1 = saliencies[bidx] > .65f ? pixel : new Color(r_pix, g_pix, b_pix, a_pix);
 				c2 = BlueNoise.diffuse(c1, qPixel, beta * saliencies[bidx], strength, x, y);
