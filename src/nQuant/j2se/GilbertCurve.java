@@ -64,9 +64,9 @@ public class GilbertCurve {
 		if (palette.length > 4) {
 			double boundary = .005 - .0000625 * palette.length;
 			beta = (float) (weight > boundary ? .25 : Math.min(1.5, beta + palette.length * weight));
-			if(palette.length > 32 && palette.length < 256)
+			if (palette.length > 32 && palette.length < 256)
 				beta += .1f;
-			if(palette.length >= 64 && weight > .006 && weight < .0125)
+			if (palette.length >= 64 && (weight > .01 && weight < .0125) || (weight > .025 && weight < .03))
 				beta = .7f;
 		}
 		else
@@ -91,9 +91,9 @@ public class GilbertCurve {
 		double deviation = !hasAlpha && weight > .0025 ? -.25 : 1;
 		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge * deviation) : (byte) (DITHER_MAX * (saliencies != null ? 2 : Math.E));
 		final int density = palette.length > 16 ? 3200 : 1500;
-		if(palette.length / weight > 5000 && (weight > .045 || (weight > .01 && palette.length < 64)))
+		if (palette.length / weight > 5000 && (weight > .045 || (weight > .01 && palette.length < 64)))
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
-		else if(weight < .03 && palette.length / weight < density && palette.length >= 16 && palette.length < 256)
+		else if (weight < .03 && palette.length / weight < density && palette.length >= 16 && palette.length < 256)
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		weights = new float[0];
