@@ -118,10 +118,6 @@ public class GilbertCurve {
 		else if (palette.length <= 4 || CIELABConvertor.Y_Diff(pixel, c2) < (2 * acceptedDiff)) {
 			if (palette.length <= 128 || BlueNoise.TELL_BLUE_NOISE[bidx & 4095] > 0)
 				c2 = BlueNoise.diffuse(pixel, qPixel, beta * .5f / saliencies[bidx], strength, x, y);
-			if (palette.length <= 4 && CIELABConvertor.U_Diff(pixel, c2) > (8 * acceptedDiff)) {
-				Color c1 = saliencies[bidx] > .65f ? pixel : new Color(r_pix, g_pix, b_pix, a_pix);
-				c2 = BlueNoise.diffuse(c1, qPixel, beta * saliencies[bidx], strength, x, y);
-			}
 			if (CIELABConvertor.U_Diff(pixel, c2) > (margin * acceptedDiff))
 				c2 = BlueNoise.diffuse(pixel, qPixel, beta / saliencies[bidx], strength, x, y);
 		}
