@@ -416,6 +416,63 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		nearestMap.put(c.getRGB(), k);
 		return k;
 	}
+	
+	protected short hybridColorIndex(final Color[] palette, Color c, final int pos)
+	{
+		Short got = nearestMap.get(c.getRGB());
+		if (got != null)
+			return got;
+
+		short k = 0;
+		
+		double mindist = 1e100;
+		Lab lab1 = getLab(c.getRGB());
+		for (short i=k; i<palette.length; ++i) {
+			Color c2 = palette[i];
+
+			double curdist = 0;
+			
+			Lab lab2 = getLab(c2.getRGB());
+			if (Math.abs(lab2.L - lab1.L) < palette.length) {
+				curdist += BitmapUtilities.sqr(lab2.L - lab1.L);
+				if (curdist > mindist)
+					continue;
+				
+				curdist += BitmapUtilities.sqr(lab2.A - lab1.A);
+				if (curdist > mindist)
+					continue;
+				
+				curdist += BitmapUtilities.sqr(lab2.B - lab1.B);
+			}
+			else {
+				double deltaL_prime_div_k_L_S_L = CIELABConvertor.L_prime_div_k_L_S_L(lab1, lab2);
+				curdist += BitmapUtilities.sqr(deltaL_prime_div_k_L_S_L);
+				if (curdist > mindist)
+					continue;
+	
+				MutableDouble a1Prime = new MutableDouble(), a2Prime = new MutableDouble(), CPrime1 = new MutableDouble(), CPrime2 = new MutableDouble();
+				float deltaC_prime_div_k_L_S_L = CIELABConvertor.C_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2);
+				curdist += BitmapUtilities.sqr(deltaC_prime_div_k_L_S_L);
+				if (curdist > mindist)
+					continue;
+	
+				MutableDouble barCPrime = new MutableDouble(), barhPrime = new MutableDouble();
+				float deltaH_prime_div_k_L_S_L = CIELABConvertor.H_prime_div_k_L_S_L(lab1, lab2, a1Prime, a2Prime, CPrime1, CPrime2, barCPrime, barhPrime);
+				curdist +=  BitmapUtilities.sqr(deltaH_prime_div_k_L_S_L);
+				if (curdist > mindist)
+					continue;
+
+				curdist += CIELABConvertor.R_T(barCPrime, barhPrime, deltaC_prime_div_k_L_S_L, deltaH_prime_div_k_L_S_L);
+			}
+
+			if (curdist > mindist)
+				continue;
+			mindist = curdist;
+			k = i;
+		}
+		nearestMap.put(c.getRGB(), k);
+		return k;
+	}
 
 	@Override
 	protected short closestColorIndex(final Color[] palette, Color c, final int pos)
@@ -500,6 +557,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 			@Override
 			public short nearestColorIndex(Color[] palette, Color c, final int pos) {
+				if (hasAlpha() || palette.length <= 4)
+					return PnnLABQuantizer.this.nearestColorIndex(palette, c, pos);
+				if (isGA() && palette.length < 16)
+					return PnnLABQuantizer.this.hybridColorIndex(palette, c, pos);
 				return PnnLABQuantizer.this.closestColorIndex(palette, c, pos);
 			}
 			
