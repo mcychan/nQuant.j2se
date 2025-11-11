@@ -102,7 +102,8 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		m_pq.setRatio(ratioX, ratioY);
 		Color[] palette = m_pq.pnnquan(cPixelsList.get(0), _nMaxColors);
 
-		int threshold = maxRatio < .1 ? -64 : -112;
+		int threshold = (maxRatio < .1 || _nMaxColors < 32) ? -64 : -112;
+
 		double[] errors = new double[_objectives.length];
 		cPixelsList.stream().forEach(cPixels -> {
 			for (int i = 0; i < cPixels.length; ++i) {
