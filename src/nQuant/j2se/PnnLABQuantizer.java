@@ -162,8 +162,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			tb.Ac += lab1.A;
 			tb.Bc += lab1.B;
 			tb.cnt += 1.0f;
-			if(saliencies != null && lab1.alpha > alphaThreshold)
-				saliencies[i] = saliencyBase + (1 - saliencyBase) * lab1.L / 100f;
+			if(saliencies != null)
+				saliencies[i] = saliencyBase + (1 - saliencyBase) * lab1.L / 100f * lab1.alpha / 255f;
 		}
 
 		/* Cluster nonempty bins at one end of array */
@@ -582,7 +582,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if(hasSemiTransparency)
 			weight *= -1;
 		
-		if(dither && !hasSemiTransparency && saliencies == null && (palette.length <= 256 || weight > .99)) {
+		if(dither && saliencies == null && (palette.length <= 256 || weight > .99)) {
 			saliencies = new float[pixels.length];
 			float saliencyBase = .1f;
 
@@ -590,7 +590,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				Color c = cPixels[i];
 				Lab lab1 = getLab(c.getRGB());
 
-				saliencies[i] = saliencyBase + (1 - saliencyBase) * lab1.L / 100f;
+				saliencies[i] = saliencyBase + (1 - saliencyBase) * lab1.L / 100f * lab1.alpha / 255f;
 			}
 		}
 		short[] qPixels = GilbertCurve.dither(width, height, pixels, palette, ditherable, saliencies, weight, dither);
