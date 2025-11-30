@@ -437,6 +437,9 @@ public class PnnQuantizer {
 			int pixel = pixels[i];
 			int alfa = (pixel >> 24) & 0xff;
 			cPixels[i] = new Color(pixel, true);
+			if(m_transparentPixelIndex > -1 && m_transparentColor.equals(new Color(cPixels[i].getRed(), cPixels[i].getGreen(), cPixels[i].getBlue(), 0)))
+				cPixels[i] = m_transparentColor;
+			
 			if (alfa < 0xE0) {	
 				if (alfa == 0) {
 					m_transparentPixelIndex = i;

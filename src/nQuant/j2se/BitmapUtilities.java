@@ -195,11 +195,8 @@ public class BitmapUtilities {
 		
 		if(nMaxColors <= 256) {
 			int[] palettes = new int[nMaxColors];
-			for(int i = 0; i < nMaxColors; ++i) {
+			for(int i = 0; i < nMaxColors; ++i)
 				palettes[i] = palette[i].getRGB();
-				if(palette[0].equals(new Color(palette[i].getRed(), palette[i].getGreen(), palette[i].getBlue(), 0)))
-					palettes[0] = new Color(51, 102, 102, 0).getRGB();
-			}
 			
 			return new IndexColorModel(getBitsPerPixel(nMaxColors),         // bits per pixel
 				nMaxColors,         // size of color component array
