@@ -173,7 +173,7 @@ public class GilbertCurve {
 		int a_pix = (int) Math.min(0xFF, Math.max(error.p[3], 0.0));
 		
 		Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
-		if (saliencies != null && dither && !sortedByYDiff && (!hasAlpha || pixel.getAlpha() <= a_pix))
+		if (saliencies != null && dither && !sortedByYDiff && (!hasAlpha || pixel.getAlpha() < a_pix))
 			qPixels[bidx] = ditherPixel(x, y, c2, beta);
 		else if (palette.length <= 32 && a_pix > 0xF0) {
 			int offset = ditherable.getColorIndex(c2);
