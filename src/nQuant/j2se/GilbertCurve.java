@@ -102,6 +102,17 @@ public class GilbertCurve {
 		lookup = new int[65536];
 	}
 	
+	private static float normalDistribution(float x) {
+		final float mean = .5f, stdDev = .1f;
+
+		// Calculate the probability density function (PDF)
+		double exponent = -Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2));
+		double pdf = (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
+		double maxPdf = 1 / (stdDev * Math.sqrt(2 * Math.PI)); // Peak at x = mean
+		double scaledPdf = (pdf / maxPdf) * 2; // Scale peak to y = 2
+		return (float) Math.max(0, Math.min(2, scaledPdf));
+	}
+
 	private short ditherPixel(int x, int y, Color c2, float beta) {
 		final int bidx = x + y * width;
 		Color pixel = new Color(pixels[bidx], true);
@@ -109,7 +120,7 @@ public class GilbertCurve {
 		int g_pix = c2.getGreen();
 		int b_pix = c2.getBlue();
 		int a_pix = c2.getAlpha();
-		
+
 		Color qPixel = palette[qPixels[bidx]];
 		final float strength = 1 / 3f;
 		final int acceptedDiff = Math.max(2, palette.length - margin);
@@ -121,15 +132,19 @@ public class GilbertCurve {
 			if (CIELABConvertor.U_Diff(pixel, c2) > (margin * acceptedDiff))
 				c2 = BlueNoise.diffuse(pixel, qPixel, beta / saliencies[bidx], strength, x, y);
 		}
-		
+
 		if (palette.length < 3 || margin > 6) {
 			if (palette.length > 4 && CIELABConvertor.Y_Diff(pixel, c2) > (beta * acceptedDiff)) {
 				float kappa = saliencies[bidx] < .4f ? beta * .4f * saliencies[bidx] : beta * .4f / saliencies[bidx];
 				Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
-				if (weight >= .0015 && saliencies[bidx] < .6)
-					c1 = pixel;
-				if (CIELABConvertor.Y_Diff(c1, c2) > (beta * Math.PI * acceptedDiff))
-					kappa = beta * (!sortedByYDiff && weight < .0025 ? .55f : .5f) / saliencies[bidx];
+				if (palette.length > 32)
+					kappa = beta * normalDistribution(beta) * saliencies[bidx];
+				else {
+					if (weight >= .0015 && saliencies[bidx] < .6)
+						c1 = pixel;
+					if (CIELABConvertor.Y_Diff(c1, c2) > (beta * Math.PI * acceptedDiff))
+						kappa = beta * (!sortedByYDiff && weight < .0025 ? .55f : .5f) / saliencies[bidx];
+				}
 
 				c2 = BlueNoise.diffuse(c1, qPixel, kappa, strength, x, y);
 			}
@@ -156,7 +171,7 @@ public class GilbertCurve {
 		final int bidx = x + y * width;	
 		Color pixel = new Color(pixels[bidx], true);
 		ErrorBox error = new ErrorBox(pixel);
-		
+
 		float maxErr = DITHER_MAX - 1;
 		int i = sortedByYDiff ? weights.length - 1 : 0;
 		for(ErrorBox eb : errorq) {
@@ -308,7 +323,7 @@ public class GilbertCurve {
 		generate2d(x + bx2, y + by2, ax, ay, bx - bx2, by - by2);
 		generate2d(x + (ax - dax) + (bx2 - dbx), y + (ay - day) + (by2 - dby), -bx2, -by2, -(ax - ax2), -(ay - ay2));
 	}
-	
+
 	private void initWeights(int size) {
 		/* Dithers all pixels of the image in sequence using
 		 * the Gilbert path, and distributes the error in
