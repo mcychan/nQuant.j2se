@@ -102,15 +102,15 @@ public class GilbertCurve {
 		lookup = new int[65536];
 	}
 	
-	private static float normalDistribution(float x) {
+	private static float normalDistribution(float x, float peak) {
 		final float mean = .5f, stdDev = .1f;
 
 		// Calculate the probability density function (PDF)
 		double exponent = -Math.pow(x - mean, 2) / (2 * Math.pow(stdDev, 2));
 		double pdf = (1 / (stdDev * Math.sqrt(2 * Math.PI))) * Math.exp(exponent);
 		double maxPdf = 1 / (stdDev * Math.sqrt(2 * Math.PI)); // Peak at x = mean
-		double scaledPdf = (pdf / maxPdf) * 2; // Scale peak to y = 2
-		return (float) Math.max(0, Math.min(2, scaledPdf));
+		double scaledPdf = (pdf / maxPdf) * peak;
+		return (float) Math.max(0, Math.min(peak, scaledPdf));
 	}
 
 	private short ditherPixel(int x, int y, Color c2, float beta) {
@@ -138,11 +138,13 @@ public class GilbertCurve {
 				float kappa = saliencies[bidx] < .4f ? beta * .4f * saliencies[bidx] : beta * .4f / saliencies[bidx];
 				Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
 				if (palette.length > 32)
-					kappa = beta * normalDistribution(beta) * saliencies[bidx];
+					kappa = beta * normalDistribution(beta, 2f) * saliencies[bidx];
 				else {
 					if (weight >= .0015 && saliencies[bidx] < .6)
 						c1 = pixel;
-					if (CIELABConvertor.Y_Diff(c1, c2) > (beta * Math.PI * acceptedDiff))
+					if (saliencies[bidx] < .6)
+						kappa = beta * normalDistribution(beta, 1.75f) * saliencies[bidx];
+					else if (CIELABConvertor.Y_Diff(c1, c2) > (beta * Math.PI * acceptedDiff))
 						kappa = beta * (!sortedByYDiff && weight < .0025 ? .55f : .5f) / saliencies[bidx];
 				}
 
