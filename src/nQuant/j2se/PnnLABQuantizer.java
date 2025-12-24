@@ -226,7 +226,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 		bins[j].cnt = quanFn.get(bins[j].cnt);
 		
-		final boolean texicab = proportional > .0225;
+		final boolean texicab = proportional > .0225 && !hasSemiTransparency;
 		
 		if(!isGA) {
 			if(hasSemiTransparency)
@@ -427,7 +427,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		
 		double mindist = 1e100;
 		Lab lab1 = getLab(c.getRGB());
-		for (short i=k; i<palette.length; ++i) {
+		for (short i = k; i < palette.length; ++i) {
 			Color c2 = palette[i];
 
 			double curdist = 0;
