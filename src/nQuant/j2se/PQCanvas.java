@@ -63,7 +63,7 @@ import nQuant.ga.NsgaIII;
 public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 
 	private static final long serialVersionUID = -5166271928949046848L;	
-	private volatile boolean hasAlpha;
+	private volatile boolean hasAlpha, hasSemiTransparency;
 	private int maxUnitIncrement = 1;
 	private double zoom = 1.0;
 	private BufferedImage image = null;
@@ -230,6 +230,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			final PnnQuantizer pq = new PnnLABQuantizer(imgs.get(0), PQCanvas.this);
 			BufferedImage highColorImage = pq.convert(256, true);
 			hasAlpha = pq.hasAlpha();
+			hasSemiTransparency = pq.hasSemiTransparency();
 			return highColorImage;
 
 			/* NsgaIII<PnnLABGAQuantizer> alg = new APNsgaIII<>(new PnnLABGAQuantizer(new PnnLABQuantizer(imgs.get(0), PQCanvas.this), imgs, 256), 2, 2, 80, 3);
@@ -238,12 +239,14 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 				System.out.println("\n" + pGAq.getResult());
 				images = pGAq.convert(true);
 				hasAlpha = pGAq.hasAlpha();
+				hasSemiTransparency = pGAq.hasSemiTransparency();
 				return images.get(0);
 			} */
 
 			/* final Otsu otsu = new Otsu();
 			BufferedImage bwImage = otsu.convertGrayScaleToBinary(imgs.get(0));
 			hasAlpha = otsu.hasAlpha();
+			hasSemiTransparency = false;
 			return bwImage; */
 		}
 
@@ -444,7 +447,7 @@ public class PQCanvas extends JPanel implements Scrollable, MouseWheelListener {
 			public void windowClosing(java.awt.event.WindowEvent e) { 
 				try {
 					if(canvas.image != null) {
-						final String fileType = canvas.images != null || canvas.image.getColorModel() instanceof IndexColorModel ? "gif" : "png";
+						final String fileType = canvas.images != null || (!canvas.hasSemiTransparency && canvas.image.getColorModel() instanceof IndexColorModel) ? "gif" : "png";
 						String tempFilePath = System.getProperty("java.io.tmpdir") + "result." + fileType;
 						if(canvas.images != null) {
 							try (GifWriter writer = new GifWriter(tempFilePath, canvas.hasAlpha, 850, true)) {

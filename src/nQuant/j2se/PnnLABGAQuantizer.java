@@ -255,6 +255,10 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 	public boolean hasAlpha() {
 		return m_pq.hasAlpha();
 	}
+	
+	public boolean hasSemiTransparency() {
+		return m_pq.hasSemiTransparency();
+	}
 
 	public String getResult() {
 		double difference = Math.abs(ratioX - ratioY);

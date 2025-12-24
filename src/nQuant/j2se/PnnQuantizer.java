@@ -503,5 +503,9 @@ public class PnnQuantizer {
 	public boolean hasAlpha() {
 		return m_transparentPixelIndex > -1;
 	}
+	
+	public boolean hasSemiTransparency() {
+		return hasSemiTransparency;
+	}
 
 }
