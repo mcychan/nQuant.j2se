@@ -50,8 +50,10 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		boolean hasSemiTransparency = isSemiTransparency.get();
 		minRatio = (hasSemiTransparency || nMaxColors < 64) ? .0111 : .85;
 		maxRatio = Math.min(1.0, nMaxColors / ((nMaxColors < 64) ? 400.0 : 50.0));
-		if (nMaxColors < 16)
+		if (nMaxColors < 16) {
+			minRatio = -.003;
 			maxRatio = .2;
+		}
 		_dp = maxRatio < .1 ? 10000 : 100;
 	}	
 
@@ -144,7 +146,7 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 
 	public void setRatio(double ratioX, double ratioY) {
 		double difference = Math.abs(ratioX - ratioY);
-		if (difference <= minRatio)
+		if (difference <= Math.abs(minRatio))
 			ratioY = ratioX;
 		this.ratioX = Math.min(Math.max(ratioX, minRatio), maxRatio);
 		this.ratioY = Math.min(Math.max(ratioY, minRatio), maxRatio);
