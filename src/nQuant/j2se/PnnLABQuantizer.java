@@ -477,6 +477,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	@Override
 	protected short closestColorIndex(final Color[] palette, Color c, final int pos)
 	{
+		if(PG < coeffs[0][1] && BlueNoise.TELL_BLUE_NOISE[pos & 4095] > -88)
+			return hybridColorIndex(palette, c, pos);
+		
 		if (c.getAlpha() <= alphaThreshold)
 			return nearestColorIndex(palette, c, pos);
 		
