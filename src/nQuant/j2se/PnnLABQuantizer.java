@@ -1,7 +1,7 @@
 package nQuant.j2se;
 
 /* Fast pairwise nearest neighbor based algorithm with CIELAB color space advanced version
-Copyright (c) 2018-2025 Miller Cy Chan
+Copyright (c) 2018-2026 Miller Cy Chan
 * error measure; time used is proportional to number of bins squared - WJ */
 
 import java.awt.Color;
@@ -355,7 +355,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		
 		double mindist = 1e100;
 		Lab lab1 = getLab(c.getRGB());
-		for (short i=k; i<palette.length; ++i) {
+		for (short i = k; i < palette.length; ++i) {
 			Color c2 = palette[i];
 
 			double curdist = hasSemiTransparency ? BitmapUtilities.sqr(c2.getAlpha() - c.getAlpha()) / Math.exp(1.5) : 0;
@@ -433,7 +433,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			double curdist = 0;
 			
 			Lab lab2 = getLab(c2.getRGB());
-			if (Math.abs(lab2.L - lab1.L) < palette.length) {
+			if (Math.abs(lab2.L - lab1.L) < palette.length || saliencies[pos] < .2 || saliencies[pos] > .8) {
 				curdist += BitmapUtilities.sqr(lab2.L - lab1.L);
 				if (curdist > mindist)
 					continue;
@@ -477,9 +477,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	@Override
 	protected short closestColorIndex(final Color[] palette, Color c, final int pos)
 	{
-		if(PG < coeffs[0][1] && BlueNoise.TELL_BLUE_NOISE[pos & 4095] > -88)
-			return nearestColorIndex(palette, c, pos);
-
 		if (c.getAlpha() <= alphaThreshold)
 			return nearestColorIndex(palette, c, pos);
 		
