@@ -430,7 +430,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		for (short i = k; i < palette.length; ++i) {
 			Color c2 = palette[i];
 
-			double curdist = 0;
+			double curdist = hasSemiTransparency ? BitmapUtilities.sqr(c2.getAlpha() - c.getAlpha()) / Math.exp(1.5) : 0;
 			
 			Lab lab2 = getLab(c2.getRGB());
 			if (Math.abs(lab2.L - lab1.L) < palette.length || saliencies[pos] < .2 || saliencies[pos] > .8) {
@@ -543,7 +543,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			idx = 0;
 		
 		int MAX_ERR = palette.length;
-		if(closest[idx + 2] >= MAX_ERR || (hasAlpha() && closest[idx] == 0))
+		if(closest[idx + 2] >= MAX_ERR || closest[idx] == 0 || palette[closest[idx]].getAlpha() < c.getAlpha())
 			return nearestColorIndex(palette, c, pos);
 		return (short) closest[idx];
 	}	
@@ -557,7 +557,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 
 			@Override
 			public short nearestColorIndex(Color[] palette, Color c, final int pos) {
-				if (hasAlpha() || palette.length <= 4)
+				if (palette.length <= 4)
 					return PnnLABQuantizer.this.nearestColorIndex(palette, c, pos);
 				if (isGA() && palette.length < 16)
 					return PnnLABQuantizer.this.hybridColorIndex(palette, c, pos);
