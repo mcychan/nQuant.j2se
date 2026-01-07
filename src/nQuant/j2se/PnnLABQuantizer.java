@@ -595,7 +595,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 		short[] qPixels = GilbertCurve.dither(width, height, pixels, palette, ditherable, saliencies, weight, dither);
 
-		if(!dither && palette.length > 32) {
+		if(!dither && palette.length > 32 && palette.length <= 256) {
 			double delta = BitmapUtilities.sqr(palette.length) / pixelMap.size();
 			float weight = delta > 0.023 ? 1.0f : (float) (37.013 * delta + 0.906);
 			BlueNoise.dither(width, height, pixels, palette, ditherable, qPixels, weight);
