@@ -70,6 +70,8 @@ public class GilbertCurve {
 				beta += .1f;
 			if (palette.length >= 64 && (weight > .012 && weight < .0125) || (weight > .025 && weight < .03))
 				beta *= 2f;
+			else if (palette.length > 32 && palette.length < 64 && weight < .015)
+				beta = .55f;
 		}
 		else
 			beta *= .95f;
@@ -78,8 +80,6 @@ public class GilbertCurve {
 			beta *= .4f;
 		if (palette.length > 64 && weight < .02)
 			beta = .2f;
-		else if (palette.length > 32 && palette.length < 64 && weight < .015)
-			beta = .55f;
 
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
 
@@ -228,8 +228,6 @@ public class GilbertCurve {
 			initWeights(errorq.size());
 
 		c2 = palette[qPixels[bidx]];
-		if (palette.length > 256)
-			qPixels[bidx] = (short) ditherable.getColorIndex(c2);
 
 		error.p[0] = r_pix - c2.getRed();
 		error.p[1] = g_pix - c2.getGreen();
@@ -267,11 +265,6 @@ public class GilbertCurve {
 				final float strength = 1 / 3f;
 				c2 = BlueNoise.diffuse(pixel, palette[qPixels[bidx]], strength, strength, x, y);
 				qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);
-			}
-
-			if (palette.length > 256) {
-				c2 = palette[qPixels[bidx]];
-				qPixels[bidx] = (short) ditherable.getColorIndex(c2);
 			}
 		}
 
@@ -362,10 +355,21 @@ public class GilbertCurve {
 			generate2d(0, 0, 0, height, width, 0);
 	}
 	
+	private static short[] processImagePixels(final Ditherable ditherable, final Color[] palette, final short[] qPixels)
+	{
+		short[] qPixel16s = new short[qPixels.length];
+		for (int i = 0; i < qPixels.length; ++i)
+			qPixel16s[i] = (short) ditherable.getColorIndex(palette[qPixels[i]]);
+
+		return qPixel16s;
+	}
+	
 	public static short[] dither(final int width, final int height, final int[] pixels, final Color[] palette, final Ditherable ditherable, final float[] saliencies, final double weight, final boolean dither)
 	{
 		short[] qPixels = new short[pixels.length];
 		new GilbertCurve(width, height, pixels, palette, qPixels, ditherable, saliencies, weight, dither).run();
+		if (palette.length > 256)
+			return processImagePixels(ditherable, palette, qPixels);
 		return qPixels;
 	}
 }
