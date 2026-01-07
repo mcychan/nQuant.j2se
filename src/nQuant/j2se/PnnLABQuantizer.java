@@ -79,7 +79,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 				nerr += (1 - ratio) * nerr2 * BitmapUtilities.sqr(lab2.L - lab1.L);
 				if (nerr >= err)
 					continue;
-	
+
 				nerr += (1 - ratio) * nerr2 * BitmapUtilities.sqr(lab2.A - lab1.A);
 				if (nerr >= err)
 					continue;
@@ -225,9 +225,9 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			bins[j].cnt = quanFn.get(bins[j].cnt);
 		}
 		bins[j].cnt = quanFn.get(bins[j].cnt);
-		
+
 		final boolean texicab = proportional > .0225 && !hasSemiTransparency;
-		
+
 		if(!isGA) {
 			if(hasSemiTransparency)
 				ratio = .5;
@@ -251,7 +251,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if (!hasSemiTransparency && quan_rt < 0)
 				ratio = Math.min(1.0, weight * Math.exp(3.13));
 		}
-		
+
 		int h, l, l2;
 		/* Initialize nearest neighbors and build heap of them */
 		int[] heap = new int[bins.length + 1];
@@ -595,11 +595,13 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		}
 		short[] qPixels = GilbertCurve.dither(width, height, pixels, palette, ditherable, saliencies, weight, dither);
 
-		if(!dither && palette.length > 32 && palette.length <= 256) {
+		if(!dither && palette.length > 32) {
 			double delta = BitmapUtilities.sqr(palette.length) / pixelMap.size();
 			float weight = delta > 0.023 ? 1.0f : (float) (37.013 * delta + 0.906);
 			BlueNoise.dither(width, height, pixels, palette, ditherable, qPixels, weight);
 		}
+		if (palette.length > 256)
+			qPixels = processImagePixels(palette, qPixels);
 		
 		return qPixels;
 	}

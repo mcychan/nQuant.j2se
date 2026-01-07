@@ -21,14 +21,14 @@ public class PnnQuantizer {
 	protected int[] pixels;
 	protected Color m_transparentColor = new Color(BYTE_MAX, BYTE_MAX, BYTE_MAX, 0);
 	
-	protected double PR = 0.299, PG = 0.587, PB = 0.114, PA = .3333;	
+	protected double PR = 0.299, PG = 0.587, PB = 0.114, PA = .3333;
 	protected double ratio = .5, weight = 1;
 	protected static final float[][] coeffs = new float[][] {
 		{0.299f, 0.587f, 0.114f},
 		{-0.14713f, -0.28886f, 0.436f},
 		{0.615f, -0.51499f, -0.10001f}
 	};
-	
+
 	protected Color[] m_palette;
 	private ColorModel m_colorModel;
 	protected Map<Integer, int[]> closestMap = new HashMap<>();
@@ -415,6 +415,15 @@ public class PnnQuantizer {
 		};
 	}
 	
+	protected short[] processImagePixels(final Color[] palette, final short[] qPixels)
+	{
+		short[] qPixel16s = new short[qPixels.length];
+		for (int i = 0; i < qPixels.length; ++i)
+			qPixel16s[i] = (short) getColorIndex(palette[qPixels[i]]);
+
+		return qPixel16s;
+	}
+	
 	protected short[] dither(Color[] palette, int width, int height, boolean dither)
 	{
 		Ditherable ditherable = getDitherFn(dither);
@@ -422,8 +431,10 @@ public class PnnQuantizer {
 			weight *= -1;
 		short[] qPixels = GilbertCurve.dither(width, height, pixels, palette, ditherable, null, weight, dither);
 
-		if (!dither && palette.length > 32 && palette.length <= 256)
+		if (!dither && palette.length > 32)
 			BlueNoise.dither(width, height, pixels, palette, ditherable, qPixels, 1.0f);
+		if (palette.length > 256)
+			qPixels = processImagePixels(palette, qPixels);
 		
 		closestMap.clear();
 		nearestMap.clear();

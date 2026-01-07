@@ -45,7 +45,7 @@ public class GilbertCurve {
 
 	private final int margin, thresold;
 	private static final float BLOCK_SIZE = 343f;
-	
+
 	private GilbertCurve(final int width, final int height, final int[] pixels, final Color[] palette, final short[] qPixels, final Ditherable ditherable, final float[] saliencies, double weight, boolean dither)
 	{
 		this.width = width;
@@ -55,7 +55,7 @@ public class GilbertCurve {
 		this.qPixels = qPixels;
 		this.ditherable = ditherable;
 		this.hasAlpha = weight < 0;
-		this.saliencies = (palette.length > 256) ? null : saliencies;
+		this.saliencies = saliencies;
 		this.dither = dither;
 		this.weight = weight = Math.abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
@@ -89,7 +89,7 @@ public class GilbertCurve {
 			}
 			
 		}) : new ArrayDeque<>();
-		
+
 		DITHER_MAX = weight < .015 ? (weight > .0025) ? (byte) 25 : 16 : 9;
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
 		double deviation = !hasAlpha && weight > .0025 ? -.25 : 1;
@@ -354,22 +354,11 @@ public class GilbertCurve {
 		else
 			generate2d(0, 0, 0, height, width, 0);
 	}
-	
-	private static short[] processImagePixels(final Ditherable ditherable, final Color[] palette, final short[] qPixels)
-	{
-		short[] qPixel16s = new short[qPixels.length];
-		for (int i = 0; i < qPixels.length; ++i)
-			qPixel16s[i] = (short) ditherable.getColorIndex(palette[qPixels[i]]);
 
-		return qPixel16s;
-	}
-	
 	public static short[] dither(final int width, final int height, final int[] pixels, final Color[] palette, final Ditherable ditherable, final float[] saliencies, final double weight, final boolean dither)
 	{
 		short[] qPixels = new short[pixels.length];
 		new GilbertCurve(width, height, pixels, palette, qPixels, ditherable, saliencies, weight, dither).run();
-		if (palette.length > 256)
-			return processImagePixels(ditherable, palette, qPixels);
 		return qPixels;
 	}
 }
