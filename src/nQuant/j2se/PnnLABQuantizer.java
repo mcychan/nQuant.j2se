@@ -343,9 +343,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	@Override
 	public short nearestColorIndex(final Color[] palette, Color c, final int pos)
 	{
-		Short got = nearestMap.get(c.getRGB());
-		if (got != null)
-			return got;
+		final int offset = getColorIndex(c);
+		int got = nearestMap[offset];
+		if (got > 0)
+			return (short) (got - 1);
 
 		short k = 0;
 		if (c.getAlpha() <= alphaThreshold)
@@ -413,15 +414,16 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			mindist = curdist;
 			k = i;
 		}
-		nearestMap.put(c.getRGB(), k);
+		nearestMap[offset] = k + 1;
 		return k;
 	}
 	
 	protected short hybridColorIndex(final Color[] palette, Color c, final int pos)
 	{
-		Short got = nearestMap.get(c.getRGB());
-		if (got != null)
-			return got;
+		final int offset = getColorIndex(c);
+		int got = nearestMap[offset];
+		if (got > 0)
+			return (short) (got - 1);
 
 		short k = 0;
 		
@@ -470,7 +472,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			mindist = curdist;
 			k = i;
 		}
-		nearestMap.put(c.getRGB(), k);
+		nearestMap[offset] = k + 1;
 		return k;
 	}
 
@@ -483,7 +485,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if (c.getAlpha() <= alphaThreshold)
 			return nearestColorIndex(palette, c, pos);
 		
-		int[] closest = closestMap.get(c.getRGB());
+		final int offset = getColorIndex(c);
+		int[] closest = (int[]) closestMap[offset];
 		if (closest == null) {
 			closest = new int[4];
 			closest[2] = closest[3] = Integer.MAX_VALUE;
@@ -535,7 +538,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if (closest[3] == Integer.MAX_VALUE)
 				closest[1] = closest[0];
 
-			closestMap.put(c.getRGB(), closest);
+			closestMap[offset] = closest;
 		}
 		
 		int idx = 1;
@@ -561,7 +564,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					return PnnLABQuantizer.this.nearestColorIndex(palette, c, pos);
 				if (isGA() && palette.length < 16)
 					return PnnLABQuantizer.this.hybridColorIndex(palette, c, pos);
-				return PnnLABQuantizer.this.closestColorIndex(palette, c, pos);
+				return PnnLABQuantizer.this.nearestColorIndex(palette, c, pos);
 			}
 			
 		};
@@ -571,8 +574,8 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	{
 		m_palette = null;
 		saliencies = null;
-		closestMap.clear();
-		nearestMap.clear();
+		closestMap = new Object[65536];
+		nearestMap = new int[65536];
 	}
 
 	@Override
@@ -600,8 +603,6 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			float weight = delta > 0.023 ? 1.0f : (float) (37.013 * delta + 0.906);
 			BlueNoise.dither(width, height, pixels, palette, ditherable, qPixels, weight);
 		}
-		if (palette.length > 256)
-			qPixels = processImagePixels(palette, qPixels);
 		
 		return qPixels;
 	}

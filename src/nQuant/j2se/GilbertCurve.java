@@ -269,6 +269,9 @@ public class GilbertCurve {
 		}
 
 		errorq.add(error);
+		
+		if (palette.length > 256)
+			qPixels[bidx] = (short) ditherable.getColorIndex(palette[qPixels[bidx]]);
 	}
 
 	private void generate2d(int x, int y, int ax, int ay, int bx, int by) {

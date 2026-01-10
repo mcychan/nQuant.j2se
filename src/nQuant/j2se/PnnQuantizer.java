@@ -31,8 +31,8 @@ public class PnnQuantizer {
 
 	protected Color[] m_palette;
 	private ColorModel m_colorModel;
-	protected Map<Integer, int[]> closestMap = new HashMap<>();
-	protected Map<Integer, Short> nearestMap = new HashMap<>();	
+	protected Object[] closestMap = new Object[65536];
+	protected int[] nearestMap = new int[65536];	
 
 	private PnnQuantizer(BufferedImage im, int w, int h) {
 		width = w;
@@ -159,8 +159,8 @@ public class PnnQuantizer {
 
 	protected Color[] pnnquan(final Color[] pixels, int nMaxColors)
 	{
-		closestMap.clear();
-		nearestMap.clear();
+		closestMap = new Object[65536];
+		nearestMap = new int[65536];
 		short quan_rt = (short) 1;
 		Pnnbin[] bins = new Pnnbin[65536];
 
@@ -297,9 +297,10 @@ public class PnnQuantizer {
 
 	public short nearestColorIndex(final Color[] palette, Color c, final int pos)
 	{
-		Short got = nearestMap.get(c.getRGB());
-		if (got != null)
-			return got;
+		final int offset = getColorIndex(c);
+		int got = nearestMap[offset];
+		if (got > 0)
+			return (short) (got - 1);
 		
 		short k = 0;
 		if (c.getAlpha() <= alphaThreshold)
@@ -332,7 +333,7 @@ public class PnnQuantizer {
 			mindist = curdist;
 			k = (short) i;
 		}
-		nearestMap.put(c.getRGB(), k);
+		nearestMap[offset] = k + 1;
 		return k;
 	}
 
@@ -342,7 +343,8 @@ public class PnnQuantizer {
 			return nearestColorIndex(palette, c, pos);
 		
 		int[] closest = new int[4];
-		int[] got = closestMap.get(c.getRGB());
+		final int offset = getColorIndex(c);
+		int[] got = (int[]) closestMap[offset];
 		if (got == null) {
 			closest[2] = closest[3] = Integer.MAX_VALUE;
 			
@@ -381,7 +383,7 @@ public class PnnQuantizer {
 			if (closest[3] == Integer.MAX_VALUE)
 				closest[1] = closest[0];
 			
-			closestMap.put(c.getRGB(), closest);
+			closestMap[offset] = closest;
 		}
 		else
 			closest = got;
@@ -415,15 +417,6 @@ public class PnnQuantizer {
 		};
 	}
 	
-	protected short[] processImagePixels(final Color[] palette, final short[] qPixels)
-	{
-		short[] qPixel16s = new short[qPixels.length];
-		for (int i = 0; i < qPixels.length; ++i)
-			qPixel16s[i] = (short) getColorIndex(palette[qPixels[i]]);
-
-		return qPixel16s;
-	}
-	
 	protected short[] dither(Color[] palette, int width, int height, boolean dither)
 	{
 		Ditherable ditherable = getDitherFn(dither);
@@ -433,11 +426,9 @@ public class PnnQuantizer {
 
 		if (!dither && palette.length > 32)
 			BlueNoise.dither(width, height, pixels, palette, ditherable, qPixels, 1.0f);
-		if (palette.length > 256)
-			qPixels = processImagePixels(palette, qPixels);
 		
-		closestMap.clear();
-		nearestMap.clear();
+		closestMap = new Object[65536];
+		nearestMap = new int[65536];
 		return qPixels;
 	}
 
