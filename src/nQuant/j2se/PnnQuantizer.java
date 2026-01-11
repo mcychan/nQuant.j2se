@@ -31,7 +31,7 @@ public class PnnQuantizer {
 
 	protected Color[] m_palette;
 	private ColorModel m_colorModel;
-	protected Object[] closestMap = new Object[65536];
+	protected Map<Integer, int[]> closestMap = new HashMap<>();
 	protected int[] nearestMap = new int[65536];	
 
 	private PnnQuantizer(BufferedImage im, int w, int h) {
@@ -159,7 +159,7 @@ public class PnnQuantizer {
 
 	protected Color[] pnnquan(final Color[] pixels, int nMaxColors)
 	{
-		closestMap = new Object[65536];
+		closestMap.clear();
 		nearestMap = new int[65536];
 		short quan_rt = (short) 1;
 		Pnnbin[] bins = new Pnnbin[65536];
@@ -344,7 +344,7 @@ public class PnnQuantizer {
 		
 		int[] closest = new int[4];
 		final int offset = getColorIndex(c);
-		int[] got = (int[]) closestMap[offset];
+		int[] got = closestMap.get(offset);
 		if (got == null) {
 			closest[2] = closest[3] = Integer.MAX_VALUE;
 			
@@ -383,7 +383,7 @@ public class PnnQuantizer {
 			if (closest[3] == Integer.MAX_VALUE)
 				closest[1] = closest[0];
 			
-			closestMap[offset] = closest;
+			closestMap.put(offset, closest);
 		}
 		else
 			closest = got;
@@ -427,7 +427,7 @@ public class PnnQuantizer {
 		if (!dither && palette.length > 32)
 			BlueNoise.dither(width, height, pixels, palette, ditherable, qPixels, 1.0f);
 		
-		closestMap = new Object[65536];
+		closestMap.clear();
 		nearestMap = new int[65536];
 		return qPixels;
 	}

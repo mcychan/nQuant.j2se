@@ -486,7 +486,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			return nearestColorIndex(palette, c, pos);
 		
 		final int offset = getColorIndex(c);
-		int[] closest = (int[]) closestMap[offset];
+		int[] closest = closestMap.get(offset);
 		if (closest == null) {
 			closest = new int[4];
 			closest[2] = closest[3] = Integer.MAX_VALUE;
@@ -538,7 +538,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			if (closest[3] == Integer.MAX_VALUE)
 				closest[1] = closest[0];
 
-			closestMap[offset] = closest;
+			closestMap.put(offset, closest);
 		}
 		
 		int idx = 1;
@@ -574,7 +574,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	{
 		m_palette = null;
 		saliencies = null;
-		closestMap = new Object[65536];
+		closestMap.clear();
 		nearestMap = new int[65536];
 	}
 
