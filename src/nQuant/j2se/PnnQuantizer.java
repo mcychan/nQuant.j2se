@@ -32,7 +32,7 @@ public class PnnQuantizer {
 	protected Color[] m_palette;
 	private ColorModel m_colorModel;
 	protected Map<Integer, int[]> closestMap = new HashMap<>();
-	protected int[] nearestMap = new int[65536];	
+	protected Map<Integer, Short> nearestMap = new HashMap<>();		
 
 	private PnnQuantizer(BufferedImage im, int w, int h) {
 		width = w;
@@ -160,7 +160,7 @@ public class PnnQuantizer {
 	protected Color[] pnnquan(final Color[] pixels, int nMaxColors)
 	{
 		closestMap.clear();
-		nearestMap = new int[65536];
+		nearestMap.clear();
 		short quan_rt = (short) 1;
 		Pnnbin[] bins = new Pnnbin[65536];
 
@@ -297,15 +297,15 @@ public class PnnQuantizer {
 
 	public short nearestColorIndex(final Color[] palette, Color c, final int pos)
 	{
-		final int offset = getColorIndex(c);
-		int got = nearestMap[offset];
-		if (got > 0)
-			return (short) (got - 1);
+		final int offset = palette.length > 32 ? c.getRGB() : getColorIndex(c);
+		Short got = nearestMap.get(offset);
+		if (got != null)
+			return got;
 		
 		short k = 0;
 		if (c.getAlpha() <= alphaThreshold)
 			c = m_transparentColor;
-		if(palette.length > 2 && hasAlpha() && c.getAlpha() > alphaThreshold)
+		if (palette.length > 2 && hasAlpha() && c.getAlpha() > alphaThreshold)
 			k = 1;
 		
 		double pr = PR, pg = PG, pb = PB;
@@ -333,7 +333,7 @@ public class PnnQuantizer {
 			mindist = curdist;
 			k = (short) i;
 		}
-		nearestMap[offset] = k + 1;
+		nearestMap.put(offset, k);
 		return k;
 	}
 
@@ -343,7 +343,7 @@ public class PnnQuantizer {
 			return nearestColorIndex(palette, c, pos);
 		
 		int[] closest = new int[4];
-		final int offset = getColorIndex(c);
+		final int offset = palette.length > 32 ? c.getRGB() : getColorIndex(c);
 		int[] got = closestMap.get(offset);
 		if (got == null) {
 			closest[2] = closest[3] = Integer.MAX_VALUE;
@@ -428,7 +428,7 @@ public class PnnQuantizer {
 			BlueNoise.dither(width, height, pixels, palette, ditherable, qPixels, 1.0f);
 		
 		closestMap.clear();
-		nearestMap = new int[65536];
+		nearestMap.clear();
 		return qPixels;
 	}
 

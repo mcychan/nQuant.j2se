@@ -343,10 +343,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	@Override
 	public short nearestColorIndex(final Color[] palette, Color c, final int pos)
 	{
-		final int offset = getColorIndex(c);
-		int got = nearestMap[offset];
-		if (got > 0)
-			return (short) (got - 1);
+		final int offset = palette.length > 32 ? c.getRGB() : getColorIndex(c);
+		Short got = nearestMap.get(offset);
+		if (got != null)
+			return got;
 
 		short k = 0;
 		if (c.getAlpha() <= alphaThreshold)
@@ -414,16 +414,16 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			mindist = curdist;
 			k = i;
 		}
-		nearestMap[offset] = k + 1;
+		nearestMap.put(offset, k);
 		return k;
 	}
 	
 	protected short hybridColorIndex(final Color[] palette, Color c, final int pos)
 	{
-		final int offset = getColorIndex(c);
-		int got = nearestMap[offset];
-		if (got > 0)
-			return (short) (got - 1);
+		final int offset = palette.length > 32 ? c.getRGB() : getColorIndex(c);
+		Short got = nearestMap.get(offset);
+		if (got != null)
+			return got;
 
 		short k = 0;
 		
@@ -472,7 +472,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			mindist = curdist;
 			k = i;
 		}
-		nearestMap[offset] = k + 1;
+		nearestMap.put(offset, k);
 		return k;
 	}
 
@@ -485,7 +485,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		if (c.getAlpha() <= alphaThreshold)
 			return nearestColorIndex(palette, c, pos);
 		
-		final int offset = getColorIndex(c);
+		final int offset = palette.length > 32 ? c.getRGB() : getColorIndex(c);
 		int[] closest = closestMap.get(offset);
 		if (closest == null) {
 			closest = new int[4];
@@ -575,7 +575,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 		m_palette = null;
 		saliencies = null;
 		closestMap.clear();
-		nearestMap = new int[65536];
+		nearestMap.clear();
 	}
 
 	@Override
