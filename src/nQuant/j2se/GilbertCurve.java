@@ -41,7 +41,6 @@ public class GilbertCurve {
 	private final Ditherable ditherable;
 	private final float[] saliencies;
 	private final Queue<ErrorBox> errorq;
-	private final int[] lookup;	
 
 	private final int margin, thresold;
 	private static final float BLOCK_SIZE = 343f;
@@ -101,7 +100,6 @@ public class GilbertCurve {
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
 		thresold = DITHER_MAX > 9 ? -112 : -64;
 		weights = new float[0];
-		lookup = new int[65536];
 	}
 	
 	private static float normalDistribution(float x, float peak) {
@@ -169,10 +167,7 @@ public class GilbertCurve {
 		if (beta > 1f && CIELABConvertor.Y_Diff(pixel, c2) > DITHER_MAX)
 			c2 = new Color(r_pix, g_pix, b_pix, a_pix);
 
-		int offset = ditherable.getColorIndex(c2);
-		if (lookup[offset] == 0)
-			lookup[offset] = ditherable.nearestColorIndex(palette, c2, bidx) + 1;
-		return (short) (lookup[offset] - 1);
+		return ditherable.nearestColorIndex(palette, c2, bidx);
 	}
 
 	private void diffusePixel(int x, int y) {
@@ -207,10 +202,7 @@ public class GilbertCurve {
 				qPixels[bidx] = ditherPixel(x, y, c2, beta);
 		}
 		else if (palette.length <= 32 && a_pix > 0xF0) {
-			int offset = ditherable.getColorIndex(c2);
-			if (lookup[offset] == 0)
-				lookup[offset] = ditherable.nearestColorIndex(palette, c2, bidx) + 1;
-			qPixels[bidx] = (short) (lookup[offset] - 1);
+			qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);
 
 			final int acceptedDiff = Math.max(2, palette.length - margin);
 			if (saliencies != null && (CIELABConvertor.Y_Diff(pixel, c2) > acceptedDiff || CIELABConvertor.U_Diff(pixel, c2) > (2 * acceptedDiff))) {
