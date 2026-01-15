@@ -58,7 +58,7 @@ public class GilbertCurve {
 		this.dither = dither;
 		this.weight = weight = Math.abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
-		sortedByYDiff = palette.length > 128 && weight >= .02 && (!hasAlpha || weight < .18);
+		sortedByYDiff = palette.length > 128 && weight >= .02 && (!hasAlpha || weight < .2);
 		beta = palette.length > 4 ? (float) (.6f - .00625f * palette.length) : 1;
 		if (palette.length > 4) {
 			double boundary = .005 - .0000625 * palette.length;
@@ -68,7 +68,7 @@ public class GilbertCurve {
 			else if (weight < .0015 || (palette.length > 32 && palette.length < 256))
 				beta += .1f;
 			if (palette.length >= 64 && (weight > .012 && weight < .0125) || (weight > .025 && weight < .03))
-				beta *= 2f;
+				beta += .05f;
 			else if (palette.length > 32 && palette.length < 64 && weight < .015)
 				beta = .55f;
 		}

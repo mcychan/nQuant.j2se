@@ -297,7 +297,7 @@ public class PnnQuantizer {
 
 	public short nearestColorIndex(final Color[] palette, Color c, final int pos)
 	{
-		final int offset = palette.length > 32 ? c.getRGB() : getColorIndex(c);
+		final int offset = weight > .015 ? c.getRGB() : getColorIndex(c);
 		Short got = nearestMap.get(offset);
 		if (got != null)
 			return got;
@@ -343,7 +343,7 @@ public class PnnQuantizer {
 			return nearestColorIndex(palette, c, pos);
 		
 		int[] closest = new int[4];
-		final int offset = palette.length > 32 ? c.getRGB() : getColorIndex(c);
+		final int offset = weight > .015 ? c.getRGB() : getColorIndex(c);
 		int[] got = closestMap.get(offset);
 		if (got == null) {
 			closest[2] = closest[3] = Integer.MAX_VALUE;
