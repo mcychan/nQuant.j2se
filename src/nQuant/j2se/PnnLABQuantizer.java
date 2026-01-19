@@ -20,7 +20,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	
 	private static Random random = new Random();
 	private Color[] cPixels;
-	private boolean isGA = false;
+	private boolean isGA = false, isNano = false;
 	private double proportional, ratioY = .5;
 
 	public PnnLABQuantizer(BufferedImage im, ImageObserver obs) {
@@ -187,6 +187,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			quan_rt = -1;
 		
 		weight = Math.min(0.9, nMaxColors * 1.0 / maxbins);
+		isNano = weight <= .015;
 		if ((nMaxColors < 16 && weight < .0075) || weight < .001 || (weight > .0015 && weight < .0022))
 			quan_rt = 2;
 		if (weight < (isGA ? .03 : .04) && PG < 1 && PG >= coeffs[0][1]) {
@@ -343,7 +344,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	@Override
 	public short nearestColorIndex(final Color[] palette, Color c, final int pos)
 	{
-		final int offset = weight > .015 ? c.getRGB() : getColorIndex(c);
+		final int offset = !isNano ? c.getRGB() : getColorIndex(c);
 		Short got = nearestMap.get(offset);
 		if (got != null)
 			return got;
@@ -420,7 +421,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	
 	protected short hybridColorIndex(final Color[] palette, Color c, final int pos)
 	{
-		final int offset = weight > .015 ? c.getRGB() : getColorIndex(c);
+		final int offset = !isNano ? c.getRGB() : getColorIndex(c);
 		Short got = nearestMap.get(offset);
 		if (got != null)
 			return got;
@@ -479,13 +480,13 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	@Override
 	protected short closestColorIndex(final Color[] palette, Color c, final int pos)
 	{
-		if(PG < coeffs[0][1] && BlueNoise.TELL_BLUE_NOISE[pos & 4095] > -88)
+		if(PG < 1 && weight > .1 && BlueNoise.TELL_BLUE_NOISE[pos & 4095] > 0)
 			return hybridColorIndex(palette, c, pos);
 		
 		if (c.getAlpha() <= alphaThreshold)
 			return nearestColorIndex(palette, c, pos);
 		
-		final int offset = weight > .015 ? c.getRGB() : getColorIndex(c);
+		final int offset = !isNano ? c.getRGB() : getColorIndex(c);
 		int[] closest = closestMap.get(offset);
 		if (closest == null) {
 			closest = new int[4];
@@ -564,7 +565,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 					return PnnLABQuantizer.this.nearestColorIndex(palette, c, pos);
 				if (isGA() && palette.length < 16)
 					return PnnLABQuantizer.this.hybridColorIndex(palette, c, pos);
-				return PnnLABQuantizer.this.nearestColorIndex(palette, c, pos);
+				return PnnLABQuantizer.this.closestColorIndex(palette, c, pos);
 			}
 			
 		};
