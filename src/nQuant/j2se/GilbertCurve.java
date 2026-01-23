@@ -58,7 +58,7 @@ public class GilbertCurve {
 		this.dither = dither;
 		this.weight = weight = Math.abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
-		sortedByYDiff = palette.length > 128 && weight >= .02 && (!hasAlpha || weight < .2);
+		sortedByYDiff = palette.length > 128 && weight >= .02 && (!hasAlpha || weight < .18);
 		beta = palette.length > 4 ? (float) (.6f - .00625f * palette.length) : 1;
 		if (palette.length > 4) {
 			double boundary = .005 - .0000625 * palette.length;
@@ -78,7 +78,7 @@ public class GilbertCurve {
 		if (palette.length > 64 || (palette.length > 4 && weight > .02))
 			beta *= .4f;
 		if (palette.length > 64 && weight < .02)
-			beta = .2f;
+			beta = .18f;
 
 		errorq = sortedByYDiff ? new PriorityQueue<>(new Comparator<ErrorBox>() {
 
@@ -90,6 +90,11 @@ public class GilbertCurve {
 		}) : new ArrayDeque<>();
 
 		DITHER_MAX = weight < .015 ? (weight > .0025) ? (byte) 25 : 16 : 9;
+		if (weight > .99) {
+			beta = (float) weight;
+			DITHER_MAX = 25;
+		}
+		
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
 		double deviation = !hasAlpha && weight > .0025 ? -.25 : 1;
 		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge * deviation) : (byte) (DITHER_MAX * (saliencies != null ? 2 : Math.E));
@@ -144,7 +149,7 @@ public class GilbertCurve {
 						c1 = pixel;
 					if (saliencies[bidx] < .6)
 						kappa = beta * normalDistribution(beta, weight < .0008 ? 2.5f : 1.75f) * saliencies[bidx];
-					else if (palette.length >= 32 || CIELABConvertor.Y_Diff(c1, c2) > (beta * Math.PI * acceptedDiff)) {						
+					else if (palette.length >= 32 || CIELABConvertor.Y_Diff(c1, c2) > (beta * Math.PI * acceptedDiff)) {
 						if (saliencies[bidx] < .9)
 							kappa = beta * (!sortedByYDiff && weight < .0025 ? .55f : .5f) / saliencies[bidx];
 						else
