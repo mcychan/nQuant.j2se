@@ -104,7 +104,10 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		m_pq.setRatio(ratioX, ratioY);
 		Color[] palette = m_pq.pnnquan(cPixelsList.get(0), _nMaxColors);
 
-		int threshold = (maxRatio < .1 || Math.abs(ratioX - ratioY) > .01) ? -64 : -112;
+		if (maxRatio < .1 && maxRatio > 0)
+			minRatio = m_pq.getProportional();
+			
+		final int threshold = (maxRatio < .1 || Math.abs(ratioX - ratioY) > .01) ? -64 : -112;
 
 		double[] errors = new double[_objectives.length];
 		cPixelsList.stream().forEach(cPixels -> {
@@ -157,19 +160,19 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		return (float) _fitness;
 	}
 	
-	private double rotateLeft(double u, double v, double delta) {
-		double theta = Math.PI * randrange(minRatio, maxRatio) / Math.exp(delta);
+	private double rotateLeft(double u, double v) {
+		double theta = Math.PI * randrange(minRatio, maxRatio);
 		double result = u * Math.sin(theta) + v * Math.cos(theta);
 		if(result <= minRatio || result >= maxRatio)
-			result = rotateLeft(u, v, delta + .5);
+			result = minRatio + minRatio % (maxRatio - minRatio);
 		return result;
 	}
 	
-	private double rotateRight(double u, double v, double delta) {
-		double theta = Math.PI * randrange(minRatio, maxRatio) / Math.exp(delta);
+	private double rotateRight(double u, double v) {
+		double theta = Math.PI * randrange(minRatio, maxRatio);
 		double result = u * Math.cos(theta) - v * Math.sin(theta);
 		if(result <= minRatio || result >= maxRatio)
-			result = rotateRight(u, v, delta + .5);
+			result = maxRatio - minRatio % (maxRatio - minRatio);
 		return result;
 	}
 
@@ -179,8 +182,8 @@ public class PnnLABGAQuantizer implements AutoCloseable, Chromosome<PnnLABGAQuan
 		if (_random.nextInt(100) <= crossoverProbability)
 			return child;
 		
-		double ratioX = rotateRight(this.ratioX, mother.getRatios()[1], 0.0);
-		double ratioY = rotateLeft(this.ratioY, mother.getRatios()[0], 0.0);
+		double ratioX = rotateRight(this.ratioX, mother.getRatios()[1]);
+		double ratioY = rotateLeft(this.ratioY, mother.getRatios()[0]);
 		child.setRatio(ratioX, ratioY);
 		child.calculateFitness();
 		return child;

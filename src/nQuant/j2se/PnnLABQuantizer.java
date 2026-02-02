@@ -631,6 +631,10 @@ public class PnnLABQuantizer extends PnnQuantizer {
 	
 	boolean isGA() {
 		return isGA;
+	}	
+
+	public double getProportional() {
+		return proportional;
 	}
 
 	void setRatio(double ratioX, double ratioY) {
