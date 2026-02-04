@@ -560,7 +560,7 @@ public class PnnLABQuantizer extends PnnQuantizer {
 			public short nearestColorIndex(Color[] palette, Color c, final int pos) {
 				if (palette.length <= 4)
 					return PnnLABQuantizer.this.nearestColorIndex(palette, c, pos);
-				if (isGA() && palette.length < 16)
+				if (weight < .0005 && palette.length < 16)
 					return PnnLABQuantizer.this.hybridColorIndex(palette, c, pos);
 				return PnnLABQuantizer.this.closestColorIndex(palette, c, pos);
 			}
