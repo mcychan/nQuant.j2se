@@ -178,8 +178,6 @@ public class GilbertCurve {
 		
 		if (DITHER_MAX < 16 && palette.length > 4 && saliencies[bidx] < .6f && CIELABConvertor.Y_Diff(pixel, c2) > margin - 1)
 			c2 = new Color(r_pix, g_pix, b_pix, a_pix);
-		if (palette.length > 32 && saliencies[bidx] > .99f)
-			c2 = BlueNoise.diffuse(c2, qPixel, beta * normalDistribution(saliencies[bidx], .25f) * beta, strength, x, y);
 
 		return ditherable.nearestColorIndex(palette, c2, bidx);
 	}
