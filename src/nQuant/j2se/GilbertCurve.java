@@ -72,7 +72,7 @@ public class GilbertCurve {
 			else if (palette.length > 32 && palette.length < 64 && weight < .015)
 				beta = .55f;
 			else if (palette.length > 16 && palette.length <= 32 && weight >= .005)
-				beta = .55f;
+				beta += .1f;
 		}
 		else
 			beta *= .95f;
@@ -155,7 +155,7 @@ public class GilbertCurve {
 				else {
 					if (weight >= .0015 && saliencies[bidx] < .6)
 						c1 = pixel;
-					if (saliencies[bidx] < .6)
+					if (weight < .005 && saliencies[bidx] < .6)
 						kappa = beta * normalDistribution(saliencies[bidx], weight < .0008 ? 2.5f : 1.75f);
 					else if (palette.length >= 32 || CIELABConvertor.Y_Diff(c1, c2) > (beta * Math.PI * acceptedDiff)) {
 						double ub = 1 - palette.length / 320.0;
