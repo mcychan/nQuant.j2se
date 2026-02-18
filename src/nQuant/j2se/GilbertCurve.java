@@ -146,8 +146,9 @@ public class GilbertCurve {
 			}
 		}
 
-		if (palette.length > 4 && CIELABConvertor.Y_Diff(pixel, c2) > (beta * acceptedDiff)) {
-			if (margin > 6 || (palette.length <= 32 && weight < .01 && weight > .007)) {
+		double gamma = (palette.length <= 32 && weight < .01 && weight > .007) ? 1 - beta : beta;
+		if (palette.length > 4 && CIELABConvertor.Y_Diff(pixel, c2) > (gamma * acceptedDiff)) {
+			if (margin > 6 || gamma > beta) {
 				float kappa = saliencies[bidx] < .4f ? beta * .4f * saliencies[bidx] : beta * .4f / saliencies[bidx];
 				Color c1 = new Color(r_pix, g_pix, b_pix, a_pix);
 				if (palette.length > 32 && saliencies[bidx] < .9)
@@ -157,7 +158,7 @@ public class GilbertCurve {
 						c1 = pixel;
 					if (weight < .005 && saliencies[bidx] < .6)
 						kappa = beta * normalDistribution(saliencies[bidx], weight < .0008 ? 2.5f : 1.75f);
-					else if (palette.length >= 32 || CIELABConvertor.Y_Diff(c1, c2) > (beta * Math.PI * acceptedDiff)) {
+					else if (palette.length >= 32 || CIELABConvertor.Y_Diff(c1, c2) > (gamma * Math.PI * acceptedDiff)) {
 						double ub = 1 - palette.length / 320.0;
 						if (saliencies[bidx] > .15 && saliencies[bidx] < ub)
 							kappa = beta * (!sortedByYDiff && weight < .0025 ? .55f : .5f) / saliencies[bidx];
