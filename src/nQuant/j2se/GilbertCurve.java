@@ -72,7 +72,7 @@ public class GilbertCurve {
 			else if (palette.length > 32 && palette.length < 64 && weight < .015)
 				beta = .55f;
 			else if (palette.length > 16 && palette.length <= 32 && weight >= .005)
-				beta += .1f;
+				beta += .05f + weight * palette.length;
 		}
 		else
 			beta *= .95f;
