@@ -208,8 +208,8 @@ public class GilbertCurve {
 		int a_pix = (int) Math.min(0xFF, Math.max(error.p[3], 0.0));
 		
 		Color c2 = new Color(r_pix, g_pix, b_pix, a_pix);
-		if (saliencies != null && dither && !sortedByYDiff && (!hasAlpha || Math.abs(pixel.getAlpha() - a_pix) < (.5 * margin))) {
-			if (palette.length >= 256 && saliencies[bidx] > .99f)
+		if (saliencies != null && dither && !sortedByYDiff && (!hasAlpha || pixel.getAlpha() < a_pix)) {
+			if ((palette.length >= 256 && saliencies[bidx] > .99f) || (hasAlpha && (pixel.getAlpha() - a_pix) < (.5 * margin)))
 				qPixels[bidx] = ditherable.nearestColorIndex(palette, c2, bidx);
 			else
 				qPixels[bidx] = ditherPixel(x, y, c2, beta);
