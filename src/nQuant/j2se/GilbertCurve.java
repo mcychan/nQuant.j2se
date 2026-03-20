@@ -251,7 +251,7 @@ public class GilbertCurve {
 					unaccepted = true;
 				
 				if (hasAlpha && saliencies == null) {
-					if (Math.abs(error.p[j]) >= (ditherMax * 2))
+					if (Math.abs(error.p[j]) >= (ditherMax * Math.PI))
 						error.p[j] = (float) Math.tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
 					continue;
 				}
