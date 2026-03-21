@@ -42,7 +42,7 @@ public class GilbertCurve {
 	private final float[] saliencies;
 	private final Queue<ErrorBox> errorq;
 
-	private final int margin, thresold;
+	private final int margin;
 	private static final float BLOCK_SIZE = 343f;
 
 	private GilbertCurve(final int width, final int height, final int[] pixels, final Color[] palette, final short[] qPixels, final Ditherable ditherable, final float[] saliencies, double weight, boolean dither)
@@ -105,7 +105,6 @@ public class GilbertCurve {
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
 		else if (weight < .03 && palette.length / weight < density && palette.length >= 16 && palette.length < 256)
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
-		thresold = DITHER_MAX > 9 ? -112 : -64;
 		weights = new float[0];
 	}
 	
@@ -240,9 +239,7 @@ public class GilbertCurve {
 		error.p[3] = a_pix - c2.getAlpha();
 
 		boolean denoise = palette.length > 2;
-		boolean diffuse = BlueNoise.TELL_BLUE_NOISE[bidx & 4095] > thresold;
 		error.yDiff = sortedByYDiff ? CIELABConvertor.Y_Diff(pixel, c2) : 1;
-		boolean illusion = !diffuse && BlueNoise.TELL_BLUE_NOISE[(int) (error.yDiff * 4096) & 4095] > thresold;
 
 		boolean unaccepted = false;
 		int errLength = denoise ? error.p.length - 1 : 0;
@@ -252,17 +249,12 @@ public class GilbertCurve {
 					unaccepted = true;
 				
 				if (hasAlpha && saliencies == null) {
-					if (Math.abs(error.p[j]) >= (ditherMax * Math.PI))
+					if (Math.abs(error.p[j]) >= (ditherMax * Math.PI) || error.p[3] < 0)
 						error.p[j] = (float) Math.tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
 					continue;
 				}
 
-				if (diffuse)
-					error.p[j] = (float) Math.tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
-				else if(illusion)
-					error.p[j] = (float) (error.p[j] / maxErr * error.yDiff) * (ditherMax - 1);
-				else
-					error.p[j] /= (float) (1 + Math.sqrt(ditherMax));
+				error.p[j] = (float) Math.tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
 			}
 
 			if (sortedByYDiff && saliencies == null && Math.abs(error.p[j]) >= DITHER_MAX)
