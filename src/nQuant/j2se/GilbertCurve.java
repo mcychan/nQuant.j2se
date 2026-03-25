@@ -98,8 +98,12 @@ public class GilbertCurve {
 		}
 		
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
-		double deviation = !hasAlpha && weight > .0025 ? -.25 : 1;
-		ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge * deviation) : (byte) (DITHER_MAX * (saliencies != null ? 2 : Math.E));
+		if (sortedByYDiff)
+			ditherMax = (byte) (DITHER_MAX / weight);
+		else {
+			double deviation = !hasAlpha && weight > .0025 ? -.25 : 1;
+			ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge * deviation) : (byte) (DITHER_MAX * (saliencies != null ? 2 : Math.E));
+		}
 		final int density = palette.length > 16 ? 3200 : 1500;
 		if (palette.length / weight > 5000 && (weight > .045 || (weight > .01 && palette.length < 64)))
 			ditherMax = (byte) BitmapUtilities.sqr(5 + edge);
@@ -249,7 +253,7 @@ public class GilbertCurve {
 					unaccepted = true;
 				
 				if (hasAlpha && saliencies == null) {
-					if (Math.abs(error.p[j]) >= (ditherMax * Math.PI) || error.p[3] < 0)
+					if (Math.abs(error.p[j]) >= (ditherMax * 2) || error.p[3] < 0)
 						error.p[j] = (float) Math.tanh(error.p[j] / maxErr * 20) * (ditherMax - 1);
 					continue;
 				}
