@@ -98,8 +98,8 @@ public class GilbertCurve {
 		}
 		
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
-		if (saliencies != null && (hasAlpha || (sortedByYDiff && weight < .03)))
-			ditherMax = (byte) (DITHER_MAX / weight);
+		if (hasAlpha || (saliencies != null && sortedByYDiff && weight < .03))
+			ditherMax = (byte) (DITHER_MAX / Math.sqrt(weight));
 		else {
 			double deviation = !hasAlpha && weight > .0025 ? -.25 : 1;
 			ditherMax = (hasAlpha || DITHER_MAX > 9) ? (byte) BitmapUtilities.sqr(Math.sqrt(DITHER_MAX) + edge * deviation) : (byte) (DITHER_MAX * (saliencies != null ? 2 : Math.E));
