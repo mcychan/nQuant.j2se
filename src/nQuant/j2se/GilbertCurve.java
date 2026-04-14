@@ -98,7 +98,9 @@ public class GilbertCurve {
 		}
 		
 		double edge = hasAlpha ? 1 : Math.exp(weight) - .25;
-		if (hasAlpha || (saliencies != null && sortedByYDiff && weight < .03))
+		if (saliencies != null && (hasAlpha || (sortedByYDiff && weight < .03)))
+			ditherMax = (byte) (DITHER_MAX / weight);
+		else if (hasAlpha)
 			ditherMax = (byte) (DITHER_MAX / Math.sqrt(weight));
 		else {
 			double deviation = !hasAlpha && weight > .0025 ? -.25 : 1;
