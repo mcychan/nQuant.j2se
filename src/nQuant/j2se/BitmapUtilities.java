@@ -158,6 +158,15 @@ public class BitmapUtilities {
 		return (c.getRed() & 0xF8) << 8 | (c.getGreen() & 0xFC) << 3 | (c.getBlue() >> 3);
 	}
 	
+	public static Color getColor(final Color c, boolean hasSemiTransparency, boolean hasTransparency)
+	{
+		if(hasSemiTransparency)
+			return new Color(c.getRed() & 0xF0, c.getGreen() & 0xF0, c.getBlue() & 0xF0, c.getAlpha() & 0xF0);
+		if (hasTransparency)
+			return new Color(c.getRed() & 0xF8, c.getGreen() & 0xF8, c.getBlue() & 0xF8, c.getAlpha() & 0x80);
+		return new Color(c.getRed() & 0xF8, c.getGreen() & 0xFC, c.getBlue() & 0xF8);
+	}
+	
 	public static BufferedImage toIndexedBufferedImage(short[] qPixels, IndexColorModel icm, int width, int height) {		
 		if(icm.getPixelSize() < 8) {			
 			WritableRaster raster = Raster.createWritableRaster(icm.createCompatibleSampleModel(width, height), new DataBufferByte(qPixels.length), null);

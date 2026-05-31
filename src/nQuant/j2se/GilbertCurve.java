@@ -32,7 +32,7 @@ public class GilbertCurve {
 	private byte ditherMax, DITHER_MAX;
 	private float beta;
 	private float[] weights;
-	private final boolean dither, hasAlpha, sortedByYDiff;
+	private final boolean dither, enforcedDither, hasAlpha, sortedByYDiff;
 	private final int width, height;
 	private final double weight;
 	private final int[] pixels;
@@ -45,7 +45,7 @@ public class GilbertCurve {
 	private final int margin;
 	private static final float BLOCK_SIZE = 343f;
 
-	private GilbertCurve(final int width, final int height, final int[] pixels, final Color[] palette, final short[] qPixels, final Ditherable ditherable, final float[] saliencies, double weight, boolean dither)
+	private GilbertCurve(final int width, final int height, final int[] pixels, final Color[] palette, final short[] qPixels, final Ditherable ditherable, final float[] saliencies, double weight, boolean dither, boolean enforcedDither)
 	{
 		this.width = width;
 		this.height = height;
@@ -56,6 +56,7 @@ public class GilbertCurve {
 		this.hasAlpha = weight < 0;
 		this.saliencies = saliencies;
 		this.dither = dither;
+		this.enforcedDither = enforcedDither;
 		this.weight = weight = Math.abs(weight);
 		margin = weight < .0025 ? 12 : weight < .004 ? 8 : 6;
 		sortedByYDiff = palette.length > 128 && weight >= .02 && (!hasAlpha || weight < .18);
@@ -143,9 +144,9 @@ public class GilbertCurve {
 				float kappa = saliencies[bidx] < .6f ? beta * .15f / saliencies[bidx] : beta * .4f / saliencies[bidx];
 				c2 = BlueNoise.diffuse(pixel, qPixel, kappa, strength, x, y);
 			}
-			else if (palette.length > 16 && weight < .005)
+			else if (enforcedDither && palette.length > 16 && weight < .005)
 				c2 = BlueNoise.diffuse(pixel, qPixel, beta * normalDistribution(saliencies[bidx], .5f) + beta, strength, x, y);
-			else
+			else if (enforcedDither)
 				c2 = BlueNoise.diffuse(pixel, qPixel, beta * .5f / saliencies[bidx], strength, x, y);
 		}
 
@@ -355,7 +356,7 @@ public class GilbertCurve {
 		for(int c = 0; c < size; ++c)
 			weight += (weights[c] /= sumweight);
 		weights[0] += 1f - weight;
-	}
+	}	
 
 	private void run() {
 		if(!sortedByYDiff)
@@ -367,10 +368,17 @@ public class GilbertCurve {
 			generate2d(0, 0, 0, height, width, 0);
 	}
 
+	public static short[] dither(final int width, final int height, final int[] pixels, final Color[] palette, final Ditherable ditherable, final float[] saliencies, final double weight, final boolean dither, boolean enforcedDither)
+	{
+		short[] qPixels = new short[pixels.length];
+		new GilbertCurve(width, height, pixels, palette, qPixels, ditherable, saliencies, weight, dither, enforcedDither).run();
+		return qPixels;
+	}
+	
 	public static short[] dither(final int width, final int height, final int[] pixels, final Color[] palette, final Ditherable ditherable, final float[] saliencies, final double weight, final boolean dither)
 	{
 		short[] qPixels = new short[pixels.length];
-		new GilbertCurve(width, height, pixels, palette, qPixels, ditherable, saliencies, weight, dither).run();
+		new GilbertCurve(width, height, pixels, palette, qPixels, ditherable, saliencies, weight, dither, true).run();
 		return qPixels;
 	}
 }
