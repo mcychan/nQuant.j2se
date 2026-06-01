@@ -33,7 +33,7 @@ public class DblGNGQuantizer {
 	private final List<GNGNode> nodes = new ArrayList<>();
 	private static Random random;
 
-	protected boolean hasSemiTransparency = false;
+	protected boolean enforcedDither = true, hasSemiTransparency = false;
 	protected int m_transparentPixelIndex = -1;
 	private static final double TRANS_RATE = 1 - (512 + 101) / 768.0;
 	protected final int width, height;
@@ -264,7 +264,7 @@ public class DblGNGQuantizer {
 				// so nodes glide smoothly into position, preventing catastrophic hue shifts.
 				double currentLR = baseLearningRate * (1.0 - progress); 
 				
-				for (int i = 0; i < node.weight.length; i++) {
+				for (int i = 0; i < node.weight.length; ++i) {
 					node.weight[i] += currentLR * (mean[i] - node.weight[i]);
 				}
 			} else {
@@ -694,7 +694,7 @@ public class DblGNGQuantizer {
 		if (hasAlpha())
 			mDivn *= -1;
 
-		if (dither && palette.length < 32 && mDivn > .003) {
+		if (dither && !enforcedDither) {
 			short[] qPixels = BitmapUtilities.quantize_image(width, height, pixels, palette, ditherable, hasSemiTransparency, dither);			
 			Clear();
 			return qPixels;
@@ -711,8 +711,11 @@ public class DblGNGQuantizer {
 				saliencies[i] = saliencyBase + (1 - saliencyBase) * lab1.L / 100f * lab1.alpha / 255f;
 			}
 		}
+		
+		if (enforcedDither)
+			enforcedDither = palette.length < 32 || palette.length > 64;
 
-		short[] qPixels = GilbertCurve.dither(width, height, pixels, palette, ditherable, saliencies, mDivn, dither, palette.length < 32 || palette.length > 64);
+		short[] qPixels = GilbertCurve.dither(width, height, pixels, palette, ditherable, saliencies, mDivn, dither, enforcedDither);
 
 		if (!dither && palette.length > 32) {
 			double delta = mDivn * palette.length;
@@ -748,6 +751,11 @@ public class DblGNGQuantizer {
 		if(isSemiTransparency != null)
 			isSemiTransparency.set(hasSemiTransparency);
 		return cPixels;
+	}
+	
+	@FunctionalInterface
+	protected interface QuanFn {
+		int get(int cnt);
 	}
 	
 	protected Color[] gngquan(final Color[] pixels, int nMaxColors)
@@ -798,6 +806,7 @@ public class DblGNGQuantizer {
 			return palette;
 		}
 
+		double mDivn = Math.min(.9, nMaxColors * 1.0 / pixelMap.size());
 		List<double[]> stdDevSamples = new ArrayList<>();
 		for (Integer pixel : histogram.keySet()) {
 			int freq = (int) Math.sqrt(histogram.get(pixel));
@@ -809,11 +818,15 @@ public class DblGNGQuantizer {
 					stdDevSamples.add(new double[]{lab1.L, lab1.A, lab1.B});
 			}
 		}
-
-		double mDivn = Math.min(.9, nMaxColors * 1.0 / pixelMap.size());
+		
+		if (mDivn < .04 && PG < 1 && PG >= coeffs[0][1] && nMaxColors >= 64)
+			enforcedDither = false;
+		if (mDivn > .003 && nMaxColors <= 32)
+			enforcedDither = false;
+		
 		if ((nMaxColors < 32 && mDivn > .015 && mDivn < .032) || (nMaxColors >= 32 && nMaxColors < 64 && mDivn > .03 && mDivn < .06))
 			trainBatch(uniqueSamples, samples, stdDevSamples, epochs);
-		else
+		else			
 			trainBatch(samples, uniqueSamples, stdDevSamples, epochs);
 		
 		if (nodes.size() > nMaxColors) {
