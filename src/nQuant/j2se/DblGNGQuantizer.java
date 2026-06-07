@@ -93,13 +93,37 @@ public class DblGNGQuantizer {
 	}
 
 	static class GNGNode {
-		double[] weight;	// LAB(alpha) vector
-		double error;
-		final Map<GNGNode, Integer> neighbors = new HashMap<>();
+		final double[] weight;	// LAB(alpha) vector
+		double error = 0.0;
+		private final Map<GNGNode, Integer> neighbors = new HashMap<>();
 
 		public GNGNode(double[] weight) {
-			this.weight = weight;
-			this.error = 0.0;
+			this.weight = weight;		
+		}
+		
+		public void addNeighbour(GNGNode nextNode) {
+			neighbors.put(nextNode, 0);
+		}
+		
+		public GNGNode findNeighborByMaxError() {
+			return neighbors.keySet().stream().max(Comparator.comparingDouble(n -> n.error))
+			.orElse(null);
+		}
+		
+		public void incrementAge() {
+			neighbors.replaceAll((neighbor, age) -> age + 1);
+		}
+		
+		public boolean noNeighbor() {
+			return neighbors.isEmpty();
+		}
+		
+		public void removeNeighbour(final GNGNode nextNode) {
+			neighbors.keySet().remove(nextNode);
+		}
+		
+		public void removeNeighbourByAge(final int maxAge) {
+			neighbors.values().removeIf(age -> age > maxAge);
 		}
 
 		public double distance(double[] input) {
@@ -138,7 +162,7 @@ public class DblGNGQuantizer {
 		return Math.max(minFloor, Math.min(maxCeiling, noOfStartingPoints));
 	}
 
-	public void initializeDistributedNode(List<double[]> samples, int noOfStartingPoints) {
+	public void initializeDistributedNode(List<GNGNode> samples, int noOfStartingPoints) {
 		if (samples == null || samples.isEmpty()) {
 			throw new IllegalArgumentException("Sample list cannot be empty.");
 		}
@@ -163,7 +187,7 @@ public class DblGNGQuantizer {
 			int randomIndex = random.nextInt(samples.size());
 			// Ensure we don't pick the exact same pixel index twice
 			if (chosenIndices.add(randomIndex)) {
-				initialNodes.add(new GNGNode(samples.get(randomIndex)));
+				initialNodes.add(samples.get(randomIndex));
 			}
 		}
 
@@ -175,18 +199,18 @@ public class DblGNGQuantizer {
 			// Link to the next node in the list (wrap around at the end)
 			GNGNode nextNode = initialNodes.get((i + 1) % initialNodes.size());
 
-			currentNode.neighbors.put(nextNode, 0);
-			nextNode.neighbors.put(currentNode, 0);
+			currentNode.addNeighbour(nextNode);
+			nextNode.addNeighbour(currentNode);
 		}
 
 		// 3. Batch transfer into the active thread-safe node list
 		nodes.addAll(initialNodes);
 	}
 
-	private void insertNewNodeWeighted(Map<GNGNode, List<double[]>> assignments) {
+	private void insertNewNodeWeighted(Map<GNGNode, List<GNGNode>> assignments) {
 		GNGNode q = nodes.stream()
 			.max(Comparator.comparingDouble(n -> {
-				List<double[]> samples = assignments.get(n);
+				List<GNGNode> samples = assignments.get(n);
 				if (samples == null || samples.isEmpty())
 					return 0.0;
 	
@@ -195,12 +219,10 @@ public class DblGNGQuantizer {
 			}))
 			.orElse(null);
 
-		if (q == null || q.neighbors.isEmpty())
+		if (q == null || q.noNeighbor())
 			return;
 
-		GNGNode f = q.neighbors.keySet().stream()
-				.max(Comparator.comparingDouble(n -> n.error))
-				.orElse(null);
+		GNGNode f = q.findNeighborByMaxError();
 
 		if (f == null)
 			return;
@@ -212,13 +234,13 @@ public class DblGNGQuantizer {
 
 		GNGNode r = new GNGNode(newWeight);
 
-		q.neighbors.remove(f);
-		f.neighbors.remove(q);
+		q.removeNeighbour(f);
+		f.removeNeighbour(q);
 
-		q.neighbors.put(r, 0);
-		f.neighbors.put(r, 0);
-		r.neighbors.put(q, 0);
-		r.neighbors.put(f, 0);
+		q.addNeighbour(r);
+		f.addNeighbour(r);
+		r.addNeighbour(q);
+		r.addNeighbour(f);
 
 		nodes.add(r);
 
@@ -234,14 +256,14 @@ public class DblGNGQuantizer {
 	 * @param progress The current epoch progress expressed as a fraction from 0.0 to 1.0.
 	 */
 	private void updateNodeWeightsAdaptive(
-		Map<GNGNode, List<double[]>> assignments, 
+		Map<GNGNode, List<GNGNode>> assignments, 
 		double baseLearningRate, 
 		double progress
 	) {
 		// Process each node cluster in parallel for high performance
 		assignments.entrySet().parallelStream().forEach(entry -> {
 			GNGNode node = entry.getKey();
-			List<double[]> cluster = entry.getValue();
+			List<GNGNode> cluster = entry.getValue();
 			
 			// Safety check: skip if no samples were mapped to this node during the batch
 			if (cluster == null || cluster.isEmpty())
@@ -249,9 +271,9 @@ public class DblGNGQuantizer {
 
 			// 1. Calculate the arithmetic mean (centroid) of the assigned color samples
 			double[] mean = new double[node.weight.length];
-			for (double[] sample : cluster) {
+			for (GNGNode sample : cluster) {
 				for (int i = 0; i < mean.length; ++i) {
-					mean[i] += sample[i];
+					mean[i] += sample.weight[i];
 				}
 			}
 			for (int i = 0; i < mean.length; ++i) {
@@ -287,7 +309,7 @@ public class DblGNGQuantizer {
 	 * @param remainingEpochs How many epochs are left in the growth phase (used to scale insertion).
 	 */
 	private void manageGraphTopology(
-		Map<GNGNode, List<double[]>> assignments, 
+		Map<GNGNode, List<GNGNode>> assignments, 
 		int remainingEpochs
 	) {
 		// Hyperparameter configuration
@@ -296,7 +318,7 @@ public class DblGNGQuantizer {
 		// 1. AGE INCREMENTATION
 		// Increment the age of all topological connections currently in the graph
 		for (GNGNode node : nodes) {
-			node.neighbors.replaceAll((neighbor, age) -> age + 1);
+			node.incrementAge();
 		}
 
 		// 2. RECONNECT ACTIVE EDGES
@@ -307,7 +329,7 @@ public class DblGNGQuantizer {
 				return;
 
 			// Find the absolute closest sample in this bucket to act as our topological anchor
-			double[] anchorSample = samplesInCluster.get(0); 
+			double[] anchorSample = samplesInCluster.get(0).weight; 
 
 			// Find the second closest node in the entire network to this anchor sample
 			GNGNode secondWinner = null;
@@ -325,23 +347,23 @@ public class DblGNGQuantizer {
 
 			// Refresh or create the link between the two closest matching colors
 			if (secondWinner != null) {
-				firstWinner.neighbors.put(secondWinner, 0);
-				secondWinner.neighbors.put(firstWinner, 0);
+				firstWinner.addNeighbour(secondWinner);
+				secondWinner.addNeighbour(firstWinner);
 			}
 		});
 
 		// 3. PRUNE DEAD CONNECTIONS
 		// Wipe out edges that haven't been validated recently
 		for (GNGNode node : nodes) {
-			node.neighbors.entrySet().removeIf(entry -> entry.getValue() > MAX_AGE);
+			node.removeNeighbourByAge(MAX_AGE);
 		}
 
 		// 4. CRITICAL RESCUE CHECK
 		// Only remove a node if it has lost all neighbors AND failed to capture 
 		// a single sample point. This preserves fragile, low-frequency minor color accents.
 		nodes.removeIf(node -> {
-			if (node.neighbors.isEmpty()) {
-				List<double[]> assigned = assignments.get(node);
+			if (node.noNeighbor()) {
+				List<GNGNode> assigned = assignments.get(node);
 				return assigned == null || assigned.isEmpty();
 			}
 			return false;
@@ -415,7 +437,7 @@ public class DblGNGQuantizer {
 		return winner;
 	}
 
-	public void trainBatch(List<double[]> samples, List<double[]> uniqueSamples, List<double[]> stdDevSamples, int totalEpochs) {
+	public void trainBatch(List<GNGNode> samples, List<GNGNode> uniqueSamples, List<GNGNode> stdDevSamples, int totalEpochs) {
 		// 1. PHASE 1: INITIALIZATION
 		// Calculate adaptive metrics from your structural equations
 		double balancedLR = calculateBalancedLearningRate(stdDevSamples.size());
@@ -435,8 +457,8 @@ public class DblGNGQuantizer {
 			List<GNGNode> currentNodesSnapshot = new ArrayList<>(nodes);
 
 			// Run matching over the square-root dampened variance stream
-			Map<GNGNode, List<double[]>> assignments = stdDevSamples.stream()
-				.collect(Collectors.groupingBy(sample -> findBestWinner(sample, currentNodesSnapshot)));
+			Map<GNGNode, List<GNGNode>> assignments = stdDevSamples.stream()
+				.collect(Collectors.groupingBy(sample -> findBestWinner(sample.weight, currentNodesSnapshot)));
 
 			// Adapt node positions using the warm-up smoothing schedule
 			double progress = (double) epoch / growthEpochs;
@@ -454,21 +476,21 @@ public class DblGNGQuantizer {
 			List<GNGNode> currentNodesSnapshot = new ArrayList<>(nodes);
 
 			// Map the full image pixels directly to the final node layout
-			Map<GNGNode, List<double[]>> realAssignments = samples.parallelStream()
-				.collect(Collectors.groupingByConcurrent(sample -> findBestWinner(sample, currentNodesSnapshot)));
+			Map<GNGNode, List<GNGNode>> realAssignments = samples.parallelStream()
+				.collect(Collectors.groupingByConcurrent(sample -> findBestWinner(sample.weight, currentNodesSnapshot)));
 
 			// STRICT SNAP: Overwrite weights with the true mathematical mean of raw pixels.
 			// This step drops the global Mean Squared Error to its absolute floor.
 			realAssignments.entrySet().parallelStream().forEach(entry -> {
 				GNGNode node = entry.getKey();
-				List<double[]> cluster = entry.getValue();
+				List<GNGNode> cluster = entry.getValue();
 				if (cluster == null || cluster.isEmpty())
 					return;
 
 				double[] trueMean = new double[node.weight.length];
-				for (double[] pixel : cluster) {
+				for (GNGNode n : cluster) {
 					for (int i = 0; i < trueMean.length; ++i) {
-						trueMean[i] += pixel[i];
+						trueMean[i] += n.weight[i];
 					}
 				}
 
@@ -481,19 +503,19 @@ public class DblGNGQuantizer {
 			// 4. GRAPH TOPOLOGY MANAGEMENT (Ages and Connections)
 			// Increment edge age across all current configurations
 			for (GNGNode node : nodes) {
-				node.neighbors.replaceAll((neighbor, age) -> age + 1);
+				node.incrementAge();
 			}
 
 			// Purge old connections that haven't been validated across batches
 			for (GNGNode node : nodes) {
-				node.neighbors.entrySet().removeIf(entry -> entry.getValue() > maxAge);
+				node.removeNeighbourByAge(maxAge);
 			}
 
 			// Only remove a node if it is structurally dead AND 
 			// failed to capture a single color point during this entire batch epoch.
 			nodes.removeIf(node -> {
-				if (node.neighbors.isEmpty()) {
-					List<double[]> assigned = realAssignments.get(node);
+				if (node.noNeighbor()) {
+					List<GNGNode> assigned = realAssignments.get(node);
 					return assigned == null || assigned.isEmpty(); 
 				}
 				return false;
@@ -695,7 +717,7 @@ public class DblGNGQuantizer {
 			mDivn *= -1;
 
 		if (dither && !enforcedDither) {
-			short[] qPixels = BitmapUtilities.quantize_image(width, height, pixels, palette, ditherable, hasSemiTransparency, dither);			
+			short[] qPixels = BitmapUtilities.quantize_image(width, height, pixels, palette, ditherable, hasSemiTransparency, dither);
 			Clear();
 			return qPixels;
 		}
@@ -763,8 +785,8 @@ public class DblGNGQuantizer {
 		maxNodes = nMaxColors;		// number of colors used
 		random = new Random(pixels.length);
 
-		List<double[]> samples = new ArrayList<>();
-		List<double[]> uniqueSamples = new ArrayList<>();
+		List<GNGNode> samples = new ArrayList<>();
+		List<GNGNode> uniqueSamples = new ArrayList<>();
 		Map<Integer, Integer> histogram = new HashMap<>();
 		for (int i = 0; i < pixels.length; ++i) {
 			Color c = BitmapUtilities.getColor(pixels[i], hasSemiTransparency, hasAlpha());
@@ -772,15 +794,15 @@ public class DblGNGQuantizer {
 
 			Lab lab1 = getLab(c.getRGB());
 			if (hasAlpha())
-				samples.add(new double[]{lab1.L, lab1.A, lab1.B, lab1.alpha});
+				samples.add(new GNGNode(new double[]{lab1.L, lab1.A, lab1.B, lab1.alpha}));
 			else
-				samples.add(new double[]{lab1.L, lab1.A, lab1.B});
+				samples.add(new GNGNode(new double[]{lab1.L, lab1.A, lab1.B}));
 
 			if (!isRegistered) {
 				if (hasAlpha())
-					uniqueSamples.add(new double[]{lab1.L, lab1.A, lab1.B, lab1.alpha});
+					uniqueSamples.add(new GNGNode(new double[]{lab1.L, lab1.A, lab1.B, lab1.alpha}));
 				else
-					uniqueSamples.add(new double[]{lab1.L, lab1.A, lab1.B});
+					uniqueSamples.add(new GNGNode(new double[]{lab1.L, lab1.A, lab1.B}));
 			}
 
 			Integer got = histogram.get(c.getRGB());
@@ -807,15 +829,15 @@ public class DblGNGQuantizer {
 		}
 
 		double mDivn = Math.min(.9, nMaxColors * 1.0 / pixelMap.size());
-		List<double[]> stdDevSamples = new ArrayList<>();
+		List<GNGNode> stdDevSamples = new ArrayList<>();
 		for (Integer pixel : histogram.keySet()) {
 			int freq = (int) Math.sqrt(histogram.get(pixel));
 			for (int i=0; i<freq; ++i) {
 				Lab lab1 = getLab(pixel);
 				if (hasAlpha())
-					stdDevSamples.add(new double[]{lab1.L, lab1.A, lab1.B, lab1.alpha});
+					stdDevSamples.add(new GNGNode(new double[]{lab1.L, lab1.A, lab1.B, lab1.alpha}));
 				else
-					stdDevSamples.add(new double[]{lab1.L, lab1.A, lab1.B});
+					stdDevSamples.add(new GNGNode(new double[]{lab1.L, lab1.A, lab1.B}));
 			}
 		}
 		
